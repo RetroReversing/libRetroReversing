@@ -1,0 +1,13 @@
+SOURCES_C += \
+    ./libRetroReversing/cdl/jarowinkler.c
+
+SOURCES_CXX += \
+    ./libRetroReversing/cdl/CDL_interface.cpp \
+    ./libRetroReversing/cdl/CDL_JSON.cpp \
+    ./libRetroReversing/cdl/CDL_Util.cpp \
+    ./libRetroReversing/consoles/PokemonMini.cpp
+
+CFLAGS += -I/usr/local/opt/nlohmann_json/include
+CXXFLAGS += -I/usr/local/opt/nlohmann_json/include -std=c++11
+
+LDFLAGS += -lbfd -L/usr/local/opt/binutils/lib -liberty -lintl -liconv -mmacosx-version-min=10.9 -lc++

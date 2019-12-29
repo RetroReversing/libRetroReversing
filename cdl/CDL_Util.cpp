@@ -164,24 +164,24 @@ string printWordsToStr(uint8_t* mem, uint32_t length=0x18) {
 }
 
 extern "C" {
-void printBytes(uint8_t* mem, uint32_t cartAddr, uint32_t length=0x18) {
-    for (int i=0; i<=length; i++) {
-        printf(" %d:%#02x ", i, mem[cartAddr+i]);
-        if ((i+1)%4 == 0) {
-            printf("\n");
+    void printBytes(uint8_t* mem, uint32_t cartAddr, uint32_t length=0x18) {
+        for (int i=0; i<=length; i++) {
+            printf(" %d:%#02x ", i, mem[cartAddr+i]);
+            if ((i+1)%4 == 0) {
+                printf("\n");
+            }
         }
+        printf("\n");
     }
-    printf("\n");
-}
-void printWords(uint8_t* mem, uint32_t cartAddr, uint32_t length=0x18) {
-    for (int i=0; i<=length; i+=1) {
-        printf("%s", n2hexstr(mem[cartAddr+i]).c_str());
-        if ((i+1)%4 == 0) {
-            printf(" ");
+    void printWords(uint8_t* mem, uint32_t cartAddr, uint32_t length=0x18) {
+        for (int i=0; i<=length; i+=1) {
+            printf("%s", n2hexstr(mem[cartAddr+i]).c_str());
+            if ((i+1)%4 == 0) {
+                printf(" ");
+            }
         }
+        printf("\n");
     }
-    printf("\n");
-}
 }
 string alphabetic_only_name(char* mem, int length) {
     std::stringstream sstream;

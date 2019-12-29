@@ -7,16 +7,17 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <nlohmann/json.hpp>
+#include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
 using namespace std;
 unsigned int hex_to_int(string str);
 extern "C" {
-void printBytes(uint8_t* mem, uint32_t cartAddr, uint32_t length);
-void printWords(uint8_t* mem, uint32_t cartAddr, uint32_t length);
-double jaro_winkler_distance(const char *s, const char *a);
+    void printBytes(uint8_t* mem, uint32_t cartAddr, uint32_t length);
+    void printWords(uint8_t* mem, uint32_t cartAddr, uint32_t length);
+    double jaro_winkler_distance(const char *s, const char *a);
 }
+
 void printf_endian_swap(const char* data);
 string string_endian_swap(const char* data);
 string alphabetic_only_name(char* mem, int length);
@@ -110,3 +111,38 @@ template <typename I> std::string n2hexstr(I w, size_t hex_len = sizeof(I)<<1) {
 }
 
 string to_hex(int my_integer);
+
+
+extern std::map<string, string> function_signatures;
+
+extern std::map<uint32_t, cdl_dram_cart_map> audio_samples;
+extern std::map<uint32_t, cdl_dram_cart_map> cart_rom_dma_writes;
+extern std::map<uint32_t, cdl_dram_cart_map> dma_sp_writes;
+extern std::map<uint32_t, cdl_labels> labels;
+extern std::map<uint32_t, cdl_jump_return> jump_returns;
+extern std::map<uint32_t,cdl_tlb> tlbs;
+extern std::map<uint32_t,cdl_dma> dmas;
+
+// Console specific overrides
+extern "C" {
+void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300);
+
+void main_state_save(int format, const char *filename);
+void main_state_load(const char *filename);
+void show_interface();
+void corruptBytes(uint8_t* mem, uint32_t cartAddr, int times);
+void saveJsonToFile();
+void write_rom_mapping();
+void cdl_log_pif_ram(uint32_t address, uint32_t* value);
+void find_asm_sections();
+void find_audio_sections();
+void find_audio_functions();
+bool isAddressCartROM(u_int32_t address);
+void add_tag_to_function(string tag, uint32_t labelAddr);
+uint32_t map_assembly_offset_to_rom_offset(uint32_t assembly_offset, uint32_t tlb_mapped_addr);
+string print_function_stack_trace();
+bool is_auto_generated_function_name(string func_name);
+
+extern int   l_CurrentFrame;
+extern string rom_name;
+}
