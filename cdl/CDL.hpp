@@ -145,4 +145,8 @@ bool is_auto_generated_function_name(string func_name);
 
 extern int   l_CurrentFrame;
 extern string rom_name;
+
+// Internal webserver
+extern void setup_web_server();
+extern void stop_web_server();
 }

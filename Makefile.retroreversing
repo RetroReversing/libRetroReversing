@@ -1,11 +1,12 @@
 SOURCES_C += \
     ./libRetroReversing/cdl/jarowinkler.c \
-    ./libRetroReversing/civetweb/src/civetweb.c
+    ./libRetroReversing/civetweb/src/civetweb.c \
 
 SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_interface.cpp \
     ./libRetroReversing/cdl/CDL_JSON.cpp \
     ./libRetroReversing/cdl/CDL_Util.cpp \
+    ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     ./libRetroReversing/consoles/PokemonMini.cpp
 
 CFLAGS += -I/usr/local/opt/nlohmann_json/include
