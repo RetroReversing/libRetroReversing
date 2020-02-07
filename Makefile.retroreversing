@@ -1,5 +1,6 @@
 SOURCES_C += \
-    ./libRetroReversing/cdl/jarowinkler.c
+    ./libRetroReversing/cdl/jarowinkler.c \
+    ./libRetroReversing/civetweb/src/civetweb.c
 
 SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_interface.cpp \

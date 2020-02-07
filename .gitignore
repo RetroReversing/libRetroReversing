@@ -31,3 +31,6 @@
 *.out
 *.app
 .DS_Store
+
+websrc/node_modules
+websrc/libRRUI.bundle.js

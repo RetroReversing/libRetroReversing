@@ -1,6 +1,7 @@
 #include "../cdl/CDL.hpp"
 #include "../../libretro/libretro.h"
 #include <queue>
+#include "../civetweb/include/civetweb.h"
 
 // useful functions when working with libretro:
 // * retro_get_memory_data
@@ -8,6 +9,9 @@
 
 int   l_CurrentFrame;
 int RRCurrentFrame=0;
+
+/* Server context handle */
+  struct mg_context *ctx;
 
 void write_rom_mapping() {
     // save_cdl_files();
@@ -49,6 +53,70 @@ void write_rom_mapping() {
         file << "   - [0x" << t.func_offset <<", \"" <<  t.func_name << "\"]\n";
     }
 
+}
+
+int
+FileHandler(struct mg_connection *conn, void *cbdata)
+{
+	/* In this handler, we ignore the req_info and send the file "fileName". */
+	const char *fileName = (const char *)cbdata;
+  // cout << "Filename:" << fileName;
+	mg_send_file(conn, "./libRetroReversing/websrc/index.html");
+	return 1;
+}
+
+static int
+handler(struct mg_connection *conn, void *ignored)
+{
+	const char *msg = "Hello world";
+	unsigned long len = (unsigned long)strlen(msg);
+
+	mg_printf(conn,
+	          "HTTP/1.1 200 OK\r\n"
+	          "Content-Length: %lu\r\n"
+	          "Content-Type: text/plain\r\n"
+	          "Connection: close\r\n\r\n",
+	          len);
+
+	mg_write(conn, msg, len);
+  printf("Connection made!");
+
+	return 200;
+}
+
+int
+log_message(const struct mg_connection *conn, const char *message)
+{
+	puts(message);
+	return 1;
+}
+
+struct mg_callbacks callbacks;
+void setup_web_server() {
+  printf("Setting up web server \n");
+  memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.log_message = log_message;
+   /* Initialize the library */
+    mg_init_library(0);
+    const char *options[] = {
+      "document_root",
+		"./libRetroReversing/websrc/",
+		"listening_ports",
+		"1234",
+		"request_timeout_ms",
+		"10000",
+		"error_log_file",
+		"error.log",
+    "enable_directory_listing",
+    "yes",
+    0
+	};
+
+    /* Start the server */
+    ctx = mg_start(&callbacks, 0, options);
+
+    /* Add some handler */
+    // mg_set_request_handler(ctx, "/test", FileHandler, 0);
 }
 
 extern "C" {
@@ -104,7 +172,7 @@ void log_input_state(retro_input_state_t input_cb) {
     }
   }
   button_history.push(frameInputBitField);
-  printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
+  // printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
 }
 
 
@@ -129,11 +197,14 @@ unsigned long long libRR_playback_next_input_state() {
 
 void libRR_handle_load_game() {
   printf("Loading a new ROM \n");
+  setup_web_server();
   read_button_state_from_file();
 }
 
 void handle_emulator_close() {
   save_button_state_to_file();
+  mg_stop(ctx);
+  mg_exit_library();
 }
 
 }
