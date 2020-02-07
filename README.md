@@ -20,3 +20,6 @@ Add the following line after it:
 ```
 include ./libRetroReversing/Makefile.retroreversing
 ```
+
+## Running with RetroArch
+make && /Applications/RetroArch.app/Contents/MacOS/RetroArch -L pokemini_libretro.dylib ftff36a.min
