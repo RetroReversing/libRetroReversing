@@ -9,6 +9,7 @@
 
 int   l_CurrentFrame;
 int RRCurrentFrame=0;
+int libRRshouldLogInput=0;
 
 void write_rom_mapping() {
     // save_cdl_files();
@@ -101,18 +102,17 @@ void log_input_state(retro_input_state_t input_cb) {
   for (int i=0; i<total_input_buttons; i++) {
     // printf("Logging button number: %d %d \n", i, desc[i].id);
     if (input_cb(desc[i].port, desc[i].device, desc[i].index, desc[i].id) != 0) {
-      frameInputBitField |= 1ULL << i;
+      frameInputBitField |= 1ULL << desc[i].id;
     }
   }
   button_history.push(frameInputBitField);
-  // printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
+  printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
 }
 
 
 void read_button_state_from_file() {
-  std::ifstream myfile("button_log_backup.bin", std::ios_base::in | std::ios::binary);
+  std::ifstream myfile("clean.bin", std::ios_base::in | std::ios::binary);
   unsigned long long frameInputBitField = 255;
-  // myfile >> frameInputBitField;
   while (myfile.read(reinterpret_cast<char*>(&frameInputBitField), sizeof(unsigned long long)))
   {
     std::cout << ' ' << frameInputBitField; 
@@ -125,17 +125,42 @@ void read_button_state_from_file() {
 unsigned long long libRR_playback_next_input_state() {
   unsigned long long button_state = button_history.front();
   button_history.pop(); 
+  // std::cout << "\nPlayed back:" << button_state;
   return button_state;
+}
+
+void define_console_memory_region(string name, unsigned long long start, unsigned long long end, long long mirror_address) {
+  cout << name << "\n";
+}
+
+void setup_console_details() {
+  //  Pokemon Mini specific
+  define_console_memory_region("Internal BIOS", 0x00, 0xFFF, -1); // 4KB
+  define_console_memory_region("PM RAM", 0x1000, 0x1FFF,-1); // 4KB
+  define_console_memory_region("Hardware Registers", 0x2000, 0x20FF, -1); // 256B
+  define_console_memory_region("Cartridge Memory", 0x2100, 0x1FDF00, -1); // 2MB
+  define_console_memory_region("Cartridge Memory (Mirror)", 0x200000, 0x3FFFFF, 0x2100); // 2MB Mirror
+  define_console_memory_region("Cartridge Memory (Mirror)", 0x400000, 0x5FFFFF, 0x2100); // 2MB Mirror
+  define_console_memory_region("Cartridge Memory (Mirror)", 0x600000, 0x7FFFFF, 0x2100); // 2MB Mirror
+  define_console_memory_region("Cartridge Memory (Mirror)", 0x800000, 0x9FFFFF, 0x2100); // 2MB Mirror
+  define_console_memory_region("Cartridge Memory (Mirror)", 0xA00000, 0xBFFFFF, 0x2100); // 2MB Mirror
+  define_console_memory_region("Cartridge Memory (Mirror)", 0xC00000, 0xDFFFFF, 0x2100); // 2MB Mirror
+  define_console_memory_region("Cartridge Memory (Mirror)", 0xE00000, 0xFFFFFF, 0x2100); // 2MB Mirror
 }
 
 void libRR_handle_load_game() {
   printf("Loading a new ROM \n");
+  setup_console_details();
   setup_web_server();
-  read_button_state_from_file();
+  if (libRRshouldLogInput == 0) {
+    read_button_state_from_file();
+  }
 }
 
 void handle_emulator_close() {
-  save_button_state_to_file();
+  if (libRRshouldLogInput == 1) {
+    save_button_state_to_file();
+  }
   stop_web_server();
 }
 

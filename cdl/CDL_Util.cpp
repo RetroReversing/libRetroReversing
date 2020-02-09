@@ -151,6 +151,16 @@ string printBytesToStr(uint8_t* mem, uint32_t length=0x18) {
     }
     return sstream.str();
 }
+
+string printBytesToJSArray(uint8_t* mem, uint32_t length=0x18) {
+    std::stringstream sstream;
+    sstream << "[";
+    for (int i=0; i<=length; i++) {
+        sstream << "0x" << n2hexstr((uint8_t)mem[i], 2) << ", ";
+    }
+    sstream << "]";
+    return sstream.str();
+}
 string printWordsToStr(uint8_t* mem, uint32_t length=0x18) {
     std::stringstream sstream;
     //sstream << std::hex << std::setfill ('0') << std::setw(sizeof(T)*2);
@@ -182,6 +192,18 @@ extern "C" {
         }
         printf("\n");
     }
+
+    void dump_memory_to_file(uint8_t* mem, uint32_t length=0x01, const char* filename="vram.bin") {
+    std::fstream output_file = std::fstream(filename, std::ios::out | std::ios::binary);
+    // std::cout << printBytesToJSArray(mem, length) << "\n";
+    for (int i=0; i<length; i++) { 
+        uint8_t byte_to_write = mem[i];
+        // std::cout << ' ' << byte_to_write; 
+        output_file.write(reinterpret_cast<char*>(&byte_to_write),sizeof(uint8_t));
+    } 
+    output_file.close();
+    }
+
 }
 string alphabetic_only_name(char* mem, int length) {
     std::stringstream sstream;
