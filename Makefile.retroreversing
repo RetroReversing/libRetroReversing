@@ -8,6 +8,7 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_Util.cpp \
     ./libRetroReversing/cdl/InputLogger.cpp \
     ./libRetroReversing/cdl/Setup.cpp \
+    ./libRetroReversing/cdl/Main.cpp \
     ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     ./libRetroReversing/consoles/DummyConsole.cpp
 

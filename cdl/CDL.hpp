@@ -31,7 +31,16 @@ void readJsonToObject(string filename, json& json_object);
  ( (((val) >> 24) & 0x000000FF) | (((val) >>  8) & 0x0000FF00) | \
 (((val) <<  8) & 0x00FF0000) | (((val) << 24) & 0xFF000000) )
 
+// Web structures
+struct player_settings {
+    bool paused;
+};
+void to_json(json& j, const player_settings& p);
+void from_json(const json& j, player_settings& p);
 
+extern player_settings libRR_settings;
+
+// N64 structures
 struct cdl_tlb {
     uint32_t start;
     uint32_t end;
@@ -111,7 +120,7 @@ template <typename I> std::string n2hexstr(I w, size_t hex_len = sizeof(I)<<1) {
 }
 
 string to_hex(int my_integer);
-
+string buffer_to_string(void* my_buf);
 
 extern std::map<string, string> function_signatures;
 

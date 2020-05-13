@@ -3,16 +3,7 @@
 #include "../include/libRR.h"
 #include "../cdl/CDL.hpp"
 
-// Common Variables
-int l_CurrentFrame;
-int RRCurrentFrame;
-
 extern "C" {
-
-  void libRR_run_frame() {
-    RRCurrentFrame++;
-    // printf("Current frame: %d\n", RRCurrentFrame);
-  }
 
   void libRR_setup_console_details() {
     printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);

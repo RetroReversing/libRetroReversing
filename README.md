@@ -1,6 +1,23 @@
 # libRetroReversing
 Library to provide reverse engineering functionality to retroArch libRetro cores
 
+# Building the Web source
+
+## Building for first time
+```bash
+cd libRetroReversing/websrc
+npm install
+npm run production 
+```
+
+## Developing with the websrc
+```bash
+npm run dev
+```
+
+Now go to `http://localhost:8081`
+
+---
 # To Add to a new core
 
 ## Add submodule to new cores repository

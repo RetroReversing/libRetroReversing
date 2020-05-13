@@ -1,5 +1,15 @@
 #include "CDL.hpp"
 
+// Web structures
+void to_json(json& j, const player_settings& p) {
+        j = json{{"paused", p.paused}
+        };
+    }
+void from_json(const json& j, player_settings& p) {
+    j.at("paused").get_to(p.paused);
+}
+
+// N64 structures
 void to_json(json& j, const cdl_memory_map& p) {
         j = json{{"start", p.start}, 
         {"end", p.end},
@@ -230,5 +240,11 @@ string get_header_ascii(uint8_t* mem, uint32_t proper_cart_address) {
         if (c == '!' || c == '^' || c == '+' || c == '/' || c == ':' || c == '%'|| c == '"' || c == '#') { break; }
         sstream << c;
     }
+    return sstream.str();
+}
+
+string buffer_to_string(void* my_buf) {
+    std::stringstream sstream;
+    sstream << (char*)my_buf;
     return sstream.str();
 }

@@ -1,9 +1,26 @@
 #include "../../cdl/CDL.hpp"
 #include <queue>
 #include "../include/civetweb.h"
+#include "../../include/libRR.h"
 
 /* Server context handle */
   struct mg_context *ctx;
+
+	static int
+SendJSON(struct mg_connection *conn, const char* json_str)
+{
+	size_t json_str_len = strlen(json_str);
+
+	/* Send HTTP message header */
+	mg_send_http_ok(conn, "application/json; charset=utf-8", json_str_len);
+
+	/* Send HTTP message content */
+	mg_write(conn, json_str, json_str_len);
+
+	// mg_printf(conn, "\r\n");
+
+	return (int)json_str_len;
+}
 
   
 int
@@ -13,6 +30,7 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 	int r, s;
 
 	char buf[2048];
+	memset(buf, 0, sizeof buf);
 
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 
@@ -42,23 +60,25 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 		 * or connection close), indicated my mg_read returning 0 */
 	}
 
-	mg_printf(conn,
-	          "HTTP/1.1 200 OK\r\nConnection: "
-	          "close\r\nTransfer-Encoding: chunked\r\n");
-	mg_printf(conn, "Content-Type: text/plain\r\n\r\n");
+	// mg_printf(conn,
+	//           "HTTP/1.1 200 OK\r\nConnection: "
+	//           "close\r\nTransfer-Encoding: chunked\r\n");
+	// mg_printf(conn, "Content-Type: application/json\r\n\r\n");
 
 	r = mg_read(conn, buf, sizeof(buf));
 	while (r > 0) {
 		r_total += r;
-		s = mg_send_chunk(conn, buf, r);
+		// s = mg_send_chunk(conn, buf, r);
 		if (r != s) {
 			/* Send error */
 			break;
 		}
 		r = mg_read(conn, buf, sizeof(buf));
 	}
-	mg_printf(conn, "0\r\n");
-  cout << buf << "\n";
+	
+  cout << "\n\n" << buf << "\n\n\n";
+	string result = libRR_parse_message_from_web(buffer_to_string(buf));
+	SendJSON(conn, result.c_str());
 
 	return 1;
 }
@@ -68,6 +88,7 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 int
 log_message(const struct mg_connection *conn, const char *message)
 {
+	puts("\nLog message:");
 	puts(message);
 	return 1;
 }

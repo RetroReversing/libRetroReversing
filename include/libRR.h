@@ -1,6 +1,8 @@
 #ifndef LIBRETRO_REVERSING_H__
 #define LIBRETRO_REVERSING_H__
 #include "libretro.h"
+#include <string>
+using namespace std;
 
 #define BitVal(data,y) ( (data>>y) & 1) 
 
@@ -27,9 +29,13 @@ extern void libRR_handle_load_game();
 // Input
 unsigned long long libRR_playback_next_input_state();
 
+// Main
+bool libRR_run_frame();
+
+// Web
+string libRR_parse_message_from_web(string message);
 
 // Override with Console specific
-void libRR_run_frame();
 void libRR_setup_console_details();
 void libRR_handle_emulator_close();
 

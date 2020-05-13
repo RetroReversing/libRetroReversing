@@ -4,6 +4,7 @@
 
 // Variables
 int libRR_should_Load_EPROM = 0;
+player_settings libRR_settings = { .paused = false};
 
 
 void libRR_define_console_memory_region(string name, unsigned long long start, unsigned long long end, long long mirror_address) {
@@ -25,3 +26,20 @@ void libRR_handle_emulator_close() {
   }
   stop_web_server();
 }
+
+// Settings
+string libRR_parse_message_from_web(string message) {
+  printf("New Web Message %s \n", message.c_str());
+  
+  auto message_json = json::parse(message);
+  string category = message_json["category"].get<std::string>();
+  if (category == "player_settings") {
+    printf("Player settings!!\n");
+    player_settings p2 =  message_json["state"].get<player_settings>();
+    std::cout << p2.paused << std::endl;
+    libRR_settings = p2;
+  }
+  // std::cout << message_json.dump(4) << std::endl;
+  return "{ 'success':true }";
+}
+
