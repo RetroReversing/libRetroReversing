@@ -1,6 +1,6 @@
 #ifndef LIBRETRO_REVERSING_H__
 #define LIBRETRO_REVERSING_H__
-#include <libretro.h>
+#include "libretro.h"
 
 #define BitVal(data,y) ( (data>>y) & 1) 
 
@@ -11,6 +11,12 @@ extern "C" {
 
 // Common Variables
 extern int RRCurrentFrame;
+extern int libRRshouldLogInput;
+extern int libRR_should_Load_EPROM= 0;
+
+// Input 
+extern void libRR_save_button_state_to_file();
+extern void libRR_read_button_state_from_file();
 
 // Common functions
 extern void show_interface();
