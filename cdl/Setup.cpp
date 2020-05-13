@@ -3,7 +3,7 @@
 #include "CDL.hpp"
 
 // Variables
-int libRRshouldLogInput=0;
+int libRR_should_Load_EPROM = 0;
 
 
 void libRR_define_console_memory_region(string name, unsigned long long start, unsigned long long end, long long mirror_address) {

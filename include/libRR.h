@@ -12,7 +12,7 @@ extern "C" {
 // Common Variables
 extern int RRCurrentFrame;
 extern int libRRshouldLogInput;
-extern int libRR_should_Load_EPROM= 0;
+extern int libRR_should_Load_EPROM;
 
 // Input 
 extern void libRR_save_button_state_to_file();

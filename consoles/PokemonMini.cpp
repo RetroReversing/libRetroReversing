@@ -4,7 +4,6 @@
 #include "../civetweb/include/civetweb.h"
 #include "../include/libRR.h"
 
-
 // useful functions when working with libretro:
 // * retro_get_memory_data
 // * retro_get_memory_size
@@ -136,7 +135,7 @@ void define_console_memory_region(string name, unsigned long long start, unsigne
   cout << name << "\n";
 }
 
-void setup_console_details() {
+void libRR_setup_console_details() {
   //  Pokemon Mini specific
   define_console_memory_region("Internal BIOS", 0x00, 0xFFF, -1); // 4KB
   define_console_memory_region("PM RAM", 0x1000, 0x1FFF,-1); // 4KB
@@ -151,20 +150,5 @@ void setup_console_details() {
   define_console_memory_region("Cartridge Memory (Mirror)", 0xE00000, 0xFFFFFF, 0x2100); // 2MB Mirror
 }
 
-void libRR_handle_load_game() {
-  printf("Loading a new ROM \n");
-  setup_console_details();
-  setup_web_server();
-  if (libRRshouldLogInput == 0) {
-    libRR_read_button_state_from_file();
-  }
-}
-
-void libRR_handle_emulator_close() {
-  if (libRRshouldLogInput == 1) {
-    libRR_save_button_state_to_file();
-  }
-  stop_web_server();
-}
 
 }
