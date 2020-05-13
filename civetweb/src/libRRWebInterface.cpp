@@ -74,7 +74,7 @@ log_message(const struct mg_connection *conn, const char *message)
 
 struct mg_callbacks callbacks;
 void setup_web_server() {
-  printf("Setting up web server \n");
+  printf("Setting up web server on Port 1234 \n");
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.log_message = log_message;
    /* Initialize the library */
@@ -100,6 +100,7 @@ void setup_web_server() {
 
     /* Add some handler */
     // mg_set_request_handler(ctx, "/test", FileHandler, 0);
+		system("open http://localhost:1234");
 }
 
 void stop_web_server() {

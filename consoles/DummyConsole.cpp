@@ -1,6 +1,7 @@
 #include <queue>
 #include "../civetweb/include/civetweb.h"
 #include "../include/libRR.h"
+#include "../cdl/CDL.hpp"
 
 // Common Variables
 int l_CurrentFrame;
@@ -10,7 +11,11 @@ extern "C" {
 
   void libRR_run_frame() {
     RRCurrentFrame++;
-    printf("Current frame: %d\n", RRCurrentFrame);
+    // printf("Current frame: %d\n", RRCurrentFrame);
+  }
+
+  void libRR_setup_console_details() {
+    printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
