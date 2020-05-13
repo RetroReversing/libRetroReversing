@@ -6,6 +6,7 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_interface.cpp \
     ./libRetroReversing/cdl/CDL_JSON.cpp \
     ./libRetroReversing/cdl/CDL_Util.cpp \
+    ./libRetroReversing/cdl/InputLogger.cpp \
     ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     ./libRetroReversing/consoles/DummyConsole.cpp
 

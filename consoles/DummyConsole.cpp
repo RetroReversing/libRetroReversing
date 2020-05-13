@@ -1,10 +1,18 @@
 #include <queue>
 #include "../civetweb/include/civetweb.h"
+#include "../include/libRR.h"
 
 // Common Variables
 int l_CurrentFrame;
+int RRCurrentFrame;
 
 extern "C" {
+
+  void libRR_run_frame() {
+    RRCurrentFrame++;
+    printf("Current frame: %d\n", RRCurrentFrame);
+  }
+
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
     printf("%d\n",1);
   }
@@ -61,4 +69,6 @@ extern "C" {
 
   }
 
+
 }
+
