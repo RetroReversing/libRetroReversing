@@ -10,6 +10,7 @@
 int   l_CurrentFrame;
 int RRCurrentFrame=0;
 int libRRshouldLogInput=0;
+int libRR_write_ascii_frame = 0;
 
 void write_rom_mapping() {
     // save_cdl_files();
