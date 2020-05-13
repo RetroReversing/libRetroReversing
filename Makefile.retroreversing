@@ -7,7 +7,7 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_JSON.cpp \
     ./libRetroReversing/cdl/CDL_Util.cpp \
     ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
-    ./libRetroReversing/consoles/PokemonMini.cpp
+    ./libRetroReversing/consoles/DummyConsole.cpp
 
 CFLAGS += -I/usr/local/opt/nlohmann_json/include
 CXXFLAGS += -I/usr/local/opt/nlohmann_json/include -std=c++11

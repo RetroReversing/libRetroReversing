@@ -7,7 +7,7 @@
 // * retro_get_memory_data
 // * retro_get_memory_size
 
-int   l_CurrentFrame;
+int l_CurrentFrame;
 int RRCurrentFrame=0;
 int libRRshouldLogInput=0;
 
