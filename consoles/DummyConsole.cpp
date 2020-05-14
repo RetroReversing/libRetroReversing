@@ -5,8 +5,24 @@
 
 extern "C" {
 
-  void libRR_setup_console_details() {
+  struct retro_memory_map libRR_retromap = { 0 };
+  // struct retro_memory_descriptor libRR_mmap =
+  // {
+  //   // flags | pointer | offset | start | select | disconnect | length | name
+  //   0, NULL, 0, 0, 0, 0, 0xFFFFF, "BOOTROM"
+  // };
+
+  void libRR_set_retro_memmap(retro_environment_t environ_cb)
+  {
+    // This should set the memory map for each console
+    libRR_retromap.descriptors = libRR_mmap;
+    libRR_retromap.num_descriptors = libRR_mmap_descriptors;
+    environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &libRR_retromap);
+  }
+
+  void libRR_setup_console_details(retro_environment_t environ_cb) {
     printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
+    libRR_set_retro_memmap(environ_cb);
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {

@@ -7,6 +7,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
+#include "../include/libRR.h"
+
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
@@ -31,16 +34,36 @@ void readJsonToObject(string filename, json& json_object);
  ( (((val) >> 24) & 0x000000FF) | (((val) >>  8) & 0x0000FF00) | \
 (((val) <<  8) & 0x00FF0000) | (((val) << 24) & 0xFF000000) )
 
+// 
 // Web structures
+// 
 struct player_settings {
     bool paused;
+    bool playbackLogged;
+    bool recordInput;
 };
 void to_json(json& j, const player_settings& p);
 void from_json(const json& j, player_settings& p);
-
 extern player_settings libRR_settings;
 
+// Current state send back to web
+struct libRR_emulator_state {
+    retro_system_av_info libretro_video_info;
+    retro_system_info libretro_system_info;
+    retro_game_info libretro_game_info;
+    std::vector<retro_memory_descriptor> memory_descriptors;
+};
+void to_json(json& j, const libRR_emulator_state& p);
+// void from_json(const json& j, libRR_emulator_state& p);
+
+void to_json(json& j, const retro_system_av_info& p);
+// void from_json(const json& j, retro_system_av_info& p);
+void to_json(json& j, const retro_memory_map& p);
+void to_json(json& j, const retro_memory_descriptor& p);
+
+// 
 // N64 structures
+// 
 struct cdl_tlb {
     uint32_t start;
     uint32_t end;

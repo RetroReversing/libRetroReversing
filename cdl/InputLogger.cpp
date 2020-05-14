@@ -4,7 +4,7 @@
 
 int libRRshouldLogInput = 0;
 
-struct retro_input_descriptor desc[9];
+struct retro_input_descriptor desc[64];
   int total_input_buttons=0;
   std::queue<unsigned long long> button_history;
 

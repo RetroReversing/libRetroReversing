@@ -15,6 +15,9 @@ extern "C" {
 extern int RRCurrentFrame;
 extern int libRRshouldLogInput;
 extern int libRR_should_Load_EPROM;
+extern struct retro_memory_descriptor libRR_mmap[];
+extern int libRR_mmap_descriptors;
+extern struct retro_memory_map libRR_retromap;
 
 // Input 
 extern void libRR_save_button_state_to_file();
@@ -24,7 +27,7 @@ extern void libRR_read_button_state_from_file();
 extern void show_interface();
 extern void log_input_state(retro_input_state_t select_button);
 // extern void handle_emulator_close();
-extern void libRR_handle_load_game();
+extern void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t environ_cb);
 
 // Input
 unsigned long long libRR_playback_next_input_state();
@@ -36,7 +39,7 @@ bool libRR_run_frame();
 string libRR_parse_message_from_web(string message);
 
 // Override with Console specific
-void libRR_setup_console_details();
+void libRR_setup_console_details(retro_environment_t environ_cb);
 void libRR_handle_emulator_close();
 
 // extern "C" {

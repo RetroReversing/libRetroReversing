@@ -2,14 +2,67 @@
 
 // Web structures
 void to_json(json& j, const player_settings& p) {
-        j = json{{"paused", p.paused}
-        };
-    }
+    j = json{
+        {"paused", p.paused},
+        {"recordInput", p.recordInput},
+        {"playbackLogged", p.playbackLogged},
+    };
+}
 void from_json(const json& j, player_settings& p) {
     j.at("paused").get_to(p.paused);
+    j.at("recordInput").get_to(p.recordInput);
+    j.at("playbackLogged").get_to(p.playbackLogged);
 }
 
+// 
+// Main emulator state (read only)
+// 
+void to_json(json& j, const libRR_emulator_state& p) {
+    j = json{
+            {"libretro_video_info", p.libretro_video_info},
+            {"library_name", p.libretro_system_info.library_name},
+            {"library_version", p.libretro_system_info.library_version},
+            {"memory_descriptors", p.memory_descriptors},
+        };
+}
+// void from_json(const json& j, libRR_emulator_state& p) {
+//     // j.at("libretro_video_info").get_to(p.libretro_video_info);
+//     // j.at("library_name").get_to(p.libretro_system_info.library_name);
+// }
+void to_json(json& j, const retro_system_av_info& p) {
+    j = json{
+            {"fps", p.timing.fps},
+            {"sample_rate", p.timing.sample_rate},
+        };
+}
+// void from_json(const json& j, retro_system_av_info& p) {
+//     j.at("fps").get_to(p.timing.fps);
+//     j.at("sample_rate").get_to(p.timing.sample_rate);
+// }
+
+// void to_json(json& j, const retro_memory_map& p) {
+//     j = json{
+//             {"num_descriptors", p.num_descriptors},
+//             // {"retro_memory_descriptors", p.descriptors},
+//         };
+// }
+
+void to_json(json& j, const retro_memory_descriptor& p) {
+    j = json{
+        {"flags", p.flags},
+        {"offset", p.offset},
+        {"start", p.start},
+        {"select", p.select},
+        {"disconnect", p.disconnect},
+        {"length", p.len},
+        {"name", p.addrspace},
+        // {"pointer", p.ptr},
+    };
+}
+
+// 
 // N64 structures
+// 
 void to_json(json& j, const cdl_memory_map& p) {
         j = json{{"start", p.start}, 
         {"end", p.end},
