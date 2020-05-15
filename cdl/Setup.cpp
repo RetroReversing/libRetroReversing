@@ -49,6 +49,24 @@ void libRR_handle_emulator_close() {
   stop_web_server();
 }
 
+string get_memory_for_web(string memory_name, int offset, int length) {
+  printf("get_memory_for_web: %s \n", memory_name.c_str());
+  for ( auto &i : current_state.memory_descriptors ) {
+    if (i.addrspace == memory_name) {
+      int end = i.start+i.len;
+      if (i.start + offset >= end) {
+        // Starting at the end is no good
+        return "[]";
+      }
+      if ((i.start + offset +length) >= end) {
+        length = end - (i.start+offset);
+      }
+      return printBytesToDecimalJSArray((uint8_t*)(i.ptr)+offset, length);
+    }
+  }
+  return "[]";
+}
+
 // Settings
 string libRR_parse_message_from_web(string message) {
   printf("New Web Message %s \n", message.c_str());
@@ -60,9 +78,13 @@ string libRR_parse_message_from_web(string message) {
     player_settings p2 =  message_json["state"].get<player_settings>();
     std::cout << p2.paused << std::endl;
     libRR_settings = p2;
+  } else if (category == "request_memory") {
+    printf("Request for memory %s\n", message_json["state"]["name"].dump(4).c_str());
+    return get_memory_for_web(message_json["state"]["memory"]["name"], message_json["state"]["offset"], message_json["state"]["length"]);
+
+  } else {
+    printf("Unknown category %s with state: %s\n", category, message_json["state"].dump(4).c_str());
   }
-  // std::cout << message_json.dump(4) << std::endl;
-  printf("\n\nAspect Ratio: %f \n",current_state.libretro_video_info.geometry.aspect_ratio);
 
   json j = current_state;
   return j.dump(4);

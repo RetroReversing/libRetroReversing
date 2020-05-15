@@ -2,23 +2,13 @@ import React, { Fragment, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import Button from "@material-ui/core/Button";
 import Grid from '@material-ui/core/Grid';
-import axios from "axios";
 import PauseIcon from '@material-ui/icons/Pause';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import RestoreIcon from '@material-ui/icons/Restore';
 import StopIcon from '@material-ui/icons/Stop';
 import SettingsIcon from '@material-ui/icons/Settings';
 import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
-
-function sentActionToServer(payload) {
-  axios.post('/postresponse', payload)
-  .then(function (response) {
-    console.log(response);
-  })
-  .catch(function (error) {
-    console.log(error);
-  });
-}
+import { sendActionToServer } from '../server';
 
 export function PlaySettings() {
   const [playerState, setPlayerState] = useState({ 
@@ -44,7 +34,7 @@ export function PlaySettings() {
       category: 'player_settings',
       state: playerState
     };
-    sentActionToServer(payload);
+    sendActionToServer(payload);
   }, [playerState]);
 
   return <Fragment> 

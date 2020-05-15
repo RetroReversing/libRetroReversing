@@ -224,6 +224,19 @@ string printBytesToJSArray(uint8_t* mem, uint32_t length=0x18) {
     sstream << "]";
     return sstream.str();
 }
+string printBytesToDecimalJSArray(uint8_t* mem, uint32_t length) {
+    std::stringstream sstream;
+    sstream << "[";
+    for (int i=0; i<=length; i++) {
+        uint8_t byte_to_write = mem[i];
+        if (i>0) {
+            sstream << ",";
+        }
+        sstream << (int)byte_to_write;
+    }
+    sstream << "]";
+    return sstream.str();
+}
 string printWordsToStr(uint8_t* mem, uint32_t length=0x18) {
     std::stringstream sstream;
     //sstream << std::hex << std::setfill ('0') << std::setw(sizeof(T)*2);

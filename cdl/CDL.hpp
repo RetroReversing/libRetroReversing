@@ -21,6 +21,8 @@ extern "C" {
     double jaro_winkler_distance(const char *s, const char *a);
 }
 
+string printBytesToDecimalJSArray(uint8_t* mem, uint32_t length=0x18);
+
 void printf_endian_swap(const char* data);
 string string_endian_swap(const char* data);
 string alphabetic_only_name(char* mem, int length);

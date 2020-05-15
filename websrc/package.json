@@ -10,19 +10,23 @@
     "production": "webpack --mode production"
   },
   "dependencies": {
-    "@material-ui/core": "latest",
+    "@material-ui/core": "^4.9.14",
     "@material-ui/icons": "^4.9.1",
     "axios": "^0.19.2",
-    "react": "latest",
-    "react-dom": "latest"
+    "create-react-class": "^15.6.3",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "react-use": "^14.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
     "@babel/preset-env": "^7.8.4",
     "@babel/preset-react": "^7.8.3",
     "babel-loader": "^8.0.6",
+    "css-loader": "^3.5.3",
     "file-loader": "^5.0.2",
     "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^1.2.1",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.10.3"

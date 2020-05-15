@@ -102,7 +102,7 @@ void setup_web_server() {
     mg_init_library(0);
     const char *options[] = {
       "document_root",
-		"./libRetroReversing/websrc/",
+		"./libRetroReversing/websrc/dist",
 		"listening_ports",
 		"1234",
 		"request_timeout_ms",
