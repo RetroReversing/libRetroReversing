@@ -83,7 +83,7 @@ string libRR_parse_message_from_web(string message) {
     return get_memory_for_web(message_json["state"]["memory"]["name"], message_json["state"]["offset"], message_json["state"]["length"]);
 
   } else {
-    printf("Unknown category %s with state: %s\n", category, message_json["state"].dump(4).c_str());
+    printf("Unknown category %s with state: %s\n", category.c_str(), message_json["state"].dump(4).c_str());
   }
 
   json j = current_state;

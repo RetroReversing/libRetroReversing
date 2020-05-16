@@ -1,27 +1,45 @@
-import React, { Fragment, useState, useEffect } from "react";
-import ReactDOM from "react-dom";
+import React, { Fragment, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import Paper from '@material-ui/core/Paper';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import Grid from '@material-ui/core/Grid';
+import { xterm } from './8bppXterm';
+import { padStart } from "lodash";
+import css from "./visual.css";
+import { visualiseData } from './visual';
+
+
 
 export function VisualViewer(props) {
+  const [visualType, setVisualType] = useState('8bpp');
 
-  const pixelsPerLine = 16; 
-  let currentPixels = [];
-  const lines = [];
+  const lines = visualiseData(props.buffer, visualType);
 
-  let current_line = 0;
-  console.error("LENGTH:", props.buffer.length);
-  for (let i=0; i< props.buffer.length; i+=3) {
-    const r = props.buffer[i];
-    const g = props.buffer[i+1];
-    const b = props.buffer[i+2];
-    // console.error("R:",r,g,b, current_line);
-    let style = {'background-color': "rgb("+r+","+g+","+b+")", width: 25, height: 25};
-    currentPixels.push(<div className="pixel" style={style}></div>);
-    if (i % 16 === 0) {
-      current_line+=1;
-      lines.push(<div className="line">{currentPixels}</div>);
-      currentPixels = [];
-    }
-  }
+  const displaySelector = (
+    <Paper>
+      <Grid container alignItems="center" justify="space-between">
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          onChange={(e) => setVisualType(e.target.value)}
+          value={visualType}
+        >
+          <MenuItem value={'24bpp_rgb'}>24bpp RGB (3 bytes)</MenuItem>
+          <MenuItem value={'24bpp_bgr'}>24bpp BGR (3 bytes)</MenuItem>
+          <MenuItem value={'16bpp'}>16bpp (2 bytes)</MenuItem>
+          <MenuItem value={'8bpp'}>8bpp (1 byte)</MenuItem>
+          <MenuItem value={'1bpp'}>1bpp (1 bit)</MenuItem> 
+          <MenuItem value={'highlight_printable'}>Highlight Printable</MenuItem>
+        </Select>
+      </Grid>
+    </Paper>
+  );
 
-  return <div>{lines}</div>
+  return (
+    <div>
+      {displaySelector}
+      {lines}
+    </div>
+  );
 }

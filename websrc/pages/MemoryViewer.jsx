@@ -100,7 +100,8 @@ export function MemoryViewer(props) {
     setNextStartOffsetManually(props.memory.start.toString(16));
   }
   function goBackToEnd() {
-    setNextStartOffsetManually((props.memory.end - totalBytesPerPage).toString(16));
+    const end = props.memory.start + props.memory.length;
+    setNextStartOffsetManually((end - totalBytesPerPage).toString(16));
   }
 
   function nextBytes() {
@@ -120,7 +121,8 @@ export function MemoryViewer(props) {
 
   const rangeSelector = (
     <Paper>
-      <Grid container alignItems="center" justify="center">
+    <Grid container alignItems="center" justify="center">
+      <Grid alignItems="center" justify="center">
         <IconButton aria-label="next">
           <SkipPreviousIcon onClick={goBackToStart} />
         </IconButton>
@@ -141,7 +143,7 @@ export function MemoryViewer(props) {
           <NavigateNextIcon onClick={nextBytes} />
         </IconButton>
         <IconButton aria-label="next">
-          <SkipNextIcon />
+          <SkipNextIcon onClick={goBackToEnd} />
         </IconButton>
       </Grid>
     </Paper>
@@ -166,7 +168,7 @@ export function MemoryViewer(props) {
       </Grid>
 
       <Grid container alignItems="center" justify="space-between">
-        <Grid item xs="12">
+        <Grid item xs="12" style={{minHeight: 350}}>
           {subTabs[subTab]}
         </Grid>
         <Grid item xs="12">
