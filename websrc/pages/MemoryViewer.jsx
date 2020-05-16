@@ -21,20 +21,36 @@ import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import SkipNextIcon from '@material-ui/icons/SkipNext';
 import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
+import Menu from '@material-ui/core/Menu';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 
 import { VisualViewer } from './DataVisualiser/VisualiseViewer';
 import { ParserViewer } from './ParserViewer';
+import { downloadData } from './util/DownloadData';
 
 const rowLength = 16;
-const numberOfRowsAtOnce = 40;
+const numberOfRowsAtOnce = 1200;
 const totalBytesPerPage = rowLength * numberOfRowsAtOnce;
 
 export function MemoryViewer(props) {
   const [data, setData] = useState(new Buffer([]));
-  const [subTab, setSubTab] = useState(0);
+  const [loading, setLoading] = useState(true);
+  
+  const [subTab, setSubTab] = useState(1);
   const [currentStartAddress, setCurrentStartAddress] = useState(props.memory.start.toString(16));
 
   const rendersCount = useRendersCount();
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const menuOpen = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   useEffect(() => {
     console.error('memory changed', props.memory);
@@ -50,7 +66,7 @@ export function MemoryViewer(props) {
     }
 
     const offset = currentStartAddressNumber - props.memory.start;
-    setData(new Buffer([]));
+    setLoading(true);
     const payload = {
       category: 'request_memory',
       state: {
@@ -60,8 +76,8 @@ export function MemoryViewer(props) {
       },
     };
     sendActionToServer(payload).then((memoryContents) => {
-      // console.error("We haz memory!", memoryContents);
       setData(new Buffer(memoryContents));
+      setLoading(false);
     });
   }, [currentStartAddress]);
 
@@ -88,6 +104,57 @@ export function MemoryViewer(props) {
     1: <VisualViewer buffer={data} />,
     2: <ParserViewer buffer={data} />,
   };
+
+
+  function downloadPageOfData() {
+    handleMenuClose();
+    downloadData(data, props.memory.name+"_page_"+currentStartAddress+"_to_.bin")
+  }
+
+  function downloadAllData() {
+    handleMenuClose();
+    const payload = {
+      category: 'request_memory',
+      state: {
+        memory: props.memory,
+        length: props.memory.length,
+        offset: 0,
+      },
+    };
+    sendActionToServer(payload).then((memoryContents) => {
+      downloadData(new Buffer(memoryContents), props.memory.name+"_full.bin")
+    });
+    
+  }
+
+  const menu = (
+    <div>
+      <IconButton
+        aria-label="more"
+        aria-controls="long-menu"
+        aria-haspopup="true"
+        onClick={handleMenuClick}
+      >
+        <MoreVertIcon />
+      </IconButton>
+      <Menu
+        id="long-menu"
+        keepMounted
+        open={menuOpen}
+        onClose={handleMenuClose}
+        anchorEl={anchorEl}
+      >
+        
+      <MenuItem onClick={downloadPageOfData}>
+        Download Page of Data
+      </MenuItem>
+      <MenuItem onClick={downloadAllData}>
+        Download All Data (0x{props.memory.start.toString(16)} -> 0x{end_offset.toString(16)})
+      </MenuItem>
+        
+      </Menu>
+    </div>
+  );
 
   function setNextStartOffsetManually(value) {
     console.error("setNextStartOffsetManually:", value, parseInt(value, 16));
@@ -122,7 +189,6 @@ export function MemoryViewer(props) {
   const rangeSelector = (
     <Paper>
     <Grid container alignItems="center" justify="center">
-      <Grid alignItems="center" justify="center">
         <IconButton aria-label="next">
           <SkipPreviousIcon onClick={goBackToStart} />
         </IconButton>
@@ -160,10 +226,11 @@ export function MemoryViewer(props) {
         <Grid item xs="6">
           {tab_bar}
         </Grid>
-        <Grid item xs="3" justify="flex-end">
-          <Typography gutterBottom variant="h6" style={{ textAlign: 'end' }}>
+        <Grid item xs="3" justify="end">
+          {menu}
+          {/* <Typography gutterBottom variant="h6" style={{ textAlign: 'end' }}>
             0x{props.memory.start.toString(16)} -> 0x{end_offset.toString(16)}
-          </Typography>
+          </Typography> */}
         </Grid>
       </Grid>
 

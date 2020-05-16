@@ -1,3 +1,7 @@
 .line {
   display:flex;
 }
+
+.tile2d {
+  display: flex;
+}

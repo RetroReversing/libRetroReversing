@@ -1,5 +1,7 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import { padStart } from "lodash";
+
 import { xterm } from './8bppXterm';
 
 var _1bpp_colour_map = {
@@ -14,27 +16,54 @@ var _2bpp_colour_map = {
 	3:"rgb("+0+","+0+","+0+")" // black
 };
 
+// for saturn its 32 tiles per block
 let currentPixels = [];
 let lines = [];
+let allLines = [];
+let tiles = [];
+let allTiles = [];
+let blocks = [];
 const pixelsPerLine = 8;
+const linesPerTile = 8;
+const tilesPerBlock = 32;
 
-function add_pixel(color, pixelsPerLine = 8) {
+export function getLines() {
+  return allLines;
+}
+
+export function getTiles() {
+  return allTiles;
+}
+
+let mode = "2d";
+
+function add_pixel(color, pixelsPerLine = 8, width=5, height=5) {
   let style = {
     'background-color': color,
-    width: 25,
-    height: 25,
+    width: width,
+    height: height,
   };
   
   if (currentPixels.length >= pixelsPerLine) {
-    // current_line += 1;
     lines.push(<div className="line">{currentPixels}</div>);
     currentPixels = [];
+  }
+  if (lines.length >= linesPerTile) {
+    allLines = [ ...allLines, lines];
+    const className = mode==="1d"?"tile":"tile2d";
+    tiles.push(<div className={className}>{lines}</div>);
+    lines = [];
+  }
+  if (tiles.length >= tilesPerBlock) {
+    allTiles = [ ...allTiles, tiles];
+    blocks.push(<div className={"block"}>{tiles}</div>);
+    tiles = [];
   }
   currentPixels.push(<div className="pixel" style={style}></div>);
 
 }
 
-function show_1bpp(buffer, pixelsPerLine = 8) {
+function show_1bpp(buffer, pixelsPerLine = 64) {
   
   for (let i = 0; i < buffer.length; i += 3) {
 
@@ -50,7 +79,6 @@ function show_1bpp(buffer, pixelsPerLine = 8) {
     }
     
   }
-  return lines;
 }
 
 function twoBytesToSingleStringOfBits(byte1, byte2) {
@@ -60,30 +88,51 @@ function twoBytesToSingleStringOfBits(byte1, byte2) {
   return additionOfBits;
 }
 
-function calculateRGBFrom2Bytes(byte1, byte2) {
+function calculateRGBFrom2Bytes(byte1, byte2, ignoreBit="msb", colourOrder="bgr", endian="little") {
   if (!byte2 || ! byte1) {
     return {r:0, g:0, b:0};
   }
-    const stringOfBits = twoBytesToSingleStringOfBits(byte1, byte2);
-    const red5bits = stringOfBits.substr(0,5);
-    const green5bits = stringOfBits.substr(5,10);
-    const blue5bits = stringOfBits.substr(10,15);
+    let stringOfBits = twoBytesToSingleStringOfBits(byte2, byte1);
+    let addition = 0;
+    if (ignoreBit === "msb") {
+      addition = 1;
+    }
+
+    if (endian === "big") {
+      stringOfBits = twoBytesToSingleStringOfBits(byte1, byte2);
+    }
+    const red5bits = stringOfBits.substr(addition,5);
+    const green5bits = stringOfBits.substr(5+addition,5);
+    const blue5bits = stringOfBits.substr(10+addition,5);
 
     // multiply by 8 just to  make sure its a wider range
-    const r = parseInt(red5bits, 2) * 8;
-    const g = parseInt(green5bits, 2) * 8;
-    const b = parseInt(blue5bits, 2) * 8;
+    let r = parseInt(red5bits, 2) << 3;
+    let g = (parseInt(green5bits, 2)) << 3;
+    let b = (parseInt(blue5bits, 2)) << 3;
+    // const r = (parseInt(red5bits, 2)/31) * 255;
+    // const g = (parseInt(green5bits, 2)/31) * 255;
+    // const b = (parseInt(blue5bits, 2)/31) * 255;
+
+    // const colour16 = parseInt(stringOfBits,2);
+    // let r,g,b;
+    // r = (colour16 >> 8) & (255-7);
+    // g = (colour16 >> 3) & (255-3);
+    // b = (colour16 << 3) & 255;
+
+    if (colourOrder === "bgr") {
+      return {r:b, g: g, b: r};
+    }
+
     return {r,g,b};
 }
 
 
-function show_16bpp(buffer, pixelsPerLine = 8) {
+function show_16bpp(buffer, pixelsPerLine = 8, ignoreBit="msb", colourOrder="bgr") {
 
   for (let i = 0; i < buffer.length+1; i += 2) {
-    const { r,g,b } = calculateRGBFrom2Bytes(buffer[i], buffer[i+1]);
+    const { r,g,b } = calculateRGBFrom2Bytes(buffer[i], buffer[i+1], ignoreBit, colourOrder);
     add_pixel('rgb(' + r + ',' + g + ',' + b + ')', pixelsPerLine);
   }
-  return lines;
 }
 function show_24bpp(buffer, order="rgb", pixelsPerLine = 8) {
   let r,g,b;
@@ -101,7 +150,6 @@ function show_24bpp(buffer, order="rgb", pixelsPerLine = 8) {
     }
     add_pixel('rgb(' + r + ',' + g + ',' + b + ')', pixelsPerLine);
   }
-  return lines;
 }
 
 
@@ -113,7 +161,6 @@ function show_8bppXterm(buffer, pixelsPerLine = 8) {
     
     add_pixel(color, pixelsPerLine);
   }
-  return lines;
 }
 function show_printable(buffer, pixelsPerLine = 32) {
 
@@ -132,29 +179,50 @@ function show_printable(buffer, pixelsPerLine = 32) {
     }
     add_pixel(color, pixelsPerLine);
   }
-  return lines;
 }
 
-export function visualiseData(data, visualType) {
+export function visualiseData(data, visualType, is2D=true, showAs="tiles") {
   // reset variables
   currentPixels = [];
   lines = [];
+  allLines = [];
+  allTiles = [];
+  tiles = [];
+  blocks = [];
+  mode = is2D?"2d":"1d";
 
   if (visualType === "highlight_printable") {
-    lines = show_printable(data);
+    show_printable(data);
   } else if (visualType === '1bpp') {
-    lines = show_1bpp(data);
+    show_1bpp(data);
   }
   else if (visualType === '8bpp') {
-    lines = show_8bppXterm(data);
+    show_8bppXterm(data);
   }
   else if (visualType === '16bpp') {
-    lines = show_16bpp(data);
+    show_16bpp(data);
+  }
+  else if (visualType === '16bpp_msb_rgb') {
+    show_16bpp(data, pixelsPerLine, "msb", "rgb");
+  }
+  else if (visualType === '16bpp_lsb_rgb') {
+    show_16bpp(data, pixelsPerLine, "lsb", "rgb");
+  }
+  else if (visualType === '16bpplsb') {
+    show_16bpp(data, pixelsPerLine, "lsb");
   }
   else if (visualType === '24bpp_bgr'){
-    lines = show_24bpp(data, 'bgr');
+    show_24bpp(data, 'bgr');
   } else {
-    lines = show_24bpp(data);
+    show_24bpp(data);
   }
-  return lines;
+
+  if (showAs==="tiles") {
+    console.error("Tiles", tiles);
+    return getTiles();
+  } else if (showAs==="blocks") {
+    console.error("Blocks", blocks);
+    return blocks;
+  }
+  return getLines();
 }
