@@ -48,12 +48,21 @@ void to_json(json& j, const player_settings& p);
 void from_json(const json& j, player_settings& p);
 extern player_settings libRR_settings;
 
+struct libRR_paths {
+    string retro_save_directory;
+    string retro_base_directory;
+    string retro_cd_base_directory;
+    string retro_cd_path;
+    string retro_cd_base_name;
+};
+
 // Current state send back to web
 struct libRR_emulator_state {
     retro_system_av_info libretro_video_info;
     retro_system_info libretro_system_info;
     retro_game_info libretro_game_info;
     std::vector<retro_memory_descriptor> memory_descriptors;
+    libRR_paths paths;
 };
 void to_json(json& j, const libRR_emulator_state& p);
 // void from_json(const json& j, libRR_emulator_state& p);
@@ -62,6 +71,7 @@ void to_json(json& j, const retro_system_av_info& p);
 // void from_json(const json& j, retro_system_av_info& p);
 void to_json(json& j, const retro_memory_map& p);
 void to_json(json& j, const retro_memory_descriptor& p);
+void to_json(json& j, const libRR_paths& p);
 
 // 
 // N64 structures

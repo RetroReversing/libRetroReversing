@@ -23,6 +23,22 @@ export function PlaySettings() {
     setPlayerState(newPlayerState);
   }
 
+  function restart() {
+    const payload = {
+      category: 'restart',
+      state: playerState
+    };
+    sendActionToServer(payload);
+  }
+
+  function stop() {
+    const payload = {
+      category: 'stop',
+      state: playerState
+    };
+    sendActionToServer(payload);
+  }
+
   function changeLogButtons() {
     const newPlayerState = {...playerState, logButtons:!playerState.logButtons};
     setPlayerState(newPlayerState);
@@ -46,13 +62,13 @@ export function PlaySettings() {
     </Grid>
 
     <Grid item>
-      <Button color="inherit" startIcon={<RestoreIcon />}>
+      <Button color="inherit" startIcon={<RestoreIcon />} onClick={restart}>
       Restart
     </Button>
     </Grid>
 
     <Grid item>
-      <Button color="inherit" startIcon={<StopIcon />}>
+      <Button color="inherit" startIcon={<StopIcon />} onClick={stop}>
       Stop
     </Button>
     </Grid>

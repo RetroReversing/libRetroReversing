@@ -28,6 +28,7 @@ extern void show_interface();
 extern void log_input_state(retro_input_state_t select_button);
 // extern void handle_emulator_close();
 extern void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t environ_cb);
+void libRR_display_message(const char *format, ...);
 
 // Input
 unsigned long long libRR_playback_next_input_state();

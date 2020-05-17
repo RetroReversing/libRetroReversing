@@ -134,6 +134,7 @@ function show_16bpp(buffer, pixelsPerLine = 8, ignoreBit="msb", colourOrder="bgr
     add_pixel('rgb(' + r + ',' + g + ',' + b + ')', pixelsPerLine);
   }
 }
+
 function show_24bpp(buffer, order="rgb", pixelsPerLine = 8) {
   let r,g,b;
   
@@ -152,6 +153,31 @@ function show_24bpp(buffer, order="rgb", pixelsPerLine = 8) {
   }
 }
 
+
+function show_digraph(buffer, pixelsPerLine = 8, visibleDigraph=0) {
+  // idea from: https://community.wolfram.com/groups/-/m/t/887456
+  const digraphs = {};
+  for (let i = 0; i < buffer.length+2; i += 2) {
+    if (typeof(buffer[i+1])==='undefined') {
+      break;
+    }
+    const digraph = parseInt(twoBytesToSingleStringOfBits(buffer[i], buffer[i+1]), 2);
+    if (digraphs[digraph]) {
+      digraphs[digraph]+=1;
+    } else {
+      digraphs[digraph]=1;
+    }
+    
+    let color = 'black';
+    if (digraph === visibleDigraph) {
+      color = 'green';
+    }
+    
+    add_pixel(color, pixelsPerLine);
+  }
+  // TODO: sort digraphs by frequency
+  return digraphs;
+}
 
 function show_8bppXterm(buffer, pixelsPerLine = 8) {
 
@@ -193,7 +219,11 @@ export function visualiseData(data, visualType, is2D=true, showAs="tiles") {
 
   if (visualType === "highlight_printable") {
     show_printable(data);
-  } else if (visualType === '1bpp') {
+  } 
+  else if (visualType === 'digraph') {
+    show_digraph(data, pixelsPerLine, 0);
+  }
+  else if (visualType === '1bpp') {
     show_1bpp(data);
   }
   else if (visualType === '8bpp') {

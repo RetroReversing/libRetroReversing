@@ -14,6 +14,17 @@ void from_json(const json& j, player_settings& p) {
     j.at("playbackLogged").get_to(p.playbackLogged);
 }
 
+// libRR_paths
+void to_json(json& j, const libRR_paths& p) {
+    j = json{
+        {"retro_save_directory", p.retro_save_directory},
+        {"retro_base_directory", p.retro_base_directory},
+        {"retro_cd_base_directory", p.retro_cd_base_directory},
+        {"retro_cd_path", p.retro_cd_path},
+        {"retro_cd_base_name", p.retro_cd_base_name},
+    };
+}
+
 // 
 // Main emulator state (read only)
 // 
@@ -23,6 +34,7 @@ void to_json(json& j, const libRR_emulator_state& p) {
             {"library_name", p.libretro_system_info.library_name},
             {"library_version", p.libretro_system_info.library_version},
             {"memory_descriptors", p.memory_descriptors},
+            {"paths", p.paths},
         };
 }
 // void from_json(const json& j, libRR_emulator_state& p) {

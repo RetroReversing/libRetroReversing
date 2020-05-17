@@ -38,6 +38,7 @@ export function VisualViewer(props) {
           <MenuItem value={'8bpp'}>8bpp (1 byte)</MenuItem>
           <MenuItem value={'1bpp'}>1bpp (1 bit)</MenuItem> 
           <MenuItem value={'highlight_printable'}>Highlight Printable</MenuItem>
+          <MenuItem value={'digraph'}>DiGraph</MenuItem>
         </Select>
         <FormControlLabel
         control={<Switch checked={is2D} onChange={(e) => set2D(e.target.checked)} name="2D" />}
