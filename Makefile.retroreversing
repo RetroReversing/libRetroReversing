@@ -9,7 +9,9 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/InputLogger.cpp \
     ./libRetroReversing/cdl/Setup.cpp \
     ./libRetroReversing/cdl/Main.cpp \
+    ./libRetroReversing/cdl/Image.cpp \
     ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
+    ./libRetroReversing/png/lodepng.cpp \
     ./libRetroReversing/consoles/DummyConsole.cpp
 
 CFLAGS += -I/usr/local/opt/nlohmann_json/include

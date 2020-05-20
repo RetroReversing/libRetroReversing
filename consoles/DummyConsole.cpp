@@ -6,11 +6,6 @@
 extern "C" {
 
   struct retro_memory_map libRR_retromap = { 0 };
-  // struct retro_memory_descriptor libRR_mmap =
-  // {
-  //   // flags | pointer | offset | start | select | disconnect | length | name
-  //   0, NULL, 0, 0, 0, 0, 0xFFFFF, "BOOTROM"
-  // };
 
   void libRR_set_retro_memmap(retro_environment_t environ_cb)
   {

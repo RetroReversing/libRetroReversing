@@ -35,6 +35,17 @@ void readJsonToObject(string filename, json& json_object) {
     std::ifstream i(filename);
     if (i.good()) {
         i >> json_object;
+    } else {
+        json_object = json::parse("{}");
+    }
+}
+
+void saveJsonToFile(string filename, json& json_object) {
+    std::ofstream o(filename);
+    if (o.good()) {
+        o << json_object.dump(4);
+    } else {
+        cout << "ERROR: Failed to write file: " << filename << std::endl;
     }
 }
 

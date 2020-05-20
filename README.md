@@ -27,6 +27,13 @@ If you have a very powerful PC you can:
 * Ability to name save states such as "Level 1 start"
 * Automatically create screenshot for save state
 
+## Playthroughs
+In a RE a project can have multiple playthroughs, a playthrough is simply just a log of button presses plus any save states that the user created along the way.
+
+When you click pause you have two options:
+* name the current state and save - this will add all button presses the the play through
+* ignore recent actions and go back to the previously saved state.
+
 ## Dirty Save States
 As soon as you manually make a change to the game such as changing memory or disabling a function, the current state will become "dirty".
 

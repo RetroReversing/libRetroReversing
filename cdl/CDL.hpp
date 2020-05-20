@@ -31,6 +31,7 @@ string printBytesToStr(uint8_t* mem, uint32_t length) ;
 string printWordsToStr(uint8_t* mem, uint32_t length);
 void save_dram_rw_to_json();
 void readJsonToObject(string filename, json& json_object);
+void saveJsonToFile(string filename, json& json_object);
 
 #define Swap4Bytes(val) \
  ( (((val) >> 24) & 0x000000FF) | (((val) >>  8) & 0x0000FF00) | \
@@ -58,11 +59,15 @@ struct libRR_paths {
 
 // Current state send back to web
 struct libRR_emulator_state {
+    string game_name;
     retro_system_av_info libretro_video_info;
     retro_system_info libretro_system_info;
     retro_game_info libretro_game_info;
     std::vector<retro_memory_descriptor> memory_descriptors;
     libRR_paths paths;
+    std::vector<libRR_save_state> libRR_save_states;
+    libRR_save_state current_state;
+    int last_frame;
 };
 void to_json(json& j, const libRR_emulator_state& p);
 // void from_json(const json& j, libRR_emulator_state& p);
@@ -145,6 +150,12 @@ void from_json(const json& j, cdl_dma& p);
 
 void to_json(json& j, const cdl_tlb& p);
 void from_json(const json& j, cdl_tlb& p);
+
+// 
+// # Save states
+// 
+void to_json(json& j, const libRR_save_state& p);
+void from_json(const json& j, libRR_save_state& p);
 
 template <typename I> std::string n2hexstr(I w, size_t hex_len = sizeof(I)<<1) {
     static const char* digits = "0123456789ABCDEF";
