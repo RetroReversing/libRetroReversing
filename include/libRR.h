@@ -23,7 +23,17 @@ extern struct retro_memory_map libRR_retromap;
 extern void libRR_save_button_state_to_file();
 extern void libRR_read_button_state_from_file();
 
-// Common functions
+// 
+// Structures
+// 
+struct libRR_save_state {
+  string name;
+  int frame;
+};
+
+// 
+// Functions
+// 
 extern void show_interface();
 extern void log_input_state(retro_input_state_t select_button);
 // extern void handle_emulator_close();

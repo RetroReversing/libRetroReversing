@@ -35,6 +35,10 @@ void to_json(json& j, const libRR_emulator_state& p) {
             {"library_version", p.libretro_system_info.library_version},
             {"memory_descriptors", p.memory_descriptors},
             {"paths", p.paths},
+            {"save_states", p.libRR_save_states},
+            {"current_state", p.current_state},
+            {"last_frame", p.last_frame},
+            {"game_name", p.game_name},
         };
 }
 // void from_json(const json& j, libRR_emulator_state& p) {
@@ -70,6 +74,19 @@ void to_json(json& j, const retro_memory_descriptor& p) {
         {"name", p.addrspace},
         // {"pointer", p.ptr},
     };
+}
+
+// 
+// Save states
+// 
+void to_json(json& j, const libRR_save_state& p) {
+        j = json{{"name", p.name}, 
+        {"frame", p.frame}
+        };
+    }
+void from_json(const json& j, libRR_save_state& p) {
+    j.at("name").get_to(p.name);
+    j.at("frame").get_to(p.frame);
 }
 
 // 

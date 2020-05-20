@@ -483,13 +483,6 @@ namespace codeDataLogger {
         return !file.fail();
     }
 
-    bool writeExample() {
-        std::ofstream file("example.txt", std::ios_base::binary);
-        file.write("ALIM",4);
-        return !file.fail();
-    }
-
-
     unsigned char *cdl_memchunk_;
     unsigned char *cdl_memchunk_cartram;
     unsigned char *cdl_memchunk_workram;
