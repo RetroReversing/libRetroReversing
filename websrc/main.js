@@ -36,13 +36,18 @@ import { DataStructures } from './pages/DataStructures';
 import { MemoryViewer } from './pages/MemoryViewer';
 import PauseSaveDialog from './dialogs/PauseSaveDialog';
 
-function setupAdditionalTabs(gameInfo, tabs) {
-  console.error("setupAdditionalTabs GameInfo:",gameInfo.memory_descriptors);
+function setupAdditionalTabs(allInfo, tabs) {
+  const gameInfo = allInfo.current_state;
+  console.error("setupAdditionalTabs GameInfo:",allInfo);
   gameInfo.memory_descriptors.forEach((mem)=> {
     const tab_name = "memory_"+mem.name;
     // TODO find display name
-    console.error("tab_name", tab_name);
     tabs[tab_name] = <MemoryViewer memory={mem} />;
+  });
+
+  allInfo.cd_tracks.forEach((mem)=> {
+    const tab_name = "memory_"+mem.name;
+    tabs[tab_name] = <MemoryViewer memory={{...mem, start: 0} } />;
   });
   console.error("Tabs:", tabs);
 
@@ -65,6 +70,9 @@ function App() {
   const [currentTab, setCurrentTab] = React.useState('main');
   const [currentDialog, setCurrentDialog] = React.useState('');
   const [gameInformation, setGameInformation] = useState({ 
+    gameName: ""
+  });
+  const [allInformation, setAllInformation] = useState({ 
     gameName: ""
   });
   const [fullState, setFullState] = useState({});
@@ -96,7 +104,8 @@ function App() {
       if (!info) { return; }
       console.error("result: gameInformation:", info);
       setGameInformation(info.current_state);
-      setupAdditionalTabs(info.current_state, tabs)
+      setAllInformation(info);
+      setupAdditionalTabs(info, tabs)
       setFullState(info);
     });
   }, [currentDialog]);
@@ -127,7 +136,7 @@ function App() {
 
         </Toolbar>
       </AppBar>
-      <RRDrawer setCurrentTab={setCurrentTab} setCurrentDialog={setCurrentDialog} handleDrawerClose={handleDrawerClose} open={open} theme={theme} memory_descriptors={gameInformation.memory_descriptors} />
+      <RRDrawer setCurrentTab={setCurrentTab} setCurrentDialog={setCurrentDialog} handleDrawerClose={handleDrawerClose} open={open} theme={theme} allInfo={allInformation} memory_descriptors={gameInformation.memory_descriptors} />
       <main
         className={clsx(classes.content, {
           [classes.contentShift]: open,

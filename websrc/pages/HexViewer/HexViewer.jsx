@@ -1,12 +1,14 @@
 import React, { Fragment, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import css from "./style.css";
+import { FixedSizeList as List } from 'react-window';
 // var React = require('react');
 var AsciiTable = require('./AsciiViewer');
 var AsciiSet = AsciiTable.AsciiSet;
 var PixelSet = require('./PixelTable').PixelSet;
 var PixelSet2 = require('./PixelTable').PixelSet2;
 var createReactClass = require('create-react-class');
+
 
 
 var Item = createReactClass({
@@ -158,55 +160,43 @@ var Row = createReactClass({
 function Hex(props) {
   const pad = "000000";
 
-		var rows = props.rows.map(function(row, i) {
-			var heading = ''+i*props.bytesper;
+
+		const createRow = ({ index, style }) => {
+			const row = props.rows[index];
+			var heading = ''+index*props.bytesper;
 				heading = pad.substring(0, pad.length - heading.length) + heading;
-				return <Row sets={row} heading={heading}/>;
-		});
+			return <div style={style}><Row sets={row} heading={heading}/></div>
+		};
 
 		return (
 			<div className="hexviewer">
 				<div className="hex">
-					{rows}
+				<List
+					height={350}
+					itemCount={props.rows.length}
+					itemSize={25}
+					width={'100%'}
+				>
+					{createRow}
+				</List>
 				</div>
 			</div>
 		);
 }
 
-var HexOld = createReactClass({
-	render: function() {
-		var pad = "000000";
-
-		var rows = this.props.rows.map(function(row, i) {
-			var heading = ''+i*this.props.bytesper;
-				heading = pad.substring(0, pad.length - heading.length) + heading;
-				return <Row sets={row} heading={heading}/>;
-		}.bind(this));
-
-		return (
-			<div className="hexviewer">
-				<div className="hex">
-					{rows}
-				</div>
-			</div>
-		);
-	}
-});
-
-var HexViewer = createReactClass({
-	render: function() {
-		var rowChunk = this.props.rowLength, setChunk = this.props.setLength;
+const HexViewer = function(props) {
+		var rowChunk = props.rowLength, setChunk = props.setLength;
 		var rows = [], row = [], set = [], sets = [];
 		
 		var buffer = [];
-		var bytes = this.props.buffer.length;
+		var bytes = props.buffer.length;
 
-		if(Buffer.isBuffer(this.props.buffer)) {
+		if(Buffer.isBuffer(props.buffer)) {
 			for (var ii = 0; ii < bytes; ii++) {
-				buffer.push(this.props.buffer[ii]);
+				buffer.push(props.buffer[ii]);
 			}
 		} else {
-			buffer = this.props.buffer;
+			buffer = props.buffer;
 		}
 
 		for (var i = 0; i<bytes; i+=rowChunk) {
@@ -232,7 +222,6 @@ var HexViewer = createReactClass({
 		return (
 			<Hex rows={rows} bytesper={rowChunk} />
 		);
-	}
-});
+	};
 
 export default HexViewer;

@@ -37,7 +37,7 @@ export function MemoryViewer(props) {
   const [loading, setLoading] = useState(true);
   
   const [subTab, setSubTab] = useState(1);
-  const [currentStartAddress, setCurrentStartAddress] = useState(props.memory.start.toString(16));
+  const [currentStartAddress, setCurrentStartAddress] = useState(props?.memory?.start?.toString(16) || 0);
 
   const rendersCount = useRendersCount();
 

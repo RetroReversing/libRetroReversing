@@ -21,6 +21,7 @@ function _MainPage( { fullState }) {
             <Typography color="textSecondary" gutterBottom>
               Current State
             </Typography>
+            <img src={"/game/playthroughs/Initial%20Playthrough/save_"+fullState?.playthrough?.current_state?.frame+".sav.png"} alt={fullState?.playthrough?.current_state?.name} />
             <Typography variant="h5" component="h2">
             {fullState?.playthrough?.current_state?.name}
             </Typography>
@@ -33,6 +34,17 @@ function _MainPage( { fullState }) {
     );
   }
 
+  function loadState(frame) {
+    console.log("About to load state:", frame);
+    const payload = {
+      category: 'load_state',
+      state: {
+        frame
+      },
+    };
+    sendActionToServer(payload);
+  }
+
   return (
     <div>
       <Grid container spacing={2}>
@@ -40,7 +52,7 @@ function _MainPage( { fullState }) {
           <Card>
             <CardContent>
               <Typography variant="h6">History</Typography>
-              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} />
+              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} load_state={loadState} />
             </CardContent>
           </Card>
         </Grid>
