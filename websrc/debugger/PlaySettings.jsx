@@ -10,7 +10,7 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
 import { sendActionToServer } from '../server';
 
-export function PlaySettings() {
+export function PlaySettings( { setCurrentDialog }) {
   const [playerState, setPlayerState] = useState({ 
     paused: true, 
     logButtons: false,
@@ -18,9 +18,22 @@ export function PlaySettings() {
     playbackLogged: false
   });
 
-  function pause() {
+  function play_or_pause() {
+    if (!playerState.paused) {
+      // we are just about to pause so lets ask if they want to create a save state
+      setCurrentDialog('pause_save');
+    }
+
     const newPlayerState = {...playerState, paused:!playerState.paused};
     setPlayerState(newPlayerState);
+
+    const category = newPlayerState.paused? "pause":"play";
+
+    const payload = {
+      category,
+      state: newPlayerState
+    };
+    sendActionToServer(payload);
   }
 
   function restart() {
@@ -44,19 +57,11 @@ export function PlaySettings() {
     setPlayerState(newPlayerState);
   }
 
-  useEffect(()=>{
-    console.info("Sending state:", playerState);
-    const payload = {
-      category: 'player_settings',
-      state: playerState
-    };
-    sendActionToServer(payload);
-  }, [playerState]);
 
   return <Fragment> 
   <Grid container justify="flex-end" spacing={2}>
     <Grid item>
-      <Button startIcon={playerState.paused?<PlayArrowIcon />:<PauseIcon />} spacing={2} color="inherit" onClick={pause}>
+      <Button startIcon={playerState.paused?<PlayArrowIcon />:<PauseIcon />} spacing={2} color="inherit" onClick={play_or_pause}>
       {playerState.paused? "Resume":"Pause"}
       </Button>
     </Grid>

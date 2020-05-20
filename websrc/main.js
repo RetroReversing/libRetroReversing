@@ -34,9 +34,10 @@ import { FunctionList } from './pages/FunctionList';
 import { ResourceList } from './pages/ResourceList';
 import { DataStructures } from './pages/DataStructures';
 import { MemoryViewer } from './pages/MemoryViewer';
+import PauseSaveDialog from './dialogs/PauseSaveDialog';
 
 function setupAdditionalTabs(gameInfo, tabs) {
-  console.error("GameInfo:",gameInfo.memory_descriptors);
+  console.error("setupAdditionalTabs GameInfo:",gameInfo.memory_descriptors);
   gameInfo.memory_descriptors.forEach((mem)=> {
     const tab_name = "memory_"+mem.name;
     // TODO find display name
@@ -47,16 +48,14 @@ function setupAdditionalTabs(gameInfo, tabs) {
 
 }
 
-const tabs = {
-  main: <MainPage />,
+let tabs = {
   input: <InputHistory />,
   functions: <FunctionList />,
   resources: <ResourceList />,
   data_structures: <DataStructures />,
-  game_info: <GameInformation />,
-  memory: <MemoryViewer />,
-  memory_BOOTROM: <MemoryViewer memory={{test:1}} />
-}
+  game_info: <GameInformation />
+  // additional tabs are setup using: setupAdditionalTabs
+};
 
 function App() {
   const classes = useStyles();
@@ -64,12 +63,20 @@ function App() {
 
   const [open, setOpen] = React.useState(false);
   const [currentTab, setCurrentTab] = React.useState('main');
+  const [currentDialog, setCurrentDialog] = React.useState('');
   const [gameInformation, setGameInformation] = useState({ 
     gameName: ""
   });
+  const [fullState, setFullState] = useState({});
 
   
-  console.error("original Tabs:", tabs);
+  tabs = {...tabs, 
+    main: <MainPage mainState={gameInformation} fullState={fullState} />
+    }
+  
+  const dialogs = {
+    'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} />
+  }
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -88,10 +95,11 @@ function App() {
     sendActionToServer(payload).then((info)=>{
       if (!info) { return; }
       console.error("result: gameInformation:", info);
-      setGameInformation(info);
-      setupAdditionalTabs(info, tabs)
+      setGameInformation(info.current_state);
+      setupAdditionalTabs(info.current_state, tabs)
+      setFullState(info);
     });
-  }, []);
+  }, [currentDialog]);
 
 
   return (
@@ -114,16 +122,19 @@ function App() {
           <Typography variant="h6">
             SaturnRE
           </Typography>
-          <PlaySettings />
+
+          <PlaySettings setCurrentDialog={setCurrentDialog} />
+
         </Toolbar>
       </AppBar>
-      <RRDrawer setCurrentTab={setCurrentTab} handleDrawerClose={handleDrawerClose} open={open} theme={theme} memory_descriptors={gameInformation.memory_descriptors} />
+      <RRDrawer setCurrentTab={setCurrentTab} setCurrentDialog={setCurrentDialog} handleDrawerClose={handleDrawerClose} open={open} theme={theme} memory_descriptors={gameInformation.memory_descriptors} />
       <main
         className={clsx(classes.content, {
           [classes.contentShift]: open,
         })}
       >
         <div className={classes.drawerHeader} />
+        {dialogs[currentDialog]}
         {tabs[currentTab]}
       </main>
       </div>

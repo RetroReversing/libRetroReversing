@@ -29,6 +29,8 @@ export function VisualViewer(props) {
           onChange={(e) => setVisualType(e.target.value)}
           value={visualType}
         >
+          <MenuItem value={'32bpp_argb'}>32bpp ARGB (4 bytes)</MenuItem>
+          <MenuItem value={'32bpp_rgba'}>32bpp RGBA (4 bytes)</MenuItem>
           <MenuItem value={'24bpp_rgb'}>24bpp RGB (3 bytes)</MenuItem>
           <MenuItem value={'24bpp_bgr'}>24bpp BGR (3 bytes)</MenuItem>
           <MenuItem value={'16bpp'}>16bpp MSB BGR (2 bytes)</MenuItem>

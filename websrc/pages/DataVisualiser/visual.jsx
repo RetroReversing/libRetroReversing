@@ -152,6 +152,25 @@ function show_24bpp(buffer, order="rgb", pixelsPerLine = 8) {
     add_pixel('rgb(' + r + ',' + g + ',' + b + ')', pixelsPerLine);
   }
 }
+function show_32bpp(buffer, order="rgba", pixelsPerLine = 8) {
+  let r,g,b,a;
+  
+  for (let i = 0; i < buffer.length; i += 4) {
+    if (order === "argb") {
+      // a = buffer[i];
+      r = buffer[i + 1];
+      g = buffer[i + 2];
+      b = buffer[i + 3];
+    } else {
+      // rgba
+      r = buffer[i];
+      g = buffer[i + 1];
+      b = buffer[i +2 ];
+      // a = buffer[i+3];
+    }
+    add_pixel('rgb(' + r + ',' + g + ',' + b + ')', pixelsPerLine);
+  }
+}
 
 
 function show_digraph(buffer, pixelsPerLine = 8, visibleDigraph=0) {
@@ -241,9 +260,16 @@ export function visualiseData(data, visualType, is2D=true, showAs="tiles") {
   else if (visualType === '16bpplsb') {
     show_16bpp(data, pixelsPerLine, "lsb");
   }
+  else if (visualType === '32bpp_rgba') {
+    show_32bpp(data, "rgba", pixelsPerLine);
+  }
+  else if (visualType === '32bpp_argb') {
+    show_32bpp(data, "argb", pixelsPerLine);
+  }
   else if (visualType === '24bpp_bgr'){
     show_24bpp(data, 'bgr');
-  } else {
+  } 
+  else {
     show_24bpp(data);
   }
 

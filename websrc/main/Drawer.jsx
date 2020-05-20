@@ -22,15 +22,21 @@ import InboxIcon from '@material-ui/icons/MoveToInbox';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import MemoryIcon from '@material-ui/icons/Memory';
+import FunctionsIcon from '@material-ui/icons/Functions';
+import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
+import StorageIcon from '@material-ui/icons/Storage';
+import InfoIcon from '@material-ui/icons/Info';
+import PermMediaIcon from '@material-ui/icons/PermMedia';
+
 import { useStyles } from '../styles';
 
 const mainPages = [
-  { displayName: 'Main State', name: 'main'},
-  { displayName: 'Input History', name: 'input'},
-  { displayName: 'Functions', name: 'functions'},
-  { displayName: 'Resources', name: 'resources'},
-  { displayName: 'Data Structures', name: 'data_structures'},
-  { displayName: 'Game Information', name: 'game_info'},
+  { displayName: 'Main State', name: 'main', icon: <InboxIcon />},
+  { displayName: 'Input History', name: 'input', icon: <SportsEsportsIcon />},
+  { displayName: 'Functions', name: 'functions', icon: <FunctionsIcon />},
+  { displayName: 'Resources', name: 'resources', icon: <PermMediaIcon />},
+  { displayName: 'Data Structures', name: 'data_structures', icon: <StorageIcon />},
+  { displayName: 'Game Information', name: 'game_info', icon: <InfoIcon />},
 ];
 
 export function RRDrawer( props ) {
@@ -55,7 +61,7 @@ export function RRDrawer( props ) {
   <List>
     {mainPages.map((page, index) => (
       <ListItem button key={page.name} onClick={()=>props.setCurrentTab(page.name)}>
-        <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
+        <ListItemIcon>{page.icon || <MailIcon />}</ListItemIcon>
         <ListItemText primary={page.displayName} />
       </ListItem>
     ))}

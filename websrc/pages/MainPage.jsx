@@ -10,46 +10,28 @@ import Grid from '@material-ui/core/Grid';
 import SaveStateList from '../main/SaveStateList';
 import { sendActionToServer } from '../server';
 
-function _MainPage() {
-  const [mainState, setMainState] = useState({ 
-    current_state: 1,
-    last_state: 2,
-    save_states: [
-      {name: "Start of Game", frame: "0"},
-      {name: "Start of Level 1", frame: "3224"},
-      {name: "Start of Level 2", frame: "6324"},
-    ]
-  });
+function _MainPage( { fullState }) {
 
-  const current_state = mainState.save_states[mainState.current_state];
-  const last_state = mainState.save_states[mainState.last_state];
-
-  const current_state_card = (
-    <Grid item xs={12} md={6}>
-      <Card>
-        <CardContent>
-          <Typography color="textSecondary" gutterBottom>
-            Current State
-          </Typography>
-          <Typography variant="h5" component="h2">
-          {current_state.name}
-          </Typography>
-          <Typography color="textSecondary" gutterBottom>
-          Frame {current_state.frame} out of {last_state.frame}
-          </Typography>
-        </CardContent>
-      </Card>
-    </Grid>
-  );
-
-  useEffect(()=>{
-    console.error("Requesting Main State:", mainState);
-    const payload = {
-      category: 'main_states',
-      state: mainState
-    };
-    sendActionToServer(payload);
-  }, []);
+  let current_state_card = null;
+  
+  if (fullState) { 
+    current_state_card=(<Grid item xs={12} md={6}>
+        <Card>
+          <CardContent>
+            <Typography color="textSecondary" gutterBottom>
+              Current State
+            </Typography>
+            <Typography variant="h5" component="h2">
+            {fullState?.playthrough?.current_state?.name}
+            </Typography>
+            <Typography color="textSecondary" gutterBottom>
+            Frame {fullState?.playthrough?.current_state?.frame} out of {fullState?.playthrough?.last_frame}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+    );
+  }
 
   return (
     <div>
@@ -58,7 +40,7 @@ function _MainPage() {
           <Card>
             <CardContent>
               <Typography variant="h6">History</Typography>
-              <SaveStateList save_states={mainState.save_states} last_frame={last_state.frame} />
+              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} />
             </CardContent>
           </Card>
         </Grid>

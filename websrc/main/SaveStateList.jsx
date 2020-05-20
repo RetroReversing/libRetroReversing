@@ -10,13 +10,19 @@ import IconButton from '@material-ui/core/IconButton';
 import CommentIcon from '@material-ui/icons/Comment';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
+import { reverse } from "lodash";
 
 export default function SaveStateList({save_states, last_frame}) {
 
+  if (!save_states) {
+    return null;
+  }
 
+  const save_states_reversed = reverse(save_states);
+  
   return (
     <List>
-      {save_states.map((state)=>{
+      {save_states_reversed.map((state)=>{
           return (<div key={state.name}><ListItem alignItems="flex-start">
           <ListItemAvatar>
             <Avatar />
