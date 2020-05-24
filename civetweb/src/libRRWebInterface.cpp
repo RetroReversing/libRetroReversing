@@ -93,11 +93,14 @@ log_message(const struct mg_connection *conn, const char *message)
 	return 1;
 }
 
+extern string libRR_project_directory;
+
 struct mg_callbacks callbacks;
 void setup_web_server() {
   printf("Setting up web server on Port 1234 \n");
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.log_message = log_message;
+	string url_rewrite = "/game/="+libRR_project_directory;
    /* Initialize the library */
     mg_init_library(0);
     const char *options[] = {
@@ -111,6 +114,8 @@ void setup_web_server() {
 		"error.log",
     "enable_directory_listing",
     "yes",
+		"url_rewrite_patterns",
+		url_rewrite.c_str(),
     0
 	};
 

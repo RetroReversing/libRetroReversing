@@ -10,9 +10,6 @@
 
 #include "../include/libRR.h"
 
-#include "nlohmann/json.hpp"
-using json = nlohmann::json;
-
 using namespace std;
 unsigned int hex_to_int(string str);
 extern "C" {

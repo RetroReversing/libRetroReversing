@@ -141,7 +141,8 @@ void libRR_read_button_state_from_file(string filename, int start_frame) {
       std::cout << ' ' << frameInputBitField; 
       playback_button_history.push(frameInputBitField);
     }
+    loading_frame++;
   }
-  printf("Finished Reading input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
+  printf("Finished Reading input state frame:%d result:%d \n", start_frame, frameInputBitField);
 
 }

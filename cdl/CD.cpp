@@ -5,6 +5,8 @@
 #include "../cd/iso9660.h"
 #include <sstream>
 
+extern json game_json;
+
 #define USER_SECTOR_SIZE 2048
 #define FULL_SECTOR_SIZE 2352
 char* start_pointer;
@@ -275,6 +277,7 @@ void parse_sega_saturn(char* data, unsigned int data_length ) {
 
 
   printf("pvd %s\n",pvd.dump(4).c_str());
+  game_json["cd_data"] = pvd;
 
 }
 

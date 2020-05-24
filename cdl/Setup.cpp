@@ -61,12 +61,12 @@ void libRR_get_list_of_memory_regions()
   std::vector<retro_memory_descriptor> memory_descriptors;
   for (int i = 0; i < libRR_retromap.num_descriptors; i++)
   {
-    printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
+    // printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
     if (libRR_retromap.descriptors[i].ptr != NULL)
     {
       memory_descriptors.push_back(libRR_retromap.descriptors[i]);
     } else {
-      printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
+      // printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
     }
   }
 
@@ -97,8 +97,7 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   environ_cb = _environ_cb;
   printf("Loading a new ROM \n");
   libRR_setup_console_details(environ_cb);
-  setup_web_server();
-
+  
   current_state.game_name = retro_cd_base_name;
   current_state.libretro_game_info = *info;
   current_state.libRR_save_states = libRR_save_states;
@@ -120,6 +119,7 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   libRR_setup_directories();
   init_playthrough("Initial Playthrough"); // todo get name from front end
   game_json["current_state"] = current_state;
+  setup_web_server();
 }
 
 void libRR_handle_emulator_close()
@@ -163,10 +163,10 @@ void save_playthough_metadata() {
   saveJsonToFile(current_playthrough_directory+"/playthrough.json", libRR_current_playthrough);
 }
 
-void libRR_reset() {
-  RRCurrentFrame = 0;
+void libRR_reset(unsigned int reset_frame) {
+  RRCurrentFrame = reset_frame;
   libRR_should_playback_input = true;
-  libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", RRCurrentFrame);
+  libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", reset_frame);
 }
 
 string libRR_load_save_state(int frame) {
@@ -176,6 +176,7 @@ string libRR_load_save_state(int frame) {
   libRR_read_binary_data_from_file(data, length_of_save_buffer, current_playthrough_directory+filename);
   retro_unserialize(data, length_of_save_buffer);
   RRCurrentFrame = frame;
+  libRR_should_playback_input = true;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", frame);
 
   return libRR_current_playthrough.dump(4);
@@ -243,6 +244,23 @@ string get_memory_for_web(string memory_name, int offset, int length)
       return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + offset, length);
     }
   }
+
+  for (auto &i : libRR_cd_tracks)
+  {
+    if (i.name == memory_name) {
+      int end = i.length;
+      if (offset >= end)
+      {
+        return "[]"; // Starting at the end is no good so just return
+      }
+      if ((offset + length) >= end)
+      {
+        length = end - (offset);
+      }
+      return printBytesToDecimalJSArray((uint8_t *)(i.data) + offset, length);
+    }
+  }
+
   return "[]";
 }
 
@@ -302,7 +320,7 @@ string libRR_parse_message_from_web(string message)
     if (libRR_current_playthrough["last_frame"] != 0) {
       // std::cout << p2.dump(4) << std::endl;
       std::cout << "Would load:" << libRR_current_playthrough["current_state"]["frame"].dump(4) << std::endl;
-      libRR_load_save_state(libRR_current_playthrough["current_state"]["frame"]);
+      // libRR_load_save_state(libRR_current_playthrough["current_state"]["frame"]);
     }
 
     return game_json.dump(4);
@@ -315,14 +333,15 @@ string libRR_parse_message_from_web(string message)
     return game_json.dump(4);
   }
   else if (category == "restart") {
-    libRR_reset();
+    libRR_reset(0);
     retro_reset();
   }
   else if (category == "save_state") {
     return libRR_create_save_state(message_json["state"]["name"], RRCurrentFrame);
   }
   else if (category == "load_state") {
-    return libRR_load_save_state(RRCurrentFrame);
+    libRR_reset(0);
+    return libRR_load_save_state(message_json["state"]["frame"]);
   }
   else
   {
@@ -334,6 +353,7 @@ string libRR_parse_message_from_web(string message)
   // Update game_json based on emulator settings
   game_json["current_state"] = current_state;
   game_json["playthrough"] = libRR_current_playthrough;
+  game_json["cd_tracks"] = libRR_cd_tracks;
   
   return game_json.dump(4);
 

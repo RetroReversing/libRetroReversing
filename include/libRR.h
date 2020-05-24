@@ -4,6 +4,9 @@
 #include <string>
 using namespace std;
 
+#include "../cdl/nlohmann/json.hpp"
+using json = nlohmann::json;
+
 #define BitVal(data,y) ( (data>>y) & 1) 
 
 
@@ -24,6 +27,16 @@ extern int libRR_last_logged_frame;
 // Input 
 extern void libRR_save_button_state_to_file(string filename  = "button_log.bin");
 extern void libRR_read_button_state_from_file(string filename  = "button_log.bin", int start_frame=0);
+
+// CD
+void libRR_add_cd_track(string name, void* data, unsigned int data_length);
+struct libRR_cd_track {
+  void* data;
+  unsigned int length;
+  string name;
+};
+void to_json(json& j, const libRR_cd_track& p);
+extern std::vector<libRR_cd_track> libRR_cd_tracks;
 
 // Screenshots
 
@@ -56,7 +69,7 @@ bool libRR_read_binary_data_from_file(uint8_t * data, size_t len, string file_na
 // 
 // Functions
 // 
-void libRR_reset();
+void libRR_reset(unsigned int reset_frame);
 extern void show_interface();
 extern void log_input_state(retro_input_state_t select_button);
 void libRR_log_input_state_bitmask(retro_input_state_t input_cb);

@@ -77,6 +77,17 @@ void to_json(json& j, const retro_memory_descriptor& p) {
 }
 
 // 
+// CD Tracks
+// 
+
+void to_json(json& j, const libRR_cd_track& p) {
+    j = json{
+        {"name", p.name},
+        {"length", p.length}
+    };
+}
+
+// 
 // Save states
 // 
 void to_json(json& j, const libRR_save_state& p) {
