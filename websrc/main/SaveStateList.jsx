@@ -12,46 +12,42 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
 import { reverse } from "lodash";
 
-export default function SaveStateList({save_states, last_frame}) {
+import GridList from '@material-ui/core/GridList';
+import GridListTile from '@material-ui/core/GridListTile';
+import GridListTileBar from '@material-ui/core/GridListTileBar';
+import ListSubheader from '@material-ui/core/ListSubheader';
+import InfoIcon from '@material-ui/icons/Info';
+import ReplayIcon from '@material-ui/icons/Replay';
+
+export default function SaveStateList({save_states, last_frame, load_state }) {
 
   if (!save_states) {
     return null;
   }
 
   const save_states_reversed = reverse(save_states);
-  
+
   return (
-    <List>
-      {save_states_reversed.map((state)=>{
-          return (<div key={state.name}><ListItem alignItems="flex-start">
-          <ListItemAvatar>
-            <Avatar />
-          </ListItemAvatar>
-          <ListItemText
-            primary={state.name}
-            secondary={
-              <React.Fragment>
-                <Typography
-                  component="span"
-                  variant="body2"
-                  style={{display: "inline"}}
-                  color="textPrimary"
-                >
-                  Frame {state.frame}
-                </Typography>
-                {"/"+last_frame}
-              </React.Fragment>
-            }
-          />
-          <ListItemSecondaryAction>
-              <IconButton edge="end" aria-label="comments">
-                <MoreHorizIcon />
-              </IconButton>
-            </ListItemSecondaryAction>
-        </ListItem>
-        <Divider variant="inset" component="li" />
-        </div>);
-        })}
-    </List>
+    <div>
+      <GridList cellHeight={180} >
+        <GridListTile key="Subheader" cols={2} style={{ height: 'auto' }}>
+          <ListSubheader component="div"></ListSubheader>
+        </GridListTile>
+        {save_states_reversed.map((tile) => (
+          <GridListTile key={tile.frame}>
+            <img src={"/game/playthroughs/Initial%20Playthrough/save_"+tile.frame+".sav.png"} alt={tile.name} />
+            <GridListTileBar
+              title={tile.name}
+              subtitle={<span>frame: {tile.frame}</span>}
+              actionIcon={
+                <IconButton color="secondary" aria-label={`info about ${tile.name}`}>
+                  <ReplayIcon onClick={()=>load_state(tile.frame)} />
+                </IconButton>
+              }
+            />
+          </GridListTile>
+        ))}
+      </GridList>
+    </div>
   );
 }

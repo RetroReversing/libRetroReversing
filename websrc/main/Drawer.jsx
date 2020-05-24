@@ -27,6 +27,7 @@ import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
 import StorageIcon from '@material-ui/icons/Storage';
 import InfoIcon from '@material-ui/icons/Info';
 import PermMediaIcon from '@material-ui/icons/PermMedia';
+import AlbumIcon from '@material-ui/icons/Album';
 
 import { useStyles } from '../styles';
 
@@ -41,6 +42,7 @@ const mainPages = [
 
 export function RRDrawer( props ) {
   const memory_descriptors = props.memory_descriptors || [];
+  const cd_tracks = props?.allInfo?.cd_tracks || [];
   const classes = useStyles();
 
   return <Drawer
@@ -63,6 +65,15 @@ export function RRDrawer( props ) {
       <ListItem button key={page.name} onClick={()=>props.setCurrentTab(page.name)}>
         <ListItemIcon>{page.icon || <MailIcon />}</ListItemIcon>
         <ListItemText primary={page.displayName} />
+      </ListItem>
+    ))}
+  </List>
+  <Divider />
+  <List>
+    {cd_tracks.map((cd_track, index) => (
+      <ListItem button key={cd_track.name} onClick={()=>props.setCurrentTab("memory_"+cd_track.name)}>
+        <ListItemIcon><AlbumIcon /></ListItemIcon>
+        <ListItemText primary={cd_track.name} />
       </ListItem>
     ))}
   </List>

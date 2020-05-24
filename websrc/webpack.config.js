@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
   mode: 'development',
@@ -63,6 +64,7 @@ module.exports = {
     ],
   },
   plugins: [
+    // new MonacoWebpackPlugin(), // reenable this when you want to use parser
     new HtmlWebpackPlugin({
       template: './index.html',
       filename: 'index.html',

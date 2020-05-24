@@ -10,6 +10,7 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/Setup.cpp \
     ./libRetroReversing/cdl/Main.cpp \
     ./libRetroReversing/cdl/Image.cpp \
+    ./libRetroReversing/cdl/CD.cpp \
     ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     ./libRetroReversing/png/lodepng.cpp \
     ./libRetroReversing/consoles/DummyConsole.cpp
