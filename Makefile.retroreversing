@@ -1,6 +1,8 @@
 SOURCES_C += \
     ./libRetroReversing/cdl/jarowinkler.c \
     ./libRetroReversing/civetweb/src/civetweb.c \
+    ./libRetroReversing/interpreter/duktape/duktape.c \
+    ./libRetroReversing/interpreter/mjs/mjs.c \
 
 SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_interface.cpp \
@@ -8,6 +10,7 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/CDL_Util.cpp \
     ./libRetroReversing/cdl/InputLogger.cpp \
     ./libRetroReversing/cdl/Setup.cpp \
+    ./libRetroReversing/cdl/Interpreter.cpp \
     ./libRetroReversing/cdl/Main.cpp \
     ./libRetroReversing/cdl/Image.cpp \
     ./libRetroReversing/cdl/CD.cpp \
