@@ -1,12 +1,37 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { TextField, Paper, Grid, Button, Container } from '@material-ui/core';
+import { TextField, Paper, Grid, Button, Container, FormControlLabel, Switch } from '@material-ui/core';
 import SaveIcon from '@material-ui/icons/Save';
+import { sendActionToServer } from '../../server';
 
-export function CodeOverride() {
+export function CodeOverride({ memory }) {
+  const [enabled, setEnabled] = useState(window.allInformation?.overrides?.CD?.[memory.filename]?.enabled || false);
   const [code, setCode] = useState(
-    "console.log('Executed with parameters', params)"
+    window.allInformation?.overrides?.CD?.[memory.filename]?.code || "// You have access to variables: lba, buffer, memset(start, length, value)"
   );
+  const overrideType = "CD";
+
+  function saveOverride() {
+    const start = memory.lba_start || memory.start;
+    const end = memory.lba_end || memory.end;
+    const payload = {
+      category: 'modify_override',
+      state: {
+        overrideType, 
+        name: memory.filename || memory.name,
+        code,
+        start, end, enabled
+      },
+    };
+    sendActionToServer(payload).then((result)=> {
+      console.error("result:", result);
+      window.allInformation = result;
+    });
+  }
+
+  useEffect(()=> {
+    saveOverride();
+  }, [enabled]);
 
   return (
     <Container>
@@ -19,12 +44,15 @@ export function CodeOverride() {
         style={{ width: '100%', paddingBottom: 20 }}
         value={code}
         onChange={(e) => {
-          console.error('Changed Override Code:', e.target.value);
           setCode(e.target.value);
         }}
       />
       <Paper elevation={0}>
-        <Button variant="contained" color="primary">
+        <FormControlLabel
+          control={<Switch checked={enabled} onChange={(e)=>setEnabled(e.target.checked)} name="enabled" />}
+          label="Enabled"
+        />
+        <Button variant="contained" color="primary" onClick={saveOverride}>
           <SaveIcon /> Save
         </Button>
       </Paper>
