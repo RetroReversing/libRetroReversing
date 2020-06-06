@@ -1,6 +1,6 @@
 import React, { Fragment, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import MonacoEditor from 'react-monaco-editor';
+// import MonacoEditor from 'react-monaco-editor';
 import Parser from './ParserViewer/binary_parser';
 var Buffer = require('buffer/').Buffer  // note: the trailing slash is important!
 // const { Parser, FileUnparser, ReactUnparser, Buffer } = window["binary_unparser"];
@@ -77,21 +77,21 @@ export function ParserViewer() {
     const options = {
       selectOnLineNumbers: true
     };
-    return (
-      <div>
-      <MonacoEditor
-        width="800"
-        height="600"
-        language="javascript"
-        theme="vs-dark"
-        value={code}
-        options={options}
-        onChange={(e)=>setCode(e.target.value)}
-        editorDidMount={()=>console.error("mount")}
-      />
-      {reactResult}
-      </div>
-    );
+    // return (
+    //   <div>
+    //   <MonacoEditor
+    //     width="800"
+    //     height="600"
+    //     language="javascript"
+    //     theme="vs-dark"
+    //     value={code}
+    //     options={options}
+    //     onChange={(e)=>setCode(e.target.value)}
+    //     editorDidMount={()=>console.error("mount")}
+    //   />
+    //   {reactResult}
+    //   </div>
+    // );
 
-  // return <div id="parse-container">ParserViewer</div>
+  return <div id="parse-container">ParserViewer (enable by commenting back in the Monaco editor)</div>
 }

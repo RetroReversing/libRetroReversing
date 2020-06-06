@@ -1,5 +1,47 @@
 #include "../cdl/CDL.hpp"
 
+// these are all the data regions
+// for assembly regions check out the tlb
+string create_n64_split_regions(cdl_dma d) { //uint8_t* header_bytes, uint32_t proper_cart_address, uint32_t length, uint32_t dram_addr, uint32_t frame,  bool is_assembly, uint32_t tbl_mapped_addr) {
+    // uint8_t* header_bytes = (uint8_t*)&d.header;
+    uint32_t header_bytes = __builtin_bswap32(d.header);
+    std::stringstream sstream, header;
+    string region_type = "bin";
+    if (d.is_assembly) {
+        region_type="asm";
+    }
+    string proper_cart_address_str = n2hexstr(d.rom_start);
+    string ascii_header = d.ascii_header;
+    header << " header: " <<  ascii_header << " 0x" << std::hex << header_bytes; // (header_bytes[3]+0) << (header_bytes[2]+0) << (header_bytes[1]+0) << (header_bytes[0]+0);
+    sstream << "  - [0x" << std::hex << d.rom_start << ", 0x"<< (d.rom_start+d.length);
+    sstream << ", \"" << region_type << "\",   ";
+    if (d.known_name.length()>1) {
+        sstream << "\"" << d.known_name;
+    }
+    else if (strcmp(d.guess_type.c_str(), "audio") == 0) {
+        sstream << "\"" << d.guess_type << "_" << d.rom_start << "_len_"<< d.length;
+    } else {
+        sstream << "\"_" << ascii_header << "_" << "_" << d.rom_start << "_len_"<< d.length;
+    }
+
+    if (d.is_assembly) {
+        sstream << "\", 0x" << n2hexstr(d.dram_start) << "] # frame:0x" << n2hexstr(d.frame);
+    } else {
+        sstream << "\"] # (DRAM:0x" << n2hexstr(d.dram_start) << ") (frame:0x" << n2hexstr(d.frame) << ") ";
+    }
+
+    if (strcmp(d.guess_type.c_str(), "audio") != 0) {
+        sstream << header.str() << " trace:" << d.func_addr;
+    }
+    //sstream << " Func:" << d.func_addr;
+    
+    if (d.tbl_mapped_addr>0) {
+        sstream << " Tbl mapped:"<<d.tbl_mapped_addr;
+    }
+
+    std::string mapping = sstream.str();
+    return mapping;
+}
 
 void write_rom_mapping() {
     save_cdl_files();

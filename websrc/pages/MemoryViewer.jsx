@@ -27,6 +27,9 @@ import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { VisualViewer } from './DataVisualiser/VisualiseViewer';
 import { ParserViewer } from './ParserViewer';
 import { downloadData } from './util/DownloadData';
+import { NotesViewer } from './NotesViewer/NotesViewer';
+import { StringsViewer } from './StringsViewer/StringsViewer';
+import { CodeOverride } from './CodeOverride/CodeOverride';
 
 const rowLength = 16;
 const numberOfRowsAtOnce = 1200;
@@ -36,7 +39,7 @@ export function MemoryViewer(props) {
   const [data, setData] = useState(new Buffer([]));
   const [loading, setLoading] = useState(true);
   
-  const [subTab, setSubTab] = useState(1);
+  const [subTab, setSubTab] = useState(0);
   const [currentStartAddress, setCurrentStartAddress] = useState(props?.memory?.start?.toString(16) || 0);
 
   const rendersCount = useRendersCount();
@@ -65,13 +68,13 @@ export function MemoryViewer(props) {
       return;
     }
 
-    const offset = currentStartAddressNumber - props.memory.start;
+    const offset = props?.offset || currentStartAddressNumber - props.memory.start;
     setLoading(true);
     const payload = {
       category: 'request_memory',
       state: {
         memory: props.memory,
-        length: totalBytesPerPage,
+        length: props.fullFile?props?.memory?.length: totalBytesPerPage,
         offset: offset,
       },
     };
@@ -89,11 +92,16 @@ export function MemoryViewer(props) {
       }}
       indicatorColor="primary"
       textColor="primary"
+      variant="scrollable"
+      scrollButtons="auto"
       centered
     >
-      <Tab label="Hex View" />
-      <Tab label="Visual View" />
-      <Tab label="Parser View" />
+      <Tab label="Hex" />
+      <Tab label="Visual" />
+      <Tab label="Parser" />
+      <Tab label="Notes" />
+      <Tab label="Strings" />
+      <Tab label="Override" />
     </Tabs>
   );
 
@@ -103,6 +111,9 @@ export function MemoryViewer(props) {
     0: <HexViewer buffer={data} rowLength={rowLength} setLength={4} />,
     1: <VisualViewer buffer={data} />,
     2: <ParserViewer buffer={data} />,
+    3: <NotesViewer buffer={data} />,
+    4: <StringsViewer buffer={data} />,
+    5: <CodeOverride buffer={data} />,
   };
 
 
@@ -218,15 +229,16 @@ export function MemoryViewer(props) {
   return (
     <div>
       <Grid container alignItems="center" justify="space-between">
-        <Grid item xs="3">
+      {props.memory.name === "file"? null:(
+        <Grid item xs="1">
           <Typography gutterBottom variant="h6">
             {props.memory.name}
           </Typography>
-        </Grid>
-        <Grid item xs="6">
+        </Grid>)}
+        <Grid item xs="10">
           {tab_bar}
         </Grid>
-        <Grid item xs="3" justify="end">
+        <Grid item xs="1" justify="end">
           {menu}
           {/* <Typography gutterBottom variant="h6" style={{ textAlign: 'end' }}>
             0x{props.memory.start.toString(16)} -> 0x{end_offset.toString(16)}

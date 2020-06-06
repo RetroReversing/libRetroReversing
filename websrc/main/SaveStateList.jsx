@@ -19,6 +19,22 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import InfoIcon from '@material-ui/icons/Info';
 import ReplayIcon from '@material-ui/icons/Replay';
 
+
+export function createSaveStateTile(tile,load_state, prefix="") {
+
+  return (<GridListTile key={tile.frame}>
+    <img src={"/game/playthroughs/Initial%20Playthrough/save_"+tile.frame+".sav.png"} alt={tile.name} />
+    <GridListTileBar
+      title={prefix+tile.name}
+      subtitle={<span>frame: {tile.frame}</span>}
+      actionIcon={
+        <IconButton color="secondary" aria-label={`info about ${tile.name}`}>
+          <ReplayIcon onClick={()=>load_state(tile.frame)} />
+        </IconButton>
+      }
+    />
+  </GridListTile>);
+}
 export default function SaveStateList({save_states, last_frame, load_state }) {
 
   if (!save_states) {
@@ -33,20 +49,7 @@ export default function SaveStateList({save_states, last_frame, load_state }) {
         <GridListTile key="Subheader" cols={2} style={{ height: 'auto' }}>
           <ListSubheader component="div"></ListSubheader>
         </GridListTile>
-        {save_states_reversed.map((tile) => (
-          <GridListTile key={tile.frame}>
-            <img src={"/game/playthroughs/Initial%20Playthrough/save_"+tile.frame+".sav.png"} alt={tile.name} />
-            <GridListTileBar
-              title={tile.name}
-              subtitle={<span>frame: {tile.frame}</span>}
-              actionIcon={
-                <IconButton color="secondary" aria-label={`info about ${tile.name}`}>
-                  <ReplayIcon onClick={()=>load_state(tile.frame)} />
-                </IconButton>
-              }
-            />
-          </GridListTile>
-        ))}
+        {save_states_reversed.map((el)=>createSaveStateTile(el,load_state))}
       </GridList>
     </div>
   );

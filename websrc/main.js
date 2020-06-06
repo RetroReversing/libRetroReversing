@@ -56,7 +56,6 @@ function setupAdditionalTabs(allInfo, tabs) {
 let tabs = {
   input: <InputHistory />,
   functions: <FunctionList />,
-  resources: <ResourceList />,
   data_structures: <DataStructures />,
   game_info: <GameInformation />
   // additional tabs are setup using: setupAdditionalTabs
@@ -76,10 +75,12 @@ function App() {
     gameName: ""
   });
   const [fullState, setFullState] = useState({});
+  window.allInformation = allInformation;
 
-  
+  const cdData = allInformation?.cd_data?.root_files;
   tabs = {...tabs, 
-    main: <MainPage mainState={gameInformation} fullState={fullState} />
+    main: <MainPage mainState={gameInformation} fullState={fullState} />,
+    resources: <ResourceList cdData={cdData} />,
     }
   
   const dialogs = {
@@ -108,7 +109,7 @@ function App() {
       setupAdditionalTabs(info, tabs)
       setFullState(info);
     });
-  }, [currentDialog]);
+  }, [currentDialog, currentTab]);
 
 
   return (

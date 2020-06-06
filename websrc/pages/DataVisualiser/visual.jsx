@@ -226,7 +226,7 @@ function show_printable(buffer, pixelsPerLine = 32) {
   }
 }
 
-export function visualiseData(data, visualType, is2D=true, showAs="tiles") {
+export function visualiseData(data, visualType, is2D=true, showAs="tiles", pixelsPerLine=8) {
   // reset variables
   currentPixels = [];
   lines = [];
@@ -237,19 +237,19 @@ export function visualiseData(data, visualType, is2D=true, showAs="tiles") {
   mode = is2D?"2d":"1d";
 
   if (visualType === "highlight_printable") {
-    show_printable(data);
+    show_printable(data, pixelsPerLine);
   } 
   else if (visualType === 'digraph') {
     show_digraph(data, pixelsPerLine, 0);
   }
   else if (visualType === '1bpp') {
-    show_1bpp(data);
+    show_1bpp(data, pixelsPerLine);
   }
   else if (visualType === '8bpp') {
-    show_8bppXterm(data);
+    show_8bppXterm(data, pixelsPerLine);
   }
   else if (visualType === '16bpp') {
-    show_16bpp(data);
+    show_16bpp(data, pixelsPerLine);
   }
   else if (visualType === '16bpp_msb_rgb') {
     show_16bpp(data, pixelsPerLine, "msb", "rgb");
@@ -267,10 +267,10 @@ export function visualiseData(data, visualType, is2D=true, showAs="tiles") {
     show_32bpp(data, "argb", pixelsPerLine);
   }
   else if (visualType === '24bpp_bgr'){
-    show_24bpp(data, 'bgr');
+    show_24bpp(data, 'bgr', pixelsPerLine);
   } 
   else {
-    show_24bpp(data);
+    show_24bpp(data, 'rgb', pixelsPerLine);
   }
 
   if (showAs==="tiles") {

@@ -28,12 +28,18 @@ extern int libRR_last_logged_frame;
 extern void libRR_save_button_state_to_file(string filename  = "button_log.bin");
 extern void libRR_read_button_state_from_file(string filename  = "button_log.bin", int start_frame=0);
 
+// Scripting support
+void libRR_run_script(string code);
+
 // CD
 void libRR_add_cd_track(string name, void* data, unsigned int data_length);
+void libRR_log_cd_access(int32_t lba);
+void libRR_cd_set_able_to_log(bool enable);
 struct libRR_cd_track {
   void* data;
   unsigned int length;
   string name;
+  bool isData;
 };
 void to_json(json& j, const libRR_cd_track& p);
 extern std::vector<libRR_cd_track> libRR_cd_tracks;
