@@ -35,7 +35,7 @@ function createData(name, lba, first_access, last_access, access_count, file_fla
 
 function createMemoryViewer(row) {
   return (<TableContainer component={Paper}>
-  <MemoryViewer fullFile offset={row.extent_location_bytes} memory={{ start: 0, name: "file", filename: row.name, length: row.extent_length, offset:row.extent_location_bytes} } />
+  <MemoryViewer fullFile offset={row.extent_location_bytes} memory={{ start: 0, name: "file", filename: row.name, length: row.extent_length, offset:row.extent_location_bytes, lba_start: row.lba, lba_end: row.extent_location_end_lba} } />
   </TableContainer>);
 }
 
@@ -105,8 +105,7 @@ Row.propTypes = {
 
 
 export function ResourceList( { cdData }) {
-  let rows = filter(cdData, data=>{
-    return data.name.trim().length>1;});
+  let rows = filter(cdData, data => { return data.name.trim().length>1;});
   rows = map(rows, file => {
     if (!file) return;
     return createData(file.name, file.extent_location_lba, file.first_access, file.last_access, file.access_count, file.file_flags, file.files, file);

@@ -4,9 +4,10 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import { each, noop } from 'lodash';
 import { createSaveStateTile } from '../main/SaveStateList';
+import { loadState } from '../pages/MainPage';
 import { Grid, GridList, Paper, Popper } from '@material-ui/core';
 
-function findClosestStates(frame, states) {
+function findClosestStates(frame, states, load_state) {
   let closest_before = { frame: -1 };
   let closest_after = { frame: 9999999999999 };
   let exact_match = false;
@@ -37,8 +38,8 @@ function findClosestStates(frame, states) {
     console.error("State:", state.frame, frame);
   })
   return (<GridList cellHeight={180} >
-      {createSaveStateTile(closest_before, noop, "After: ")}
-      {createSaveStateTile(closest_after,noop, "But Before: ")}
+      {createSaveStateTile(closest_before, load_state, "After: ")}
+      {createSaveStateTile(closest_after, load_state, "But Before: ")}
   </GridList>)
   // return {closest_before, closest_after, exact_match};
 }
@@ -85,7 +86,7 @@ export default function FrameHintPopOver(props) {
     >
       <Paper>
         <Typography>Closest named frames to {frame}</Typography>
-        {findClosestStates(frame, window.allInformation?.playthrough?.states)}
+        {findClosestStates(frame, window.allInformation?.playthrough?.states, loadState)}
       </Paper>
     </Popover>);
   }

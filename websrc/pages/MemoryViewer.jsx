@@ -74,7 +74,7 @@ export function MemoryViewer(props) {
       category: 'request_memory',
       state: {
         memory: props.memory,
-        length: props.fullFile?props?.memory?.length: totalBytesPerPage,
+        length: props.fullFile || props.function? props?.memory?.length: totalBytesPerPage,
         offset: offset,
       },
     };
@@ -98,10 +98,10 @@ export function MemoryViewer(props) {
     >
       <Tab label="Hex" />
       <Tab label="Visual" />
-      <Tab label="Parser" />
+      <Tab label="Override" />
       <Tab label="Notes" />
       <Tab label="Strings" />
-      <Tab label="Override" />
+      <Tab label="Parser" />
     </Tabs>
   );
 
@@ -110,10 +110,10 @@ export function MemoryViewer(props) {
   const subTabs = {
     0: <HexViewer buffer={data} rowLength={rowLength} setLength={4} />,
     1: <VisualViewer buffer={data} />,
-    2: <ParserViewer buffer={data} />,
-    3: <NotesViewer buffer={data} />,
-    4: <StringsViewer buffer={data} />,
-    5: <CodeOverride buffer={data} />,
+    2: <CodeOverride buffer={data} memory={props.memory} />,
+    3: <NotesViewer buffer={data} memory={props.memory} />,
+    4: <StringsViewer buffer={data} memory={props.memory} />,
+    5: <ParserViewer buffer={data} />,
   };
 
 
@@ -129,7 +129,7 @@ export function MemoryViewer(props) {
       state: {
         memory: props.memory,
         length: props.memory.length,
-        offset: 0,
+        offset: props.fullFile || props.function? props.offset : 0,
       },
     };
     sendActionToServer(payload).then((memoryContents) => {
