@@ -35,6 +35,7 @@ import { ResourceList } from './pages/ResourceList';
 import { DataStructures } from './pages/DataStructures';
 import { MemoryViewer } from './pages/MemoryViewer';
 import PauseSaveDialog from './dialogs/PauseSaveDialog';
+import ResumeDialog from './dialogs/ResumeDialog';
 
 function setupAdditionalTabs(allInfo, tabs) {
   const gameInfo = allInfo.current_state;
@@ -77,6 +78,14 @@ function App() {
   const [fullState, setFullState] = useState({});
   window.allInformation = allInformation;
 
+  const [playerState, setPlayerState] = useState({ 
+    paused: true, 
+    logButtons: false,
+    recordInput: false,
+    playbackLogged: false,
+    fullLogging: false
+  });
+
   const cdData = allInformation?.cd_data?.root_files;
   tabs = {...tabs, 
     main: <MainPage mainState={gameInformation} fullState={fullState} />,
@@ -84,7 +93,8 @@ function App() {
     }
   
   const dialogs = {
-    'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} />
+    'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} />,
+    'resume': <ResumeDialog setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />,
   }
 
   const handleDrawerOpen = () => {
@@ -133,7 +143,7 @@ function App() {
             SaturnRE
           </Typography>
 
-          <PlaySettings setCurrentDialog={setCurrentDialog} />
+          <PlaySettings setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />
 
         </Toolbar>
       </AppBar>

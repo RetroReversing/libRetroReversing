@@ -6,12 +6,14 @@ void to_json(json& j, const player_settings& p) {
         {"paused", p.paused},
         {"recordInput", p.recordInput},
         {"playbackLogged", p.playbackLogged},
+        {"fullLogging", p.fullLogging},
     };
 }
 void from_json(const json& j, player_settings& p) {
     j.at("paused").get_to(p.paused);
     j.at("recordInput").get_to(p.recordInput);
     j.at("playbackLogged").get_to(p.playbackLogged);
+    j.at("fullLogging").get_to(p.fullLogging);
 }
 
 // libRR_paths
@@ -264,11 +266,18 @@ string printBytesToJSArray(uint8_t* mem, uint32_t length=0x18) {
     sstream << "]";
     return sstream.str();
 }
-string printBytesToDecimalJSArray(uint8_t* mem, uint32_t length) {
+string printBytesToDecimalJSArray(uint8_t* mem, uint32_t length, bool swapEndian) {
     std::stringstream sstream;
     sstream << "[";
     for (int i=0; i<=length; i++) {
         uint8_t byte_to_write = mem[i];
+        if (swapEndian) {
+            if (i%2 == 0) {
+                byte_to_write = mem[i+1];
+            } else {
+                byte_to_write = mem[i-1];
+            }
+        }
         if (i>0) {
             sstream << ",";
         }

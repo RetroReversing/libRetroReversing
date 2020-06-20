@@ -5,11 +5,13 @@
 
 // Variables
 libRR_frame_buffer libRR_current_frame_buffer = {};
+unsigned int libRR_current_frame_buffer_length = 0;
 bool libRR_should_playback_input = true;
 bool libRR_should_log_input = false;
 int libRR_last_logged_frame = 0;
 string current_playthrough_directory = "";
 json game_json = {};
+json override_code_json = {};
 json playthroughs_json = {};
 json libRR_current_playthrough = {};
 string libRR_project_directory = "";
@@ -36,6 +38,7 @@ extern char retro_cd_base_name[4096];
 void save_playthough_metadata();
 
 void init_playthrough(string name) {
+  cout << "Init playthrough for " << name << std::endl;
   // 
   // Create Playthough directory if it doesn't already exist
   // 
@@ -43,6 +46,13 @@ void init_playthrough(string name) {
   std::__fs::filesystem::create_directories( current_playthrough_directory );
 
   readJsonToObject(current_playthrough_directory+"/playthrough.json", libRR_current_playthrough);
+  readJsonToObject(current_playthrough_directory+"/resources.json", game_json["cd_data"]["root_files"]);
+
+  readJsonToObject(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
+  readJsonToObject(libRR_project_directory+"/notes.json", game_json["notes"]);
+  readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"]);
+  functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
+  
   save_playthough_metadata();
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin");
   libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
@@ -79,12 +89,15 @@ void libRR_setup_directories() {
   libRR_project_directory+= "/RE_projects/";
   libRR_project_directory+=current_state.libretro_system_info.library_name;
   libRR_project_directory+="/"+current_state.game_name+"/";
-  // std::__fs::filesystem::create_directories( path+"/RE_projects/"+current_state.libretro_system_info.library_name+"/"+current_state.game_name+"/");
   std::__fs::filesystem::create_directories( libRR_project_directory);
   std::__fs::filesystem::create_directories( libRR_project_directory+ "/playthroughs/");
   cout << "Created project directory: " << libRR_project_directory << std::endl;
 }
 
+// 
+// # Read all JSON config
+// This isn't used yet
+// 
 void read_json_config() {
   readJsonToObject(libRR_project_directory+"/game.json", game_json);
   cout << game_json.dump(4) << std::endl;
@@ -142,9 +155,15 @@ bool libRR_read_binary_data_from_file(uint8_t * data, size_t len, string file_na
 }
 
 void libRR_set_framebuffer(const void *fb, unsigned int length, unsigned int width, unsigned int height, unsigned int pitch) {
-  // printf("set framebuffer: %d \n", fb[0]);
   if (libRR_current_frame_buffer.fb == NULL) {
+    printf("set framebuffer length: %d width: %d \n", length, width);
     libRR_current_frame_buffer.fb = malloc(length);
+    libRR_current_frame_buffer_length = length;
+  } else if (libRR_current_frame_buffer_length < length) {
+    printf("set framebuffer NEW Size length: %d width: %d \n", length, width);
+    free(libRR_current_frame_buffer.fb);
+    libRR_current_frame_buffer.fb = malloc(length);
+    libRR_current_frame_buffer_length = length;
   }
   memcpy((void*)libRR_current_frame_buffer.fb, fb, length);
   libRR_current_frame_buffer.length = length;
@@ -154,6 +173,7 @@ void libRR_set_framebuffer(const void *fb, unsigned int length, unsigned int wid
 }
 
 void save_playthough_metadata() {
+  printf("Save Playthough Meta Data");
   if (libRR_current_playthrough.count("name") < 1) {
     libRR_current_playthrough["name"] = "Initial Playthrough";
     libRR_current_playthrough["states"] =  json::parse("[]");
@@ -161,6 +181,12 @@ void save_playthough_metadata() {
     libRR_current_playthrough["last_frame"] =  0;
   }
   saveJsonToFile(current_playthrough_directory+"/playthrough.json", libRR_current_playthrough);
+  saveJsonToFile(current_playthrough_directory+"/resources.json", game_json["cd_data"]["root_files"]);
+  saveJsonToFile(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
+
+  // These files are Game specific rather than playthrough specific
+  saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
+  saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
 }
 
 void libRR_reset(unsigned int reset_frame) {
@@ -203,18 +229,12 @@ string libRR_create_save_state(string name, int frame) {
   state.frame = RRCurrentFrame;
   libRR_current_playthrough["states"].push_back(state);
   libRR_current_playthrough["current_state"] = state;
-  
-
-  // current_state.libRR_save_states.push_back(state);
-  // current_state.current_state = state;
 
   if (RRCurrentFrame > libRR_current_playthrough["last_frame"]) {
-      // current_state.last_frame = RRCurrentFrame;
       libRR_current_playthrough["last_frame"] = RRCurrentFrame;
   }
   save_playthough_metadata();
 
-  // TODO: save input log here
   if (!libRR_should_playback_input) {
     libRR_save_button_state_to_file(current_playthrough_directory+"button_log.bin");
   }
@@ -223,10 +243,86 @@ string libRR_create_save_state(string name, int frame) {
   return libRR_current_playthrough.dump(4);
 }
 
-string get_memory_for_web(string memory_name, int offset, int length)
+string libRR_get_data_for_file(int offset, int length, bool swapEndian);
+
+
+uint8_t* get_memory_pointer(string memory_name, int offset, int length) {
+  if (memory_name == "file") {
+    return NULL;
+    // return libRR_get_data_for_file(offset, length);
+  }
+  for (auto &i : current_state.memory_descriptors)
+  {
+    if (i.addrspace == memory_name)
+    {
+      int end = i.start + i.len;
+      if (i.start + offset >= end)
+      {
+        // Starting at the end is no good
+        return NULL;
+      }
+      if ((i.start + offset + length) >= end)
+      {
+        length = end - (i.start + offset);
+      }
+      return (uint8_t *)(i.ptr) + offset;
+    }
+  }
+
+  for (auto &i : libRR_cd_tracks)
+  {
+    if (i.name == memory_name) {
+      int end = i.length;
+      if (offset >= end)
+      {
+        return NULL; // Starting at the end is no good so just return
+      }
+      if ((offset + length) >= end)
+      {
+        length = end - (offset);
+      }
+      return (uint8_t *)(i.data) + offset;
+    }
+  }
+}
+
+string get_strings_for_web(string memory_name, int offset, int length) {
+  uint8_t* memory = get_memory_pointer(memory_name, offset, length);
+  string current_string = "";
+  json found_strings;
+  json valid_string_characters;
+  int minimum_string_length = 4;
+
+  return "Strings go here";
+}
+
+string libRR_get_data_for_function(int offset, int length, bool swapEndian) {
+  printf("libRR_get_data_for_function offset: %d length: %d \n", offset, length);
+  for (auto &i : current_state.memory_descriptors)
+  {
+    int end = i.start + i.len;
+    if (offset >= i.start && offset < end) {
+      int relative_offset = offset - i.start;
+      if ((offset + length) >= end)
+      {
+        length = end - (offset);
+      }
+      
+      printf("Found Name: %s start: %d end: %d \n", i.addrspace, i.start, end);
+      return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + relative_offset, length, swapEndian);
+    }
+  }
+}
+
+string get_memory_for_web(string memory_name, int offset, int length, bool swapEndian)
 {
   printf("get_memory_for_web: %s \n", memory_name.c_str());
-
+  if (memory_name == "file") {
+    return libRR_get_data_for_file(offset, length, swapEndian);
+  } else if (memory_name == "function") {
+    printf("Memory name function \n");
+    return libRR_get_data_for_function(offset, length, swapEndian);
+  }
   for (auto &i : current_state.memory_descriptors)
   {
     if (i.addrspace == memory_name)
@@ -241,7 +337,7 @@ string get_memory_for_web(string memory_name, int offset, int length)
       {
         length = end - (i.start + offset);
       }
-      return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + offset, length);
+      return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + offset, length, swapEndian);
     }
   }
 
@@ -257,7 +353,7 @@ string get_memory_for_web(string memory_name, int offset, int length)
       {
         length = end - (offset);
       }
-      return printBytesToDecimalJSArray((uint8_t *)(i.data) + offset, length);
+      return printBytesToDecimalJSArray((uint8_t *)(i.data) + offset, length, swapEndian);
     }
   }
 
@@ -304,8 +400,13 @@ string libRR_parse_message_from_web(string message)
   }
   else if (category == "request_memory")
   {
-    printf("Request for memory %s\n", message_json["state"]["name"].dump(4).c_str());
-    return get_memory_for_web(message_json["state"]["memory"]["name"], message_json["state"]["offset"], message_json["state"]["length"]);
+    printf("Request for memory %s\n", message_json["state"]["memory"]["name"].dump(4).c_str());
+    return get_memory_for_web(message_json["state"]["memory"]["name"], message_json["state"]["offset"], message_json["state"]["length"], message_json["state"]["swapEndian"]);
+  }
+  else if (category == "request_strings")
+  {
+    printf("Request for strings %s\n", message_json["state"]["name"].dump(4).c_str());
+    return get_strings_for_web(message_json["state"]["memory"]["name"], message_json["state"]["offset"], message_json["state"]["length"]);
   }
   else if (category == "stop") {
     // retro_unload_game();
@@ -316,6 +417,7 @@ string libRR_parse_message_from_web(string message)
     printf("Play!\n");
     player_settings p2 = message_json["state"].get<player_settings>();
     libRR_settings = p2;
+    libRR_full_function_log = p2.fullLogging;
     
     if (libRR_current_playthrough["last_frame"] != 0) {
       // std::cout << p2.dump(4) << std::endl;
@@ -330,6 +432,7 @@ string libRR_parse_message_from_web(string message)
     player_settings p2 = message_json["state"].get<player_settings>();
     std::cout << p2.paused << std::endl;
     libRR_settings = p2;
+    libRR_full_function_log = p2.fullLogging;
     return game_json.dump(4);
   }
   else if (category == "restart") {
@@ -340,12 +443,28 @@ string libRR_parse_message_from_web(string message)
     return libRR_create_save_state(message_json["state"]["name"], RRCurrentFrame);
   }
   else if (category == "load_state") {
+    printf("WEB UI: Requested Load State\n");
+    libRR_display_message("WEB UI: Requested Load State");
     libRR_reset(0);
     return libRR_load_save_state(message_json["state"]["frame"]);
   }
+  else if (category == "modify_override") {
+    printf("Add Code Override %s\n", message_json["state"].dump().c_str());
+    string category = message_json["state"]["overrideType"];
+    string name = message_json["state"]["name"];
+    game_json["overrides"][category][name] = message_json["state"];
+    saveJsonToFile(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
+  }
+  else if (category == "modify_note") {
+    printf("Add Note %s\n", message_json["state"].dump().c_str());
+    string category = message_json["state"]["overrideType"];
+    string name = message_json["state"]["name"];
+    game_json["notes"][category][name] = message_json["state"];
+    saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
+  }
   else
   {
-    printf("Unknown category %s with state: %s\n", category.c_str(), message_json["state"].dump(4).c_str());
+    printf("Unknown category %s with state: %s\n", category.c_str(), message_json["state"].dump().c_str());
   }
 
   libRR_display_message("Category: %s", category.c_str());
@@ -354,6 +473,10 @@ string libRR_parse_message_from_web(string message)
   game_json["current_state"] = current_state;
   game_json["playthrough"] = libRR_current_playthrough;
   game_json["cd_tracks"] = libRR_cd_tracks;
+  game_json["functions"] = functions;
+  game_json["functions_playthough"] = function_playthough_info;
+  game_json["assembly"] = libRR_disassembly;
+  add_console_specific_game_json();
   
   return game_json.dump(4);
 

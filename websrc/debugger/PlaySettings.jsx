@@ -10,30 +10,37 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
 import { sendActionToServer } from '../server';
 
-export function PlaySettings( { setCurrentDialog }) {
-  const [playerState, setPlayerState] = useState({ 
-    paused: true, 
-    logButtons: false,
-    recordInput: false,
-    playbackLogged: false
-  });
+export function PlaySettings( { setCurrentDialog, playerState, setPlayerState }) {
 
   function play_or_pause() {
-    if (!playerState.paused) {
-      // we are just about to pause so lets ask if they want to create a save state
-      setCurrentDialog('pause_save');
+    if (playerState.paused) {
+      setCurrentDialog('resume');
+      return;
     }
 
     const newPlayerState = {...playerState, paused:!playerState.paused};
     setPlayerState(newPlayerState);
 
-    const category = newPlayerState.paused? "pause":"play";
+      // we are just about to pause so lets ask if they want to create a save state
+      setCurrentDialog('pause_save');
+      const category = newPlayerState.paused? "pause":"play";
 
-    const payload = {
-      category,
-      state: newPlayerState
-    };
-    sendActionToServer(payload);
+      const payload = {
+        category: "pause",
+        state: newPlayerState
+      };
+      sendActionToServer(payload);
+      return;
+
+    
+
+    // const category = newPlayerState.paused? "pause":"play";
+
+    // const payload = {
+    //   category,
+    //   state: newPlayerState
+    // };
+    // sendActionToServer(payload);
   }
 
   function restart() {

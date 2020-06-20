@@ -21,7 +21,9 @@
     "react-dom": "^16.13.0",
     "react-monaco-editor": "^0.36.0",
     "react-use": "^14.2.0",
-    "react-window": "^1.8.5"
+    "react-virtualized": "^9.21.2",
+    "react-window": "^1.8.5",
+    "rich-markdown-editor": "^10.0.2-1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",

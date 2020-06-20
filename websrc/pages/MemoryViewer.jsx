@@ -30,6 +30,7 @@ import { downloadData } from './util/DownloadData';
 import { NotesViewer } from './NotesViewer/NotesViewer';
 import { StringsViewer } from './StringsViewer/StringsViewer';
 import { CodeOverride } from './CodeOverride/CodeOverride';
+import { DisasmViewer } from './DisasmViewer/DisasmViewer';
 
 const rowLength = 16;
 const numberOfRowsAtOnce = 1200;
@@ -76,6 +77,7 @@ export function MemoryViewer(props) {
         memory: props.memory,
         length: props.fullFile || props.function? props?.memory?.length: totalBytesPerPage,
         offset: offset,
+        swapEndian: props.swapEndian || false,
       },
     };
     sendActionToServer(payload).then((memoryContents) => {
@@ -97,6 +99,7 @@ export function MemoryViewer(props) {
       centered
     >
       <Tab label="Hex" />
+      <Tab label="Disassembled" />
       <Tab label="Visual" />
       <Tab label="Override" />
       <Tab label="Notes" />
@@ -108,12 +111,13 @@ export function MemoryViewer(props) {
   const end_offset = props.memory.start + props.memory.length;
 
   const subTabs = {
-    0: <HexViewer buffer={data} rowLength={rowLength} setLength={4} />,
-    1: <VisualViewer buffer={data} />,
-    2: <CodeOverride buffer={data} memory={props.memory} />,
-    3: <NotesViewer buffer={data} memory={props.memory} />,
-    4: <StringsViewer buffer={data} memory={props.memory} />,
-    5: <ParserViewer buffer={data} />,
+    0: <HexViewer buffer={data} rowLength={rowLength} setLength={4} offset={props?.offset || props?.memory?.start} />,
+    1: <DisasmViewer buffer={data} memory={props.memory} function={props.function} />,
+    2: <VisualViewer buffer={data} />,
+    3: <CodeOverride buffer={data} memory={props.memory} />,
+    4: <NotesViewer buffer={data} memory={props.memory} />,
+    5: <StringsViewer buffer={data} memory={props.memory} />,
+    6: <ParserViewer buffer={data} />,
   };
 
 
@@ -129,6 +133,7 @@ export function MemoryViewer(props) {
       state: {
         memory: props.memory,
         length: props.memory.length,
+        swapEndian: props.swapEndian || false,
         offset: props.fullFile || props.function? props.offset : 0,
       },
     };

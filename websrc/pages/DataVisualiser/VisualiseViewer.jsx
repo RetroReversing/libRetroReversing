@@ -8,17 +8,29 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import { xterm } from './8bppXterm';
-import { padStart } from "lodash";
+import { padStart, debounce } from "lodash";
 import css from "./visual.css";
-import { visualiseData } from './visual';
+import { visualiseData as originalVisualiseData } from './visual';
+import { TextField } from '@material-ui/core';
+import { FixedSizeList as List } from 'react-window';
 
-
+// const visualiseData = debounce(originalVisualiseData, 2000);
 
 export function VisualViewer(props) {
   const [visualType, setVisualType] = useState('8bpp');
   const [is2D, set2D] = useState(true);
+  const [pixelsPerLine, setPixelsPerLine] = useState(16);
+  // const debouncedSetPixelsPerLine = debounce(setPixelsPerLine, 2000);
 
-  const lines = visualiseData(props.buffer, visualType, is2D);
+  let lines = originalVisualiseData(props.buffer, visualType, is2D, "tiles", pixelsPerLine>8?pixelsPerLine:8);
+
+  // useEffect(
+  //   ()=> {
+  //     console.error("Pixels per line changed");
+  //     lines = visualiseData(props.buffer, visualType, is2D, "tiles", pixelsPerLine);
+  //   },
+  //   [pixelsPerLine]
+  // )
 
   const displaySelector = (
     <Paper>
@@ -42,6 +54,8 @@ export function VisualViewer(props) {
           <MenuItem value={'highlight_printable'}>Highlight Printable</MenuItem>
           <MenuItem value={'digraph'}>DiGraph</MenuItem>
         </Select>
+        <TextField id="standard-basic" label="Pixels per Line" value={pixelsPerLine} onChange={(e)=>setPixelsPerLine(e.target.value)} />
+        {/* TODO: Add pixel size zooms */}
         <FormControlLabel
         control={<Switch checked={is2D} onChange={(e) => set2D(e.target.checked)} name="2D" />}
         label="2D"
@@ -50,11 +64,24 @@ export function VisualViewer(props) {
     </Paper>
   );
 
+  const createRow = ({ index, style }) => {
+    const row = lines?.[index];
+    return row;
+  };
+
   return (
     <div>
       {displaySelector}
-      <Grid container>
+      <Grid container style={{maxWidth: '95vw', display: 'block'}}>
         {lines}
+        {/* <List
+					height={512}
+					itemCount={lines?.length}
+					itemSize={15}
+					width={'100%'}
+				>
+					{createRow}
+				</List> */}
       </Grid>
     </div>
   );

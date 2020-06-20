@@ -10,6 +10,29 @@ import Grid from '@material-ui/core/Grid';
 import SaveStateList from '../main/SaveStateList';
 import { sendActionToServer } from '../server';
 
+export function loadState(frame) {
+  console.log("About to load state:", frame);
+  const payload = {
+    category: 'load_state',
+    state: {
+      frame
+    },
+  };
+  sendActionToServer(payload);
+};
+
+export function deleteState(frame) {
+  console.log("About to delete state:", frame);
+  // TODO: should probably warn if its the latest state (as would need to remove button presses and could invalidate functions)
+  const payload = {
+    category: 'delete_state',
+    state: {
+      frame
+    },
+  };
+  sendActionToServer(payload);
+};
+
 function _MainPage( { fullState }) {
 
   let current_state_card = null;
@@ -34,16 +57,7 @@ function _MainPage( { fullState }) {
     );
   }
 
-  function loadState(frame) {
-    console.log("About to load state:", frame);
-    const payload = {
-      category: 'load_state',
-      state: {
-        frame
-      },
-    };
-    sendActionToServer(payload);
-  }
+  
 
   return (
     <div>
@@ -52,7 +66,7 @@ function _MainPage( { fullState }) {
           <Card>
             <CardContent>
               <Typography variant="h6">History</Typography>
-              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} load_state={loadState} />
+              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} load_state={loadState} delete_state={deleteState} />
             </CardContent>
           </Card>
         </Grid>

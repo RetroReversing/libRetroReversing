@@ -18,7 +18,7 @@ extern "C" {
     double jaro_winkler_distance(const char *s, const char *a);
 }
 
-string printBytesToDecimalJSArray(uint8_t* mem, uint32_t length=0x18);
+string printBytesToDecimalJSArray(uint8_t* mem, uint32_t length=0x18, bool swapEndian = false);
 
 void printf_endian_swap(const char* data);
 string string_endian_swap(const char* data);
@@ -41,6 +41,7 @@ struct player_settings {
     bool paused;
     bool playbackLogged;
     bool recordInput;
+    bool fullLogging;
 };
 void to_json(json& j, const player_settings& p);
 void from_json(const json& j, player_settings& p);

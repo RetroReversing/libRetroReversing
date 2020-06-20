@@ -313,7 +313,7 @@ void libRR_replace_lba_buffer(int lba) {
   }
 }
 
-string libRR_get_data_for_file(int offset, int length) {
+string libRR_get_data_for_file(int offset, int length, bool swapEndian) {
   printf("libRR_get_data_for_file %d length: %d \n", offset, length);
   int number_of_sectors_for_file = (length / USER_SECTOR_SIZE);
   if (length % USER_SECTOR_SIZE > 0) {

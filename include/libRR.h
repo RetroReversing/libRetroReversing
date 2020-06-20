@@ -9,6 +9,8 @@ using json = nlohmann::json;
 
 #define BitVal(data,y) ( (data>>y) & 1) 
 
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments);
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned a1, unsigned a2);
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,14 +26,37 @@ extern int libRR_mmap_descriptors;
 extern struct retro_memory_map libRR_retromap;
 extern int libRR_last_logged_frame;
 
+// JSON
+extern json game_json;
+extern json function_playthough_info;
+extern json libRR_disassembly;
+
+// Console specific
+void add_console_specific_game_json();
+
+// CPU
+void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc);
+void libRR_log_branch(uint32_t current_pc, uint32_t target_pc);
+void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target);
+
+extern bool libRR_full_function_log;
+extern bool libRR_isDelaySlot;
+extern uint32_t libRR_delay_slot_pc;
+
 // Input 
 extern void libRR_save_button_state_to_file(string filename  = "button_log.bin");
 extern void libRR_read_button_state_from_file(string filename  = "button_log.bin", int start_frame=0);
 
 // Scripting support
 void libRR_run_script(string code);
+int libRR_get_current_lba();
+void* libRR_get_current_buffer();
+void libRR_memset(int startOffset, int length, uint8_t value );
+void libRR_cd_set_able_override(bool enable);
+void libRR_replace_lba_buffer(int lba);
 
 // CD
+void libRR_override_cd_lba(uint8_t *buf, int32_t lba, int mode);
 void libRR_add_cd_track(string name, void* data, unsigned int data_length);
 void libRR_log_cd_access(int32_t lba);
 void libRR_cd_set_able_to_log(bool enable);

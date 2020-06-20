@@ -9,9 +9,12 @@ var PixelSet = require('./PixelTable').PixelSet;
 var PixelSet2 = require('./PixelTable').PixelSet2;
 var createReactClass = require('create-react-class');
 
+function Item(props) {
+	var classes = (props.active ? 'active' : '') + (props.value == -1 ? ' none' : '');
+	return (<li title={(props.row_start_address+props.index).toString(16)} className={classes} onMouseOver={()=>props.activate(props.index)} onMouseLeave={()=>props.clear()}>{props.byteString}</li>);
+}
 
-
-var Item = createReactClass({
+var Item2 = createReactClass({
 	activate: function () {
 		this.props.activate(this.props.index);
 	},
@@ -20,7 +23,7 @@ var Item = createReactClass({
 	},
 	render: function() {
 		var classes = (this.props.active ? 'active' : '') + (this.props.value == -1 ? ' none' : '');
-		return (<li className={classes} onMouseOver={this.activate} onMouseLeave={this.clear}>{this.props.byteString}</li>);
+		return (<li title={this.props.row_start_address+this.props.index} className={classes} onMouseOver={this.activate} onMouseLeave={this.clear}>{this.props.byteString}</li>);
 	}
 });
 
@@ -44,7 +47,7 @@ var Set = createReactClass({
 			}
 
 			var active = this.props.activeItem == i && this.props.active;
-			return (<Item index={i} value={b} byteString={byteString} active={active} activate={this.props.activateItem} clear={this.props.clearItem}/>);
+			return (<Item row_start_address={this.props.row_start_address} index={i} value={b} byteString={byteString} active={active} activate={this.props.activateItem} clear={this.props.clearItem}/>);
 		}.bind(this));
 
 		return (
@@ -95,7 +98,8 @@ var Row = createReactClass({
 				activateSet:  this.setActiveSet,
 				clearSet:     this.clearActiveSet,
 				activateItem: this.setActiveItem,
-				clearItem:    this.clearActiveItem
+				clearItem:    this.clearActiveItem,
+				row_start_address: this.props.row_start_address
 			};
 
 			return (<Set {...props}/>);
@@ -158,22 +162,33 @@ var Row = createReactClass({
 });
 
 function Hex(props) {
+	const { bytesper, rows, offset=0, offsetDisplay="hex" } = props;
   const pad = "000000";
 
 
 		const createRow = ({ index, style }) => {
-			const row = props.rows[index];
-			var heading = ''+index*props.bytesper;
-				heading = pad.substring(0, pad.length - heading.length) + heading;
-			return <div style={style}><Row sets={row} heading={heading}/></div>
+			const row = rows[index];
+			// Heading is the offset index shown on the left
+			var row_start_address = index * bytesper + offset;
+			var heading = ""+row_start_address;
+			if (offsetDisplay === "hex") {
+				heading = (row_start_address).toString(16);
+			}
+			heading = pad.substring(0, pad.length - heading.length) + heading;
+			return <div style={style}><Row sets={row} heading={heading} row_start_address={row_start_address}/></div>
 		};
+
+		let height = 350;
+		if (rows.length * 25 < height) {
+			height = rows.length * 25;
+		}
 
 		return (
 			<div className="hexviewer">
 				<div className="hex">
 				<List
-					height={350}
-					itemCount={props.rows.length}
+					height={height}
+					itemCount={rows.length}
 					itemSize={25}
 					width={'100%'}
 				>
@@ -185,23 +200,24 @@ function Hex(props) {
 }
 
 const HexViewer = function(props) {
-		var rowChunk = props.rowLength, setChunk = props.setLength;
+	const { rowLength, setLength, original_buffer: buffer, offset } = props;
+		var rowChunk = rowLength, setChunk = setLength;
 		var rows = [], row = [], set = [], sets = [];
 		
-		var buffer = [];
+		var temp_buffer = [];
 		var bytes = props.buffer.length;
 
 		if(Buffer.isBuffer(props.buffer)) {
 			for (var ii = 0; ii < bytes; ii++) {
-				buffer.push(props.buffer[ii]);
+				temp_buffer.push(props.buffer[ii]);
 			}
 		} else {
-			buffer = props.buffer;
+			temp_buffer = props.buffer;
 		}
 
 		for (var i = 0; i<bytes; i+=rowChunk) {
 			sets = [];
-			let temparray = buffer.slice(i,i+rowChunk);
+			let temparray = temp_buffer.slice(i,i+rowChunk);
 
 			for(var z = temparray.length; z < rowChunk; z++) {
 				temparray.push(-1);
@@ -220,7 +236,7 @@ const HexViewer = function(props) {
 		}
 
 		return (
-			<Hex rows={rows} bytesper={rowChunk} />
+			<Hex rows={rows} bytesper={rowChunk} offset={offset} />
 		);
 	};
 
