@@ -1,8 +1,6 @@
 #include "../include/libRR.h"
 #include "CDL.hpp"
 #include <fstream>
-#include "../cd/kaitaistream.h"
-#include "../cd/iso9660.h"
 #include <sstream>
 
 extern json game_json;
@@ -256,16 +254,18 @@ json parse_root_files(char*& data, json pvd, uint32_t lba, uint32_t directory_si
 }
 // 
 // # Parse Sega Saturn CD Track
+// returns whether this is a valid ISO 9660 Track, otherwise its probably audio
 // 
-void parse_sega_saturn(char* data, unsigned int data_length ) {
+bool parse_sega_saturn(char* data, unsigned int data_length ) {
   start_pointer = &data[0];
   printf("parse_sega_saturn\n");
   seek(data, 0x9310, "Ignore Boot rom data");
   char value = read1Byte(data);
   string magic = readString(data, 5, "CD001");
   if (magic != "CD001") {
-    return; // probably a audio track
+    return false; // probably an audio track so ignore
   }
+
   json pvd = parse_primary_volume_descriptor(data);
   
   pvd = parse_path_table(data, pvd, pvd["path_table_size"]);
@@ -273,12 +273,19 @@ void parse_sega_saturn(char* data, unsigned int data_length ) {
   // Now lets get top level files
   uint32_t lba = pvd["root_directory"]["extent_location_lba"];
   uint32_t directory_size = pvd["root_directory"]["extent_length"];
-  pvd["root_files"] = parse_root_files(data, pvd, lba, directory_size);
 
-
-  printf("pvd %s\n",pvd.dump(4).c_str());
+  string dump = game_json["cd_data"]["root_files"].dump();
+  if (game_json.count("cd_data") != 0 && game_json["cd_data"].count("root_files") != 0 && dump != "null" && dump != "{}") {
+    // if we already have the layout of the CD from a previous run then we don't need to re-read it
+    printf("No need to parse CD layout, reading from previous run \n");
+    pvd["root_files"] = game_json["cd_data"]["root_files"];
+  }
+  else {
+    pvd["root_files"] = parse_root_files(data, pvd, lba, directory_size);
+    printf("pvd %s\n",pvd.dump(4).c_str());
+  }
   game_json["cd_data"] = pvd;
-
+  return true;
 }
 
 std::vector<libRR_cd_track> libRR_cd_tracks;
@@ -288,27 +295,157 @@ void libRR_add_cd_track(string name, void* data, unsigned int data_length) {
   track.data = data;
   track.length = data_length;
   track.name = name;
+  track.isData = parse_sega_saturn((char*)data,data_length );
   libRR_cd_tracks.push_back(track);
-  parse_sega_saturn((char*)data,data_length );
-  // printf("Just about to load \n");
-  // // const char buf[] = { ... };
-  // // std::string str((char*)data, data_length);
-  // // std::istringstream is(str);
-  // std::ifstream is("/Users/alasdairmorrison/Downloads/RR/Saturn/Games/Devil Summoner - Soul Hackers (Japan) (Disc 1)/Devil Summoner - Soul Hackers (Japan) (Disc 1) (Track 1).bin", std::ifstream::binary);
-  // printf("Just about to load ksteam\n");
+}
+
+void libRR_replace_lba_buffer(int lba) {
+  printf("libRR_replace_lba_buffer %d \n", lba);
+  uint8_t* buf = (uint8_t*)libRR_get_current_buffer();
+  for (auto track : libRR_cd_tracks) {
+    if (!track.isData) { continue; }
+
+    int location_of_sector = (FULL_SECTOR_SIZE * lba); //+ 16;
+    memcpy((uint8_t *)buf, ((char*)track.data)+location_of_sector, FULL_SECTOR_SIZE); //USER_SECTOR_SIZE+100);
+    // }
+    // printf("Just about to print bytes to decimal \n");
+    // result = printBytesToDecimalJSArray((uint8_t*)buffer, length);
+  }
+}
+
+string libRR_get_data_for_file(int offset, int length) {
+  printf("libRR_get_data_for_file %d length: %d \n", offset, length);
+  int number_of_sectors_for_file = (length / USER_SECTOR_SIZE);
+  if (length % USER_SECTOR_SIZE > 0) {
+    number_of_sectors_for_file+=1;
+  }
+  printf("number_of_sectors_for_file %d \n", number_of_sectors_for_file);
+  string result = "";
+  unsigned int full_size = number_of_sectors_for_file*FULL_SECTOR_SIZE;
+  char* buffer = (char*)malloc (sizeof(char) * (full_size+1));
+  printf("Created Buffer successful %d \n", full_size);
+
+  for (auto track : libRR_cd_tracks) {
+    if (!track.isData) { continue; }
+    for (int sector = 0; sector < number_of_sectors_for_file; sector++) {
+      int sector_offset = (USER_SECTOR_SIZE * sector);
+      int location_of_sector = offset + (FULL_SECTOR_SIZE * sector) +16;
+      memcpy(buffer+sector_offset, ((char*)track.data)+location_of_sector, USER_SECTOR_SIZE);
+    }
+    printf("Just about to print bytes to decimal \n");
+    result = printBytesToDecimalJSArray((uint8_t*)buffer, length);
+  }
+  printf("Just about to free buffer \n");
+  free(buffer);
+
+  return result;
+}
+
+bool libbRR_cd_can_log = false;
+void libRR_cd_set_able_to_log(bool enable) {
+  libbRR_cd_can_log = enable;
+}
+bool libRR_enable_overrides = false;
+void libRR_cd_set_able_override(bool enable) {
+  libRR_enable_overrides = enable;
+}
+
+// This is used if you have an lba and want to search while file name it is
+string libRR_check_which_file_has_lba(int32_t lba, json files) {
+  int index = 0;
+  string result = "";
+  for (auto& a: files) {
+    int file_flags = a["file_flags"];
+    if (file_flags == 2) {
+      result = libRR_check_which_file_has_lba(lba, a["files"]);
+      continue;
+    }
+    int extent_location_lba = a["extent_location_lba"];
+    int extent_location_end_lba = a["extent_location_end_lba"];
+    if (lba >= extent_location_lba && lba <= extent_location_end_lba) {
+      printf("Found it: %s lba: %d \n", a["name"].dump().c_str(), lba);
+      result= result + (string)a["name"];
+    }
+    index++;
+  }
+  return result;
+}
+
+json log_access_of_file_by_lba(int32_t lba, json& files) {
+  int index = 0;
+  for (auto& a: files) {
+    int file_flags = a["file_flags"];
+    if (file_flags == 2) {
+      json result = log_access_of_file_by_lba(lba, a["files"]);
+      if (result != NULL) {
+        return files;
+      }
+      continue;
+    }
+    int extent_location_lba = a["extent_location_lba"];
+    int extent_location_end_lba = a["extent_location_end_lba"];
+    if (lba >= extent_location_lba && lba <= extent_location_end_lba) {
+      if (a.count("first_access") == 0) {
+        a["first_access"] = RRCurrentFrame;
+        a["last_access"] = RRCurrentFrame;
+        a["access_count"] = 1;
+      } else {
+          int last_access = a["last_access"];
+          if (last_access < RRCurrentFrame) {
+            a["last_access"] = RRCurrentFrame;
+          }
+          a["access_count"] = ((int)a["access_count"]) + 1;
+      }
+      return files;
+    }
+    index++;
+  }
+  return NULL;
+}
+
+
+int libRR_current_lba = 0;
+void* libRR_current_buffer = 0;
+
+int libRR_get_current_lba() {
+  return libRR_current_lba;
+}
+
+void* libRR_get_current_buffer() {
+  return libRR_current_buffer;
+}
+
+void libRR_memset(int startOffset, int length, uint8_t value ) {
+  uint8_t* buf = (uint8_t*)libRR_get_current_buffer();
+  printf("libRR_memset offset: %d length: %d value: %d \n", startOffset, length, value);
+  memset(buf+startOffset, value, length);
+  printf("done.\n");
+}
+
+void libRR_log_cd_access(int32_t lba) {
+  if (!libbRR_cd_can_log) return;
+  json& root_files =  game_json["cd_data"]["root_files"];
+  json modified_root_files = log_access_of_file_by_lba(lba, root_files);
   
-  // kaitai::kstream ks(&is);
-  // printf("Just about to load iso\n");
-  // iso9660_t iso_data(&ks);
-  // printf("Just about to load primary_vol_desc\n");
-  // // auto a = iso_data.primary_vol_desc();
-  // printf("after load vol desc\n");
-  // try {
-  // json b = iso_data.primary_vol_desc();
-  // printf("Magic: %s \n", b.dump(4).c_str());
-  // } catch( std::exception &e )
-	// {
-  //   printf("\nException: %s \n", e.what());
-  // }
-  // printf("Magic: %s \n", a->magic().c_str());
+  // Find custom:
+  // libRR_check_which_file_has_lba(7414, root_files);
+}
+
+void libRR_override_cd_lba(uint8_t *buf, int32_t lba, int mode) {
+  if (!libRR_enable_overrides) {
+    return;
+  }
+  for (auto a : game_json["overrides"]["CD"]) {
+    if (!a["enabled"]) {
+      continue;
+    }
+    if (lba >= a["start"] && lba <= a["end"]) {
+      // printf("The Mode is: %d \n", mode);
+      // printf("Found it lba: %d %s \n", lba, a.dump().c_str());
+      libRR_current_lba = lba;
+      libRR_current_buffer = (void*)buf;
+      libRR_run_script(a["code"]);
+      return;
+    }
+  }
 }

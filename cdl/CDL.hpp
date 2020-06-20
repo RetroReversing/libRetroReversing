@@ -171,6 +171,7 @@ extern std::map<uint32_t, cdl_dram_cart_map> audio_samples;
 extern std::map<uint32_t, cdl_dram_cart_map> cart_rom_dma_writes;
 extern std::map<uint32_t, cdl_dram_cart_map> dma_sp_writes;
 extern std::map<uint32_t, cdl_labels> labels;
+extern std::map<uint32_t, cdl_labels> functions;
 extern std::map<uint32_t, cdl_jump_return> jump_returns;
 extern std::map<uint32_t,cdl_tlb> tlbs;
 extern std::map<uint32_t,cdl_dma> dmas;

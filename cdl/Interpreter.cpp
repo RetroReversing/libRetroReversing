@@ -25,21 +25,33 @@ void run_in_duktape(string code) {
   duk_destroy_heap(ctx);
 }
 
+void *my_dlsym(void *handle, const char *name) {
+  if (strcmp(name, "libRR_get_current_lba") == 0) return (void*)libRR_get_current_lba;
+  if (strcmp(name, "libRR_get_current_buffer") == 0) return (void*)libRR_get_current_buffer;
+  if (strcmp(name, "memset") == 0) return (void*)memset;
+  if (strcmp(name, "libRR_memset") == 0) return (void*)libRR_memset;
+  if (strcmp(name, "libRR_replace_lba_buffer") == 0) return (void*)libRR_replace_lba_buffer;
+
+  return NULL;
+}
+
 void run_in_mjs(string code) {
   struct mjs *mjs = mjs_create();
-  // mjs_set_ffi_resolver(mjs, my_dlsym);
-  mjs_exec(mjs, "print('test')", NULL);
+  mjs_set_ffi_resolver(mjs, my_dlsym);
+  mjs_exec(mjs, code.c_str(), NULL);
 }
 
 #define ENGINE_DUKTAPE 0
 #define ENGINE_MJS 1
 int current_engine = ENGINE_MJS;
 
+string code_prefix = "let lba = ffi('int libRR_get_current_lba()')(); let buffer = ffi('void* libRR_get_current_buffer()')(); let memset = ffi('void libRR_memset(int, int, int)'); let replace_lba = ffi('void libRR_replace_lba_buffer(int)');";
+
 void libRR_run_script(string code) {
-  printf("About to run code: %s \n", code.c_str());
+  // printf("About to run code: %s \n", (code_prefix+code).c_str());
   if (current_engine == ENGINE_DUKTAPE) {
-    run_in_duktape(code);
+    run_in_duktape(code_prefix+code);
   } else if (current_engine == ENGINE_MJS) {
-    run_in_mjs(code);
+    run_in_mjs(code_prefix+code);
   }
 }

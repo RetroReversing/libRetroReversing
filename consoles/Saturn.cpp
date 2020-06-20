@@ -1,26 +1,66 @@
 #include <queue>
 #include "../civetweb/include/civetweb.h"
+#include "../include/libRR.h"
+#include "../cdl/CDL.hpp"
 
 // Common Variables
-int l_CurrentFrame;
+
+namespace VDP2
+{
+  extern uint16_t* RawRegs;
+  // TVMD Registers - TV Mode
+  extern bool BorderMode;
+  extern bool DisplayOn;
+  extern uint8_t InterlaceMode;
+  extern uint8_t HRes, VRes;
+
+  // Exten registers - Extension?
+  extern bool ExSyncEnable;
+  extern bool ExLatchEnable;
+  extern bool ExBGEnable;
+  extern bool DispAreaSelect;
+
+  extern bool VRAMSize;
+
+  extern uint16_t RAMCTL_Raw;
+  extern uint8_t CRAM_Mode;
+}
 
 extern "C" {
-  void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
-    printf("%d\n",1);
+  void libRR_log_branch(uint32_t current_pc, uint32_t target_pc) {
+
   }
+  
+  // void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
+  //   printf("%d\n",1);
+  // }
 
-  void main_state_load(const char *filename)
-  {
-    // TODO: actually load the state here
-  }
+  // void write_rom_mapping() {
 
-  void main_state_save(int format, const char *filename)
-  {
-    // TODO: actually load the state here
-  }
+  // }
 
-  void write_rom_mapping() {
+  void add_console_specific_game_json() {
+    // more info on VDP2 regs: https://segaretro.org/images/8/89/TUTORIAL.pdf
+    // game_json["VDP2"]["RawRegs"] = printBytesToDecimalJSArray((uint8_t*)VDP2::RawRegs, 0x100);
+    
+    // TVMD - TV Mode registers
+    game_json["VDP2"]["TVMD"]["DisplayOn"] = VDP2::DisplayOn;
+    game_json["VDP2"]["TVMD"]["BorderMode"] = VDP2::BorderMode;
+    game_json["VDP2"]["TVMD"]["InterlaceMode"] = VDP2::InterlaceMode;
+    game_json["VDP2"]["TVMD"]["HRes"] = VDP2::HRes;
+    game_json["VDP2"]["TVMD"]["VRes"] = VDP2::VRes;
 
+    // EXTEN - 
+    game_json["VDP2"]["EXTEN"]["ExSyncEnable"] = VDP2::ExSyncEnable;
+    game_json["VDP2"]["EXTEN"]["ExLatchEnable"] = VDP2::ExLatchEnable;
+    game_json["VDP2"]["EXTEN"]["ExBGEnable"] = VDP2::ExBGEnable;
+    game_json["VDP2"]["EXTEN"]["DispAreaSelect"] = VDP2::DispAreaSelect;
+
+    game_json["VDP2"]["VRAMSize"] = VDP2::VRAMSize;
+    game_json["VDP2"]["RAMCTL_Raw"] = VDP2::RAMCTL_Raw;
+    game_json["VDP2"]["CRAM_Mode"] = VDP2::CRAM_Mode;
+    // Documentation only needs to be added once
+    game_json["Documentation"]["Memory"]["VDP2CRAM"] = "Colour RAM for VDP2 - basically the palette for the background layer";
   }
 
 }
