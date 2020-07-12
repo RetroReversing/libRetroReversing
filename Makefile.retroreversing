@@ -16,6 +16,7 @@ SOURCES_CXX += \
     ./libRetroReversing/cdl/CD.cpp \
     ./libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     ./libRetroReversing/png/lodepng.cpp \
+    ./libRetroReversing/consoles/Saturn.cpp \
     ./libRetroReversing/consoles/DummyConsole.cpp
 
 CFLAGS += -I/usr/local/opt/nlohmann_json/include

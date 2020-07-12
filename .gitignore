@@ -34,3 +34,4 @@
 
 websrc/node_modules
 websrc/libRRUI.bundle.js
+websrc/dist/*

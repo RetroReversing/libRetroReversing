@@ -118,3 +118,15 @@ Initially `retro_get_memory_data` seemed perfect for our Reversing Emulator, how
 #define RETRO_MEMORY_VIDEO_RAM   3
 ```
 We need access to all the different specific memory regions such as Boot ROM etc which are too platform specific for libretro itself.
+
+## JSON usage
+
+### Check if key in JSON object
+```c
+your_json.contains("key_name")
+```
+
+### Set to blank object
+```c
+your_json["key_name"] = json::parse("{}");
+```
