@@ -50,7 +50,7 @@ bool should_reverse_jumps = false;
 bool should_change_jumps = false;
 int frame_last_reversed = 0;
 int time_last_reversed = 0;
-string game_name = "";
+string libRR_game_name = "";
 string ucode_crc = "";
 
 // string next_dma_type = "";
@@ -106,7 +106,7 @@ void cdl_keyevents(int keysym, int keymod) {
 
 bool createdCartBackup = false;
 void backupCart() {
-    game_name = alphabetic_only_name((char*)rom_name.c_str(), 21);
+    libRR_game_name = alphabetic_only_name((char*)rom_name.c_str(), 21);
     std::cout << "TODO: backup";
     createdCartBackup = true;
 }
@@ -499,7 +499,7 @@ void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target) {
     current_pc -= 2;
     string current_function = n2hexstr(function_returning_from);
     string current_pc_str = n2hexstr(current_pc);
-    function_playthough_info[game_name+"_func_"+current_function]["returns"]["x"+current_pc_str] = return_target;
+    function_playthough_info[libRR_game_name+"_func_"+current_function]["returns"]["x"+current_pc_str] = return_target;
     // printf("Logged inst: %s \n", name.c_str());
 }
 
@@ -533,7 +533,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target) {
     // } else {
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
-    t.func_name = game_name+"_func_"+jump_target_str;
+    t.func_name = libRR_game_name+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
     t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
@@ -597,7 +597,7 @@ void cdl_log_jump_always(int take_jump, uint32_t jump_target, uint8_t* jump_targ
     } else {
         t.caller_offset = n2hexstr(previous_function_backup);
     }
-    t.func_name = game_name+"_func_"+jump_target_str;
+    t.func_name = libRR_game_name+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
     t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
@@ -1267,6 +1267,6 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
         libRR_isDelaySlot = false;
     }
     // function_playthough_info[game_name+"_func_"+current_function]["assembly"]["x"+current_pc_str] = name + "(0x"+n2hexstr((uint16_t)instruction_bytes)+")";
-    libRR_disassembly["x"+current_pc_str][name + "(0x"+n2hexstr((uint16_t)instruction_bytes)+")"][game_name+"_func_"+current_function]=RRCurrentFrame;
+    libRR_disassembly["x"+current_pc_str][name + "(0x"+n2hexstr((uint16_t)instruction_bytes)+")"][libRR_game_name+"_func_"+current_function]=RRCurrentFrame;
     // printf("Logged inst: %s \n", name.c_str());
 }

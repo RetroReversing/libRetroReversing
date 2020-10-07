@@ -23,7 +23,7 @@ void to_json(json& j, const libRR_paths& p) {
         {"retro_base_directory", p.retro_base_directory},
         {"retro_cd_base_directory", p.retro_cd_base_directory},
         {"retro_cd_path", p.retro_cd_path},
-        {"retro_cd_base_name", p.retro_cd_base_name},
+        // {"retro_cd_base_name", p.retro_cd_base_name},
     };
 }
 

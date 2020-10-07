@@ -30,10 +30,10 @@ std::vector<libRR_save_state> libRR_save_states = {};
 // External Libretro variables
 // 
 extern char retro_save_directory[4096];
+extern char retro_system_directory[4096];
 extern char retro_base_directory[4096];
 extern  char retro_cd_base_directory[4096];
 extern  char retro_cd_path[4096];
-extern char retro_cd_base_name[4096];
 
 void save_playthough_metadata();
 
@@ -84,8 +84,25 @@ void libRR_get_list_of_memory_regions()
   game_json["current_state"] = current_state;
 }
 
+void libRR_setup_retro_base_directory() {
+  // Setup path
+  const char *dir = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+   {
+      snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", dir);
+   }
+   else {
+     snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", retro_save_directory);
+   }
+  // end setup path
+}
+
 void libRR_setup_directories() {
-  libRR_project_directory = retro_base_directory; 
+
+  libRR_setup_retro_base_directory();
+
+  libRR_project_directory = retro_base_directory;
   libRR_project_directory+= "/RE_projects/";
   libRR_project_directory+=current_state.libretro_system_info.library_name;
   libRR_project_directory+="/"+current_state.game_name+"/";
@@ -105,13 +122,40 @@ void read_json_config() {
   cout << playthroughs_json.dump(4) << std::endl;
 }
 
+// TODO: move extract_basename to some sort of file/path utils
+string extract_basename(const char *path)
+{
+  char buf[4096];
+  size_t size = sizeof(buf);
+   const char *base = strrchr(path, '/');
+   if (!base)
+      base = strrchr(path, '\\');
+   if (!base)
+      base = path;
+
+   if (*base == '\\' || *base == '/')
+      base++;
+
+   strncpy(buf, base, size - 1);
+   buf[size - 1] = '\0';
+
+   char *ext = strrchr(buf, '.');
+   if (ext)
+      *ext = '\0';
+
+  return buf;
+}
+
+extern string libRR_game_name;
 void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t _environ_cb)
 {
   environ_cb = _environ_cb;
   printf("Loading a new ROM \n");
   libRR_setup_console_details(environ_cb);
-  
-  current_state.game_name = retro_cd_base_name;
+
+  current_state.game_name = extract_basename(info->path);
+  printf("Game path: %s name: %s\n", info->path, current_state.game_name.c_str());
+  libRR_game_name = current_state.game_name;
   current_state.libretro_game_info = *info;
   current_state.libRR_save_states = libRR_save_states;
 
@@ -124,7 +168,6 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   current_state.paths.retro_base_directory = retro_base_directory;
   current_state.paths.retro_cd_base_directory = retro_cd_base_directory;
   current_state.paths.retro_cd_path = retro_cd_path;
-  current_state.paths.retro_cd_base_name = retro_cd_base_name;
   // 
   // Setup reversing files
   // 

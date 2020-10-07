@@ -10,7 +10,7 @@ std::queue<unsigned long long> playback_button_history;
 bool libRR_should_append_history = false;
 
 void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int total) {
-  // desc = descriptor;
+  // printf("libRR_setInputDescriptor \n");
   total_input_buttons = total;
 
   for (int i=0; i<total_input_buttons; i++) {
@@ -19,17 +19,23 @@ void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int tot
   }
 }
 
+bool libRR_alreadyWarnedAboutEndOfLog = false;
 // 
 // playback_fake_input_state_cb - plays back input
 // 
 int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
       unsigned index, unsigned id) {
-        if(port > 0) {
-          // printf("We only support Port 0 (player 1)\n");
-          return 0;
-        }
+      // printf("playback_fake_input_state_cb\n");
+      if(port > 0) {
+        // printf("We only support Port 0 (player 1)\n");
+        return 0;
+      }
+
       if (playback_button_history.empty()) {
-        printf("WARNING: button history was empty: probably at the end\n");
+        if (!libRR_alreadyWarnedAboutEndOfLog) {
+          printf("WARNING: button history was empty: probably at the end\n");
+          libRR_alreadyWarnedAboutEndOfLog = true;
+        }
         libRR_should_append_history = true;
         libRR_should_playback_input = false;
         return 0;

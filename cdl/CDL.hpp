@@ -52,7 +52,7 @@ struct libRR_paths {
     string retro_base_directory;
     string retro_cd_base_directory;
     string retro_cd_path;
-    string retro_cd_base_name;
+    // string retro_cd_base_name;
 };
 
 // Current state send back to web

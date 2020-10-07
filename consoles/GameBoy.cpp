@@ -5,17 +5,18 @@
 
 extern "C" {
 
+  // SameBoy doesn't have this defined so:
+  char retro_base_directory[4096];
+
   struct retro_memory_map libRR_retromap = { 0 };
 
   struct retro_memory_descriptor libRR_mmap[0];
   int libRR_mmap_descriptors = 0;
 
   // SameBoy's libretro doesn't have these paths defined
-  string retro_save_directory = "libRR_RemeberToSetThis";
-  string retro_base_directory = "libRR_RemeberToSetThis";
-  string retro_cd_base_directory = "libRR_RemeberToSetThis";
-  string retro_cd_path = "libRR_RemeberToSetThis";
-  string retro_cd_base_name = "libRR_RemeberToSetThis";
+  string retro_cd_base_directory = "libRR_RemeberToSetCDBase";
+  string retro_cd_path = "libRR_RemeberToSetCDPATH";
+  string retro_cd_base_name = "libRR_RemeberToBaseName";
   // char retro_system_directory[4096];
   // char retro_save_directory[4096];
   // char retro_game_path[4096];
