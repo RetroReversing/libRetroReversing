@@ -10,6 +10,17 @@ extern "C" {
   struct retro_memory_descriptor libRR_mmap[0];
   int libRR_mmap_descriptors = 0;
 
+  // SameBoy's libretro doesn't have these paths defined
+  string retro_save_directory = "libRR_RemeberToSetThis";
+  string retro_base_directory = "libRR_RemeberToSetThis";
+  string retro_cd_base_directory = "libRR_RemeberToSetThis";
+  string retro_cd_path = "libRR_RemeberToSetThis";
+  string retro_cd_base_name = "libRR_RemeberToSetThis";
+  // char retro_system_directory[4096];
+  // char retro_save_directory[4096];
+  // char retro_game_path[4096];
+  // end Sameboy libretro differences
+
   void libRR_set_retro_memmap(retro_environment_t environ_cb)
   {
     // This should set the memory map for each console

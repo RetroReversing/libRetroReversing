@@ -1244,6 +1244,11 @@ void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
 // C++
 json function_playthough_info = {};
 json libRR_disassembly = {};
+
+// Delay slot variables (only for Archs that support Delay slot Jumps)
+uint32_t libRR_delay_slot_pc = 0;
+bool libRR_isDelaySlot = false;
+
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned a1, unsigned a2) {
     libRR_log_instruction(current_pc, name, a1, arguments);
 }
