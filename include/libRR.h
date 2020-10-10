@@ -44,6 +44,7 @@ extern bool libRR_isDelaySlot;
 extern uint32_t libRR_delay_slot_pc;
 
 // Input 
+extern void libRR_resave_button_state_to_file(string filename = "button_log.bin", int max_number=-1);
 extern void libRR_save_button_state_to_file(string filename  = "button_log.bin");
 extern void libRR_read_button_state_from_file(string filename  = "button_log.bin", int start_frame=0);
 

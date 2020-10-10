@@ -108,6 +108,7 @@ make && /Applications/RetroArch.app/Contents/MacOS/RetroArch -L pokemini_libretr
 
 ## Useful Developer References
 JSON - https://github.com/nlohmann/json
+For more examples see the JSON usage section below
 
 ## We don't use retro_get_memory_data
 Initially `retro_get_memory_data` seemed perfect for our Reversing Emulator, however it is too limited, it only allows 4 different types of memory defined below:
@@ -129,4 +130,18 @@ your_json.contains("key_name")
 ### Set to blank object
 ```c
 your_json["key_name"] = json::parse("{}");
+```
+
+### Check for null
+```c
+if (!libRR_current_playthrough["last_frame"].is_null()) {
+    // value is not null
+}
+```
+
+### erase element of array
+As long as you know the index as an integaer you can do:
+```c
+int i = 2;
+libRR_current_playthrough["states"].erase(i);
 ```

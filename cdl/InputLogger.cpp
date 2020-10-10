@@ -101,6 +101,28 @@ void log_input_state(retro_input_state_t input_cb) {
   printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
 }
 
+// max_number is used if you want to only save up to a particular frame number
+void libRR_resave_button_state_to_file(string filename, int max_number) {
+  std::fstream output_file;
+  // read the state before we open it as an output file
+  libRR_read_button_state_from_file(filename);
+  output_file = std::fstream(filename, std::ios::out | std::ios::binary);
+  printf("libRR_resave_button_state_to_file max_number: %d\n", max_number);
+  int frame_number = 0;
+  while (!playback_button_history.empty()) { 
+    unsigned long long button_state = playback_button_history.front();
+    output_file.write(reinterpret_cast<char*>(&button_state),sizeof(unsigned long long));
+    playback_button_history.pop(); 
+    if (frame_number == max_number) {
+      printf("Resaving button log, found Max value %d \n", frame_number);
+      break;
+    }
+    frame_number++;
+  } 
+  output_file.close();
+  libRR_read_button_state_from_file(filename);
+}
+
 // 
 // # libRR_save_button_state_to_file - save all the keys pressed to a file
 // 

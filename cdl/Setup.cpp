@@ -55,7 +55,9 @@ void init_playthrough(string name) {
   
   save_playthough_metadata();
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin");
-  libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
+  if (!libRR_current_playthrough["last_frame"].is_null()) {
+    libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
+  }
   libRR_should_playback_input = true;
   printf("Loaded last logged frame: %d\n",libRR_last_logged_frame);
 }
@@ -183,6 +185,18 @@ void libRR_handle_emulator_close()
   stop_web_server();
 }
 
+bool libRR_delete_file(string file_name) {
+  const int result = remove( file_name.c_str() );
+  if( result == 0 ){
+      printf( "successfully deleted: %s\n", file_name.c_str() );
+      return true;
+  } else {
+      printf( "Error deleting: %s error: %s\n",file_name.c_str(), strerror( errno ) ); // No such file or directory
+      return false;
+  }
+
+}
+
 bool libRR_write_binary_data_to_file(uint8_t * data, size_t len, string file_name) {
         std::ofstream file(file_name, std::ios_base::binary);
         file.write(reinterpret_cast <char*> (data),len);
@@ -257,6 +271,42 @@ string libRR_load_save_state(int frame) {
 
   return libRR_current_playthrough.dump(4);
 } 
+
+string libRR_delete_save_state(int frame) {
+  string filename = current_playthrough_directory+"save_"+to_string(frame)+".sav";
+  string png_filename = filename+".png";
+  libRR_delete_file(filename);
+  libRR_delete_file(png_filename);
+
+  json j = libRR_current_playthrough["states"];
+  int i=0;
+  json next_latest_state;
+  for (json::iterator it = j.begin(); it != j.end(); ++it) {
+    json current = *it;
+    if (current["frame"] == frame) {
+      // Delete this frame
+      current["frame"] = -1;
+      libRR_current_playthrough["states"].erase(i);
+    } else if (next_latest_state.is_null() || current["frame"]>next_latest_state["frame"]) {
+      // if the one we are deleting is latest then we need to find the next latest
+      next_latest_state = current;
+    }
+    i++;
+  }
+
+  int latest_state_number = libRR_current_playthrough["current_state"]["frame"];
+  if (frame == latest_state_number && !next_latest_state.is_null()) {
+      // User is deleting the last known state so we need special handling
+      libRR_current_playthrough["current_state"] = next_latest_state;
+      libRR_current_playthrough["last_frame"] = next_latest_state["frame"];
+      printf("Since we are deleting the latest state, we will go back to: %d \n", (int)next_latest_state["frame"]);
+      // next we want to remove some entries from the button log
+      libRR_resave_button_state_to_file(current_playthrough_directory+"button_log.bin", (int)next_latest_state["frame"]);
+  }
+
+  save_playthough_metadata();
+  return libRR_current_playthrough.dump(4);
+}
 
 string libRR_create_save_state(string name, int frame) {
 
@@ -491,6 +541,9 @@ string libRR_parse_message_from_web(string message)
   }
   else if (category == "save_state") {
     return libRR_create_save_state(message_json["state"]["name"], RRCurrentFrame);
+  }
+  else if (category == "delete_state") {
+    return libRR_delete_save_state(message_json["state"]["frame"]);
   }
   else if (category == "load_state") {
     printf("WEB UI: Requested Load State\n");
