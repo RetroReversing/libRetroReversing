@@ -23,6 +23,7 @@ bool libRR_alreadyWarnedAboutEndOfLog = false;
 // 
 // playback_fake_input_state_cb - plays back input
 // 
+int lastPlayedBackFrame = 0;
 int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
       unsigned index, unsigned id) {
       // printf("playback_fake_input_state_cb\n");
@@ -41,12 +42,21 @@ int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
         return 0;
       }
 
+      // This can be called multiple times per frame, so we need to only pop it when the frame has changed
       int16_t button_state = playback_button_history.front();
-      playback_button_history.pop();
-      if (button_state>0) {
-        libRR_display_message("Playback Pressed: %d",button_state);
+      if (RRCurrentFrame > lastPlayedBackFrame) {
+        playback_button_history.pop();
+        if (button_state>0) {
+          libRR_display_message("Playback Pressed: %d",button_state);
+        }
+        lastPlayedBackFrame = RRCurrentFrame;
       }
-      return button_state;
+
+      if (id == RETRO_DEVICE_ID_JOYPAD_MASK) {
+        return button_state;
+      }
+
+      return button_state & 1 << id;
 }
 
 retro_input_state_t libRR_playback() {
@@ -161,6 +171,7 @@ void libRR_save_button_state_to_file(string filename) {
 void libRR_read_button_state_from_file(string filename, int start_frame) {
   std::ifstream myfile(filename, std::ios_base::in | std::ios::binary);
   unsigned long long frameInputBitField = 255;
+  lastPlayedBackFrame = 0;
   int loading_frame = 0;
   playback_button_history = {};
   while (myfile.read(reinterpret_cast<char*>(&frameInputBitField), sizeof(unsigned long long)))
@@ -171,6 +182,6 @@ void libRR_read_button_state_from_file(string filename, int start_frame) {
     }
     loading_frame++;
   }
-  printf("Finished Reading input state frame:%d result:%d \n", start_frame, frameInputBitField);
+  printf("Finished Reading input state frame:%d size:%d \n", start_frame, playback_button_history.size());
 
 }

@@ -70,15 +70,16 @@ void libRR_define_console_memory_region(string name, unsigned long long start, u
 void libRR_get_list_of_memory_regions()
 {
   // can we save the memory map to json and send to client?
+  printf("libRR_get_list_of_memory_regions number:%d \n", libRR_retromap.num_descriptors);
   std::vector<retro_memory_descriptor> memory_descriptors;
   for (int i = 0; i < libRR_retromap.num_descriptors; i++)
   {
-    // printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
+    printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
     if (libRR_retromap.descriptors[i].ptr != NULL)
     {
       memory_descriptors.push_back(libRR_retromap.descriptors[i]);
     } else {
-      // printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
+      printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
     }
   }
 
