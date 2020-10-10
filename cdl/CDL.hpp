@@ -27,7 +27,7 @@ string get_header_ascii(uint8_t* mem, uint32_t proper_cart_address);
 string printBytesToStr(uint8_t* mem, uint32_t length) ;
 string printWordsToStr(uint8_t* mem, uint32_t length);
 void save_dram_rw_to_json();
-void readJsonToObject(string filename, json& json_object);
+void readJsonToObject(string filename, json& json_object, string default_json="{}");
 void saveJsonToFile(string filename, json& json_object);
 
 #define Swap4Bytes(val) \

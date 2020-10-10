@@ -32,11 +32,11 @@ std::map<string, string> function_signatures;
 std::map<uint32_t,uint8_t> cached_jumps;
 std::map<uint32_t,string> memory_to_log;
 
-void readJsonToObject(string filename, json& json_object) {
-    // printf("readJsonToObject %s \n", filename.c_str());
+void readJsonToObject(string filename, json& json_object, string default_json) {
+    printf("readJsonToObject %s \n", filename.c_str());
     std::ifstream i(filename);
     if (!i.good()) {
-        json_object = json::parse("{}");
+        json_object = json::parse(default_json);
         return;
     } 
     json temp_json = {};

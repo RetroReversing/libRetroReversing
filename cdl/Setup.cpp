@@ -50,7 +50,7 @@ void init_playthrough(string name) {
 
   readJsonToObject(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
   readJsonToObject(libRR_project_directory+"/notes.json", game_json["notes"]);
-  readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"]);
+  readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"], "[]");
   functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
   
   save_playthough_metadata();
@@ -195,6 +195,13 @@ bool libRR_read_binary_data_from_file(uint8_t * data, size_t len, string file_na
         file.read(reinterpret_cast <char*> (data),len);
         file.close();
         return !file.fail();
+}
+
+extern retro_video_refresh_t video_cb;
+void libRR_video_cb(const void *fb, unsigned int width, unsigned int height, unsigned int pitch) {
+  unsigned int length = pitch * height;
+  video_cb(fb, width, height, pitch);
+  libRR_set_framebuffer(fb, length, width, height, pitch);
 }
 
 void libRR_set_framebuffer(const void *fb, unsigned int length, unsigned int width, unsigned int height, unsigned int pitch) {

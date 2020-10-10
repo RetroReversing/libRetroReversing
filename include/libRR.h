@@ -81,6 +81,7 @@ struct libRR_frame_buffer {
 extern libRR_frame_buffer libRR_current_frame_buffer;
 void libRR_create_png(string filename, libRR_frame_buffer libRR_current_frame_buffer);
 void libRR_set_framebuffer(const void *fb, unsigned int length, unsigned int width, unsigned int height, unsigned int pitch);
+void libRR_video_cb(const void *fb, unsigned int width, unsigned int height, unsigned int pitch);
 
 
 // 
