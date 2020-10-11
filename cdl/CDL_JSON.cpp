@@ -26,7 +26,9 @@ std::map<uint32_t, cdl_dram_cart_map> audio_samples;
 std::map<uint32_t, cdl_dram_cart_map> cart_rom_dma_writes;
 std::map<uint32_t, cdl_dram_cart_map> dma_sp_writes;
 std::map<uint32_t, cdl_labels> labels; // Deprecated: Should now use functions
+// cdl_labels functions is not playthrough specific
 std::map<uint32_t, cdl_labels> functions;
+
 std::map<uint32_t, cdl_jump_return> jump_returns;
 std::map<string, string> function_signatures;
 std::map<uint32_t,uint8_t> cached_jumps;
@@ -40,29 +42,36 @@ void readJsonToObject(string filename, json& json_object) {
         return;
     } 
     json temp_json = {};
-    i >> temp_json;
+    try {
+        i >> temp_json;
+    } catch(...) {
+		std::cerr << "WARNING: json error with file:" << filename << std::endl;
+        json_object = json::parse("{}");
+        return;
+	}
     if (temp_json == NULL) {
         return;
     }
     string dump = temp_json.dump();
     if (temp_json != NULL && dump != "null") {
-        printf("Loading %s as: %s \n", dump.c_str(), filename.c_str());
+        // printf("Loading %s as: %s \n", dump.c_str(), filename.c_str());
         json_object = temp_json;
     }
 }
 
 void saveJsonToFile(string filename, json& json_object) {
-    string dump = json_object.dump();
+    cout << "Saving: " << filename << std::endl;
+    string dump = json_object.dump(2);
     if (dump == "null" || dump == "{}") {
         return;
     }
-    cout << "Saving: " << filename << std::endl;
     std::ofstream o(filename);
     if (o.good()) {
-        o << json_object.dump(4);
+        o << dump;
     } else {
         cout << "ERROR: Failed to write file: " << filename << std::endl;
     }
+    cout << "Save Successful" << std::endl; 
 }
 
 void save_dram_rw_to_json() {

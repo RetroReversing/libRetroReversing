@@ -10,7 +10,11 @@ using json = nlohmann::json;
 #define BitVal(data,y) ( (data>>y) & 1) 
 
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments);
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned a1, unsigned a2);
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n);
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d);
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d, unsigned ea);
+
+string libRR_get_data_for_function(int offset, int length, bool swapEndian, bool asHexString);
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +32,7 @@ extern int libRR_last_logged_frame;
 
 // JSON
 extern json game_json;
-extern json function_playthough_info;
+// extern json function_playthough_info; //function_usage instead
 extern json libRR_disassembly;
 
 // Console specific

@@ -14,6 +14,7 @@ json game_json = {};
 json override_code_json = {};
 json playthroughs_json = {};
 json libRR_current_playthrough = {};
+json playthough_function_usage = {};
 string libRR_project_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
 int libRR_should_Load_EPROM = 0;
@@ -45,15 +46,25 @@ void init_playthrough(string name) {
   current_playthrough_directory = libRR_project_directory+ "/playthroughs/"+name+"/";
   std::__fs::filesystem::create_directories( current_playthrough_directory );
 
+  cout << "About to read JSON files to memory" << std::endl;
+
   readJsonToObject(current_playthrough_directory+"/playthrough.json", libRR_current_playthrough);
   readJsonToObject(current_playthrough_directory+"/resources.json", game_json["cd_data"]["root_files"]);
+  readJsonToObject(current_playthrough_directory+"/function_usage.json", playthough_function_usage);
 
   readJsonToObject(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
   readJsonToObject(libRR_project_directory+"/notes.json", game_json["notes"]);
   readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"]);
-  functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
+  readJsonToObject(libRR_project_directory+"/assembly.json", libRR_disassembly);
+  cout << "About to set functions array" << std::endl;
+  if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
+    // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
+    functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
+  } 
   
+  cout << "About to save playthough metadata" << std::endl;
   save_playthough_metadata();
+  cout << "About to read button state to memory" << std::endl;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin");
   libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
   libRR_should_playback_input = true;
@@ -154,6 +165,11 @@ bool libRR_read_binary_data_from_file(uint8_t * data, size_t len, string file_na
         return !file.fail();
 }
 
+// fb -0 the framebuffer object from libretro
+// length of the full frame buffer
+// width of the screen
+// height of the screen
+// pitch if applicable
 void libRR_set_framebuffer(const void *fb, unsigned int length, unsigned int width, unsigned int height, unsigned int pitch) {
   if (libRR_current_frame_buffer.fb == NULL) {
     printf("set framebuffer length: %d width: %d \n", length, width);
@@ -183,10 +199,12 @@ void save_playthough_metadata() {
   saveJsonToFile(current_playthrough_directory+"/playthrough.json", libRR_current_playthrough);
   saveJsonToFile(current_playthrough_directory+"/resources.json", game_json["cd_data"]["root_files"]);
   saveJsonToFile(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
+  saveJsonToFile(current_playthrough_directory+"/function_usage.json", playthough_function_usage);
 
   // These files are Game specific rather than playthrough specific
   saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
   saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
+  saveJsonToFile(libRR_project_directory+"/assembly.json", libRR_disassembly);
 }
 
 void libRR_reset(unsigned int reset_frame) {
@@ -296,8 +314,8 @@ string get_strings_for_web(string memory_name, int offset, int length) {
   return "Strings go here";
 }
 
-string libRR_get_data_for_function(int offset, int length, bool swapEndian) {
-  printf("libRR_get_data_for_function offset: %d length: %d \n", offset, length);
+string libRR_get_data_for_function(int offset, int length, bool swapEndian, bool asHexString = false) {
+  // printf("libRR_get_data_for_function offset: %d length: %d \n", offset, length);
   for (auto &i : current_state.memory_descriptors)
   {
     int end = i.start + i.len;
@@ -308,10 +326,15 @@ string libRR_get_data_for_function(int offset, int length, bool swapEndian) {
         length = end - (offset);
       }
       
-      printf("Found Name: %s start: %d end: %d \n", i.addrspace, i.start, end);
+      if (asHexString) {
+        return printBytesToStr((uint8_t *)(i.ptr) + relative_offset, length, swapEndian);
+      }
+      // printf("Found Name: %s start: %d end: %d \n", i.addrspace, i.start, end);
       return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + relative_offset, length, swapEndian);
     }
   }
+  printf("libRR_get_data_for_function Failed to find: %d \n", offset);
+  return "Failed to find data";
 }
 
 string get_memory_for_web(string memory_name, int offset, int length, bool swapEndian)
@@ -378,6 +401,10 @@ void libRR_display_message(const char *format, ...)
 
   environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
   free(str);
+}
+
+void upload_linker_map(json linker_map) {
+
 }
 
 // Settings
@@ -462,6 +489,28 @@ string libRR_parse_message_from_web(string message)
     game_json["notes"][category][name] = message_json["state"];
     saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
   }
+  else if (category == "edit_function") {
+    printf("Edit Function %s\n", message_json["state"].dump().c_str());
+    for (auto& it : functions) {
+      if (it.second.func_offset == message_json["state"]["func_offset"]) {
+        printf("Found function to update %s \n", message_json["state"]["func_offset"].dump().c_str());
+        functions[it.first].func_name = message_json["state"]["func_name"];
+        // functions[it.first].additional = message_json["state"]["additional"];
+        break;
+      }
+    }
+    game_json["functions"] = functions;
+    printf("Saving functions.json \n");
+    saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
+  }
+  else if (category == "upload_linker_map") {
+    saveJsonToFile(libRR_project_directory+"/linker_map.json", message_json["state"]);
+    upload_linker_map(message_json["state"]);
+    printf("Uploaded linker map\n");
+  }
+  else if (category == "game_information") {
+    printf("get game information \n");
+  }
   else
   {
     printf("Unknown category %s with state: %s\n", category.c_str(), message_json["state"].dump().c_str());
@@ -471,12 +520,19 @@ string libRR_parse_message_from_web(string message)
 
   // Update game_json based on emulator settings
   game_json["current_state"] = current_state;
+  printf("About to set playthrough\n");
   game_json["playthrough"] = libRR_current_playthrough;
   game_json["cd_tracks"] = libRR_cd_tracks;
+  printf("About to set functions\n");
   game_json["functions"] = functions;
-  game_json["functions_playthough"] = function_playthough_info;
+  // cout << game_json["functions"].dump() << std::endl;
+  printf("About to set function_usage\n");
+  game_json["function_usage"] = playthough_function_usage;
+  printf("About to set functions_playthrough\n");
+  // game_json["functions_playthough"] = function_playthough_info;
   game_json["assembly"] = libRR_disassembly;
   add_console_specific_game_json();
+  printf("About to set return dump to client\n");
   
   return game_json.dump(4);
 
