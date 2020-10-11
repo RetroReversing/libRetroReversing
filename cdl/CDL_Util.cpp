@@ -137,15 +137,16 @@ void to_json(json& j, const cdl_labels& p) {
         {"return_offset_from_start", p.return_offset_from_start},
         {"function_bytes", p.function_bytes},
         {"stack_trace", p.stack_trace},
-        {"function_bytes_endian", p.function_bytes_endian},
-        {"read_addresses", p.read_addresses},
-        {"write_addresses", p.write_addresses},
         {"isRenamed", p.isRenamed},
-        {"many_memory_reads", p.many_memory_reads},
-        {"many_memory_writes", p.many_memory_writes},
-        {"function_calls", p.function_calls},
-        {"printfs", p.printfs},
-        {"notes", p.notes},
+        {"additional", p.additional},
+        // {"function_bytes_endian", p.function_bytes_endian},
+        // {"read_addresses", p.read_addresses},
+        // {"write_addresses", p.write_addresses},
+        // {"many_memory_reads", p.many_memory_reads},
+        // {"many_memory_writes", p.many_memory_writes},
+        // {"function_calls", p.function_calls},
+        // {"printfs", p.printfs},
+        // {"notes", p.notes},
     };
 }
 void from_json(const json& j, cdl_labels& p) {
@@ -156,13 +157,14 @@ void from_json(const json& j, cdl_labels& p) {
     j.at("return_offset_from_start").get_to(p.return_offset_from_start);
     j.at("function_bytes").get_to(p.function_bytes);
     j.at("stack_trace").get_to(p.stack_trace);
-    j.at("function_bytes_endian").get_to(p.function_bytes_endian);
-    j.at("read_addresses").get_to(p.read_addresses);
-    j.at("write_addresses").get_to(p.write_addresses);
     j.at("isRenamed").get_to(p.isRenamed);
-    j.at("many_memory_reads").get_to(p.many_memory_reads);
-    j.at("many_memory_writes").get_to(p.many_memory_writes);
-    j.at("function_calls").get_to(p.function_calls);
+    p.additional = j.at("additional");//.get_to(p.additional);
+    // j.at("function_bytes_endian").get_to(p.function_bytes_endian);
+    // j.at("read_addresses").get_to(p.read_addresses);
+    // j.at("write_addresses").get_to(p.write_addresses);
+    // j.at("many_memory_reads").get_to(p.many_memory_reads);
+    // j.at("many_memory_writes").get_to(p.many_memory_writes);
+    // j.at("function_calls").get_to(p.function_calls);
     //j.at("notes").get_to(p.notes);
 }
 
@@ -250,9 +252,26 @@ void from_json(const json& j, cdl_dma& p) {
 
 string printBytesToStr(uint8_t* mem, uint32_t length=0x18) {
     std::stringstream sstream;
-    //sstream << std::hex << std::setfill ('0') << std::setw(sizeof(T)*2);
     for (int i=0; i<=length; i++) {
         sstream << n2hexstr((uint8_t)mem[i], 2);
+    }
+    return sstream.str();
+}
+
+string printBytesToStr(uint8_t* mem, uint32_t length=0x18, bool swapEndian=false) {
+    std::stringstream sstream;
+    for (int i=0; i<=length; i++) {
+        // Start endian swap
+        uint8_t byte_to_write = mem[i];
+        if (swapEndian) {
+            if (i%2 == 0) {
+                byte_to_write = mem[i+1];
+            } else {
+                byte_to_write = mem[i-1];
+            }
+        }
+        // end endian swap
+        sstream << n2hexstr(byte_to_write, 2);
     }
     return sstream.str();
 }

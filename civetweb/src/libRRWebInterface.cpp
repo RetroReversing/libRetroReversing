@@ -29,7 +29,7 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 	long long r_total = 0;
 	int r, s;
 
-	char buf[2048];
+	char buf[2048*16];
 	memset(buf, 0, sizeof buf);
 
 	const struct mg_request_info *ri = mg_get_request_info(conn);

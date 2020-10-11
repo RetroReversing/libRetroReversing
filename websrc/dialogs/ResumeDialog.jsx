@@ -8,6 +8,8 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { sendActionToServer } from '../server';
 import { FormControl, FormLabel, FormGroup, FormControlLabel, Switch } from '@material-ui/core';
+import ChipInput from 'material-ui-chip-input'
+
 
 export default function ResumeDialog( { setCurrentDialog, playerState, setPlayerState, open = true }) {
 
@@ -32,21 +34,31 @@ export default function ResumeDialog( { setCurrentDialog, playerState, setPlayer
   return (
     <div>
       <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">Save State</DialogTitle>
+        <DialogTitle id="form-dialog-title">Run</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This will resume the game at a save state, you have some options for what logging to do:
-            * Full function logging
-            * Full memory logging
+            This will resume the game at the chosen save state, input will be replayed until the end of the log.
           </DialogContentText>
+          
           <FormControl component="fieldset">
             <FormLabel component="legend">Additional Logging</FormLabel>
             <FormGroup>
+            <FormControlLabel
+                  control={<Switch checked={playerState.allowOverrides} onChange={(e)=>setPlayerState({...playerState, allowOverrides:e.target.checked})} name="allowOverrides" />}
+                  label="Allow Overrides"
+                />
               <FormControlLabel
                 control={<Switch checked={playerState.fullLogging} onChange={(e)=>setPlayerState({...playerState, fullLogging:e.target.checked})} name="fullFunctionLogging" />}
-                label="Full Function Logging"
+                label="All Functions"
               />
-              {JSON.stringify(playerState)}
+              <FormControlLabel
+                labelPlacement={"start"}
+                control={<ChipInput
+                  value={playerState.fullFrames || []}
+                  onChange={(chips) =>setPlayerState({...playerState, fullFrames:chips})}
+                />}
+                label="Full Frames: "
+              />
             </FormGroup>
           </FormControl>
           

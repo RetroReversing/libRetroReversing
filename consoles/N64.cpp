@@ -1,5 +1,28 @@
 #include "../cdl/CDL.hpp"
 
+const char *register_names[] = {
+    "$r0",
+    "$at",
+    "v0", "v1",
+    "a0", "a1", "a2", "a3",
+    "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+    "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+    "t8", "t9",
+    "k0", "k1",
+    "$gp",
+    "$sp",
+    "sB",
+    "$ra"
+};
+#define REGISTER_A0 4
+#define REGISTER_A1 5
+#define REGISTER_A2 6
+#define REGISTER_A3 7
+#define REGISTER_GP 28
+#define REGISTER_SP 29
+#define REGISTER_SB  30
+#define REGISTER_RA  31
+
 // these are all the data regions
 // for assembly regions check out the tlb
 string create_n64_split_regions(cdl_dma d) { //uint8_t* header_bytes, uint32_t proper_cart_address, uint32_t length, uint32_t dram_addr, uint32_t frame,  bool is_assembly, uint32_t tbl_mapped_addr) {

@@ -1,0 +1,22 @@
+.disasmRow {
+  display: flex;
+}
+
+.disasmHeaderRow {
+  display: flex;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.disasmColOffset {
+  font-weight: 700;
+}
+
+.disasmRow div {
+  padding-left: 5px;
+  min-width: 200px;
+}
+
+.disasmColBytes {
+  color: #95AFBA;
+}

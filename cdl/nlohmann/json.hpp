@@ -14025,7 +14025,10 @@ class serializer
             }
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                o->write_characters("unknown", 7);
+                printf("\n\n ERROR Weird error writing unknown to json file \n");
+                // assert(false);  // LCOV_EXCL_LINE
+                return;
         }
     }
 

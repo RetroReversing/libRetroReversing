@@ -112,7 +112,7 @@ export function MemoryViewer(props) {
 
   const subTabs = {
     0: <HexViewer buffer={data} rowLength={rowLength} setLength={4} offset={props?.offset || props?.memory?.start} />,
-    1: <DisasmViewer buffer={data} memory={props.memory} function={props.function} />,
+    1: <DisasmViewer buffer={data} memory={props.memory} isFunction={props.function} functionObj={props.functionObj} />,
     2: <VisualViewer buffer={data} />,
     3: <CodeOverride buffer={data} memory={props.memory} />,
     4: <NotesViewer buffer={data} memory={props.memory} />,

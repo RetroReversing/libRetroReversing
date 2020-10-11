@@ -24,6 +24,7 @@ void printf_endian_swap(const char* data);
 string string_endian_swap(const char* data);
 string alphabetic_only_name(char* mem, int length);
 string get_header_ascii(uint8_t* mem, uint32_t proper_cart_address);
+string printBytesToStr(uint8_t* mem, uint32_t length, bool swapEndian) ;
 string printBytesToStr(uint8_t* mem, uint32_t length) ;
 string printWordsToStr(uint8_t* mem, uint32_t length);
 void save_dram_rw_to_json();
@@ -108,6 +109,12 @@ struct cdl_dram_cart_map {
     string dram_offset;
     string rom_offset;
 };
+struct cdl_playthrough_function {
+    uint32_t first_frame_access;
+    uint32_t last_frame_access;
+    uint32_t number_of_calls;
+    uint32_t number_of_frames; // number of frames that use this function
+};
 struct cdl_labels {
     string func_offset;
     string caller_offset;
@@ -117,6 +124,7 @@ struct cdl_labels {
     uint32_t return_offset_from_start;
     string function_bytes;
     string function_bytes_endian;
+    // uint32_t parameter_count;
     std::map<uint32_t, string> function_calls;
     std::map<string, string> read_addresses;
     std::map<string, string> write_addresses;
@@ -127,6 +135,7 @@ struct cdl_labels {
     bool many_memory_writes;
     bool many_memory_reads;
     bool generatedSignature;
+    json additional;
 };
 struct cdl_jump_return {
     string func_offset;

@@ -16,6 +16,8 @@ using namespace std;
 
 extern json fileConfig;
 extern json reConfig;
+extern json playthough_function_usage;
+
 json libultra_signatures;
 json linker_map_file;
 #define USE_CDL 1;
@@ -392,15 +394,8 @@ void cdl_common_log_tag(const char* tag) {
 }
 
 void cdl_log_audio_reg_access() {
-    // if (audio_functions.find(current_function) != audio_functions.end() ) 
-    //     return;
-    // if (function_stack.size() ==0 || labels.size() ==0 || function_stack.size() > 0xF) {
-    //     return;
-    // }
-    // next_dma_type = "audio";
     // TODO speed this up with a check first
     add_tag_to_function("_audioRegAccess", function_stack.back());
-    //cout << std::hex << labels[function_stack.back()].func_name << " function is audio\n";
 }
 
 string print_function_stack_trace() {
@@ -481,6 +476,7 @@ void cdl_log_jump_cached(int take_jump, uint32_t jump_target, uint8_t* jump_targ
 int number_of_functions = 0;
 bool libRR_full_function_log = false;
 int last_return_address = 0;
+
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target) {
     auto function_returning_from = function_stack.back();
     auto presumed_return_address = previous_ra.back();
@@ -496,10 +492,29 @@ void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target) {
         return;
     }
     // For saturn we remove 2 from the program counter, but this will vary per console
-    current_pc -= 2;
+    // we only want to return 2 and not 4 because we want to include the delay slot instruction
+    current_pc -= 2; 
     string current_function = n2hexstr(function_returning_from);
     string current_pc_str = n2hexstr(current_pc);
-    function_playthough_info[libRR_game_name+"_func_"+current_function]["returns"]["x"+current_pc_str] = return_target;
+    // string function_key = current_function;
+    playthough_function_usage[current_function]["returns"][current_pc_str] = return_target;
+
+    // TODO: Calculate Function Signature so we can check for its name
+    int length = current_pc - function_returning_from;
+    string length_str = n2hexstr(length);
+    playthough_function_usage[current_function]["lengths"][length_str] = length;
+    if (length > 0 && length < 200) {
+        if (playthough_function_usage[current_function]["signatures"].contains(length_str)) {
+
+        } else {
+            printf("About to get length: %d \n", length);
+            playthough_function_usage[current_function]["signatures"][n2hexstr(length)] = libRR_get_data_for_function(function_returning_from, length+1, true, true);
+        }
+    }    
+
+    // string bytes_with_branch_delay = printBytesToStr(jump_data[previous_function_backup], byte_len+4)+"_"+n2hexstr(length+4);
+    // string word_pattern = printWordsToStr(jump_data[previous_function_backup], byte_len+4)+" L"+n2hexstr(length+4,4);
+    // TODO: need to get the moment where the bytes for the function are located 
     // printf("Logged inst: %s \n", name.c_str());
 }
 
@@ -507,24 +522,48 @@ void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target) {
 
 // libRR_log_full_function_call is expensive as it does extensive logging
 void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
-    // TODO: log assembly instructions
+    // Instead of using function name, we just use the location
+    string function_name = /*game_name + "_func_" +*/ n2hexstr(jump_target);
+    // printf("libRR_log_full_function_call Full function logging on %s \n", print_function_stack_trace().c_str());
+    // This is playthough specific
+    if (!playthough_function_usage.contains(function_name)) {
+        // printf("Adding new function %s \n", function_name.c_str());
+        playthough_function_usage[function_name] = json::parse("{}");
+        playthough_function_usage[function_name]["first_frame_access"] = RRCurrentFrame;
+        playthough_function_usage[function_name]["number_of_frames"]=0;
+        playthough_function_usage[function_name]["last_frame_access"] = 0;
+        playthough_function_usage[function_name]["number_of_calls_per_frame"] = 1;
+    }
+    else if (RRCurrentFrame < playthough_function_usage[function_name]["last_frame_access"]) {
+        // we have already ran this frame before, probably replaying, no need to add more logging
+        return;
+    }
+    if (RRCurrentFrame > playthough_function_usage[function_name]["last_frame_access"]) {
+        playthough_function_usage[function_name]["last_frame_access"] = RRCurrentFrame;
+        playthough_function_usage[function_name]["number_of_frames"]= (int)playthough_function_usage[function_name]["number_of_frames"]+1;
+        playthough_function_usage[function_name]["number_of_calls_per_frame"]=0;
+    } 
+    else if (RRCurrentFrame == playthough_function_usage[function_name]["last_frame_access"]) {
+        // we are in the same frame so its called more than once per frame
+        playthough_function_usage[function_name]["number_of_calls_per_frame"]=(int)playthough_function_usage[function_name]["number_of_calls_per_frame"]+1;
+    }
     // TODO: log read/writes to memory
     // TODO: calculate return and paramerters
     // TODO: find out how long the function is
-    // printf("Full function logging on %s \n", print_function_stack_trace().c_str());
 }
 
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target) {
     last_return_address = current_pc;
     function_stack.push_back(jump_target);
     previous_ra.push_back(current_pc);
+    if (libRR_full_function_log) {
+        libRR_log_full_function_call(current_pc, jump_target);
+    }
     if (functions.find(jump_target) != functions.end() ) {
         // We have already logged this function, so ignore for now
-        if (libRR_full_function_log) {
-            libRR_log_full_function_call(current_pc, jump_target);
-        }
         return;
     }
+    // We have never logged this function so lets create it
     auto t = cdl_labels();
     string jump_target_str = n2hexstr(jump_target);
     t.func_offset = jump_target_str;
@@ -535,10 +574,11 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target) {
     // }
     t.func_name = libRR_game_name+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
-    t.stack_trace = print_function_stack_trace();
+    // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
     t.many_memory_reads = false;
     t.many_memory_writes = false;
+    t.additional["callers"][print_function_stack_trace()] = RRCurrentFrame;
     printf("Logged new function: %s target:%d number_of_functions:%d \n", t.func_name.c_str(), jump_target, number_of_functions);
     functions[jump_target] = t;
     number_of_functions++;
@@ -552,29 +592,6 @@ void log_function_call(uint32_t function_that_is_being_called) {
     if (labels[function_that_is_calling].isRenamed || labels[function_that_is_calling].doNotLog) return;
     labels[function_that_is_calling].function_calls[function_that_is_being_called] = labels[function_that_is_being_called].func_name;
 }
-
-const char *register_names[] = {
-    "$r0",
-    "$at",
-    "v0", "v1",
-    "a0", "a1", "a2", "a3",
-    "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-    "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-    "t8", "t9",
-    "k0", "k1",
-    "$gp",
-    "$sp",
-    "sB",
-    "$ra"
-};
-#define REGISTER_A0 4
-#define REGISTER_A1 5
-#define REGISTER_A2 6
-#define REGISTER_A3 7
-#define REGISTER_GP 28
-#define REGISTER_SP 29
-#define REGISTER_SB  30
-#define REGISTER_RA  31
 
 void cdl_log_jump_always(int take_jump, uint32_t jump_target, uint8_t* jump_target_memory, uint32_t ra, uint32_t pc) {
     add_note(ra-8, pc, "Call (jal)");
@@ -1242,31 +1259,57 @@ void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
 } // end extern C
 
 // C++
-json function_playthough_info = {};
+
 json libRR_disassembly = {};
 
-// Delay slot variables (only for Archs that support Delay slot Jumps)
-uint32_t libRR_delay_slot_pc = 0;
-bool libRR_isDelaySlot = false;
+bool replace(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = str.find(from);
+    if(start_pos == std::string::npos)
+        return false;
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
 
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned a1, unsigned a2) {
-    libRR_log_instruction(current_pc, name, a1, arguments);
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d, unsigned ea) {
+    replace(name, "%EA", "0x"+n2hexstr(ea));
+    libRR_log_instruction(current_pc, name, instruction_bytes, arguments, m, n, imm, d);
+}
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d) {
+    replace(name, "#imm", "#"+to_string(imm));
+    replace(name, "disp", ""+to_string(d));
+    if (name.find("SysRegs") != std::string::npos) {
+        replace(name, "SysRegs[#0]", "MACH");
+        replace(name, "SysRegs[#1]", "MACL");
+        replace(name, "SysRegs[#2]", "PR");
+    }
+    libRR_log_instruction(current_pc, name, instruction_bytes, arguments, m, n);
+}
+
+
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n) {
+    if (!libRR_full_function_log) {
+        return;
+    }
+    replace(name, "Rm", "R"+to_string(m));
+    replace(name, "Rn", "R"+to_string(n));
+    libRR_log_instruction(current_pc, name, instruction_bytes, arguments);
 }
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments) {
     if (!libRR_full_function_log) {
         return;
     }
     // For saturn we remove 2 from the program counter, but this will vary per console
-    current_pc -= 2;
-    string current_function = n2hexstr(function_stack.back());
+    current_pc -= 4; // was -2
+    // string current_function = n2hexstr(function_stack.back());
     string current_pc_str = n2hexstr(current_pc);
+    
     // printf("libRR_log_instruction %s \n", current_function.c_str());
     if (libRR_isDelaySlot) {
-        current_pc_str = n2hexstr(libRR_delay_slot_pc);
+        current_pc_str = n2hexstr(libRR_delay_slot_pc - 2); //subtract 2 as pc is ahead
         // printf("Delay Slot %s \n", current_pc_str.c_str());
         libRR_isDelaySlot = false;
     }
-    // function_playthough_info[game_name+"_func_"+current_function]["assembly"]["x"+current_pc_str] = name + "(0x"+n2hexstr((uint16_t)instruction_bytes)+")";
-    libRR_disassembly["x"+current_pc_str][name + "(0x"+n2hexstr((uint16_t)instruction_bytes)+")"][libRR_game_name+"_func_"+current_function]=RRCurrentFrame;
-    // printf("Logged inst: %s \n", name.c_str());
+    string hexBytes = n2hexstr((uint16_t)instruction_bytes);
+    libRR_disassembly[current_pc_str][name]["frame"]=RRCurrentFrame;
+    libRR_disassembly[current_pc_str][name]["bytes"]=hexBytes;
 }
