@@ -10,7 +10,7 @@ std::queue<unsigned long long> playback_button_history;
 bool libRR_should_append_history = false;
 
 void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int total) {
-  // desc = descriptor;
+  // printf("libRR_setInputDescriptor \n");
   total_input_buttons = total;
 
   for (int i=0; i<total_input_buttons; i++) {
@@ -19,28 +19,44 @@ void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int tot
   }
 }
 
+bool libRR_alreadyWarnedAboutEndOfLog = false;
 // 
 // playback_fake_input_state_cb - plays back input
 // 
+int lastPlayedBackFrame = 0;
 int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
       unsigned index, unsigned id) {
-        if(port > 0) {
-          // printf("We only support Port 0 (player 1)\n");
-          return 0;
-        }
+      // printf("playback_fake_input_state_cb\n");
+      if(port > 0) {
+        // printf("We only support Port 0 (player 1)\n");
+        return 0;
+      }
+
       if (playback_button_history.empty()) {
-        printf("WARNING: button history was empty: probably at the end\n");
+        if (!libRR_alreadyWarnedAboutEndOfLog) {
+          printf("WARNING: button history was empty: probably at the end\n");
+          libRR_alreadyWarnedAboutEndOfLog = true;
+        }
         libRR_should_append_history = true;
         libRR_should_playback_input = false;
         return 0;
       }
 
+      // This can be called multiple times per frame, so we need to only pop it when the frame has changed
       int16_t button_state = playback_button_history.front();
-      playback_button_history.pop();
-      if (button_state>0) {
-        libRR_display_message("Playback Pressed: %d",button_state);
+      if (RRCurrentFrame > lastPlayedBackFrame) {
+        playback_button_history.pop();
+        if (button_state>0) {
+          libRR_display_message("Playback Pressed: %d",button_state);
+        }
+        lastPlayedBackFrame = RRCurrentFrame;
       }
-      return button_state;
+
+      if (id == RETRO_DEVICE_ID_JOYPAD_MASK) {
+        return button_state;
+      }
+
+      return button_state & 1 << id;
 }
 
 retro_input_state_t libRR_playback() {
@@ -95,6 +111,28 @@ void log_input_state(retro_input_state_t input_cb) {
   printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
 }
 
+// max_number is used if you want to only save up to a particular frame number
+void libRR_resave_button_state_to_file(string filename, int max_number) {
+  std::fstream output_file;
+  // read the state before we open it as an output file
+  libRR_read_button_state_from_file(filename);
+  output_file = std::fstream(filename, std::ios::out | std::ios::binary);
+  printf("libRR_resave_button_state_to_file max_number: %d\n", max_number);
+  int frame_number = 0;
+  while (!playback_button_history.empty()) { 
+    unsigned long long button_state = playback_button_history.front();
+    output_file.write(reinterpret_cast<char*>(&button_state),sizeof(unsigned long long));
+    playback_button_history.pop(); 
+    if (frame_number == max_number) {
+      printf("Resaving button log, found Max value %d \n", frame_number);
+      break;
+    }
+    frame_number++;
+  } 
+  output_file.close();
+  libRR_read_button_state_from_file(filename);
+}
+
 // 
 // # libRR_save_button_state_to_file - save all the keys pressed to a file
 // 
@@ -133,6 +171,7 @@ void libRR_save_button_state_to_file(string filename) {
 void libRR_read_button_state_from_file(string filename, int start_frame) {
   std::ifstream myfile(filename, std::ios_base::in | std::ios::binary);
   unsigned long long frameInputBitField = 255;
+  lastPlayedBackFrame = 0;
   int loading_frame = 0;
   playback_button_history = {};
   while (myfile.read(reinterpret_cast<char*>(&frameInputBitField), sizeof(unsigned long long)))
@@ -143,6 +182,6 @@ void libRR_read_button_state_from_file(string filename, int start_frame) {
     }
     loading_frame++;
   }
-  printf("Finished Reading input state frame:%d result:%d \n", start_frame, frameInputBitField);
+  printf("Finished Reading input state frame:%d size:%d \n", start_frame, playback_button_history.size());
 
 }

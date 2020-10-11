@@ -31,10 +31,10 @@ std::vector<libRR_save_state> libRR_save_states = {};
 // External Libretro variables
 // 
 extern char retro_save_directory[4096];
+extern char retro_system_directory[4096];
 extern char retro_base_directory[4096];
 extern  char retro_cd_base_directory[4096];
 extern  char retro_cd_path[4096];
-extern char retro_cd_base_name[4096];
 
 void save_playthough_metadata();
 
@@ -54,7 +54,7 @@ void init_playthrough(string name) {
 
   readJsonToObject(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
   readJsonToObject(libRR_project_directory+"/notes.json", game_json["notes"]);
-  readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"]);
+  readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"], "[]");
   readJsonToObject(libRR_project_directory+"/assembly.json", libRR_disassembly);
   cout << "About to set functions array" << std::endl;
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
@@ -66,7 +66,9 @@ void init_playthrough(string name) {
   save_playthough_metadata();
   cout << "About to read button state to memory" << std::endl;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin");
-  libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
+  if (!libRR_current_playthrough["last_frame"].is_null()) {
+    libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
+  }
   libRR_should_playback_input = true;
   printf("Loaded last logged frame: %d\n",libRR_last_logged_frame);
 }
@@ -79,15 +81,16 @@ void libRR_define_console_memory_region(string name, unsigned long long start, u
 void libRR_get_list_of_memory_regions()
 {
   // can we save the memory map to json and send to client?
+  printf("libRR_get_list_of_memory_regions number:%d \n", libRR_retromap.num_descriptors);
   std::vector<retro_memory_descriptor> memory_descriptors;
   for (int i = 0; i < libRR_retromap.num_descriptors; i++)
   {
-    // printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
+    printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
     if (libRR_retromap.descriptors[i].ptr != NULL)
     {
       memory_descriptors.push_back(libRR_retromap.descriptors[i]);
     } else {
-      // printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
+      printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
     }
   }
 
@@ -95,8 +98,25 @@ void libRR_get_list_of_memory_regions()
   game_json["current_state"] = current_state;
 }
 
+void libRR_setup_retro_base_directory() {
+  // Setup path
+  const char *dir = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+   {
+      snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", dir);
+   }
+   else {
+     snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", retro_save_directory);
+   }
+  // end setup path
+}
+
 void libRR_setup_directories() {
-  libRR_project_directory = retro_base_directory; 
+
+  libRR_setup_retro_base_directory();
+
+  libRR_project_directory = retro_base_directory;
   libRR_project_directory+= "/RE_projects/";
   libRR_project_directory+=current_state.libretro_system_info.library_name;
   libRR_project_directory+="/"+current_state.game_name+"/";
@@ -116,13 +136,40 @@ void read_json_config() {
   cout << playthroughs_json.dump(4) << std::endl;
 }
 
+// TODO: move extract_basename to some sort of file/path utils
+string extract_basename(const char *path)
+{
+  char buf[4096];
+  size_t size = sizeof(buf);
+   const char *base = strrchr(path, '/');
+   if (!base)
+      base = strrchr(path, '\\');
+   if (!base)
+      base = path;
+
+   if (*base == '\\' || *base == '/')
+      base++;
+
+   strncpy(buf, base, size - 1);
+   buf[size - 1] = '\0';
+
+   char *ext = strrchr(buf, '.');
+   if (ext)
+      *ext = '\0';
+
+  return buf;
+}
+
+extern string libRR_game_name;
 void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t _environ_cb)
 {
   environ_cb = _environ_cb;
   printf("Loading a new ROM \n");
   libRR_setup_console_details(environ_cb);
-  
-  current_state.game_name = retro_cd_base_name;
+
+  current_state.game_name = extract_basename(info->path);
+  printf("Game path: %s name: %s\n", info->path, current_state.game_name.c_str());
+  libRR_game_name = current_state.game_name;
   current_state.libretro_game_info = *info;
   current_state.libRR_save_states = libRR_save_states;
 
@@ -135,7 +182,6 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   current_state.paths.retro_base_directory = retro_base_directory;
   current_state.paths.retro_cd_base_directory = retro_cd_base_directory;
   current_state.paths.retro_cd_path = retro_cd_path;
-  current_state.paths.retro_cd_base_name = retro_cd_base_name;
   // 
   // Setup reversing files
   // 
@@ -151,6 +197,18 @@ void libRR_handle_emulator_close()
   stop_web_server();
 }
 
+bool libRR_delete_file(string file_name) {
+  const int result = remove( file_name.c_str() );
+  if( result == 0 ){
+      printf( "successfully deleted: %s\n", file_name.c_str() );
+      return true;
+  } else {
+      printf( "Error deleting: %s error: %s\n",file_name.c_str(), strerror( errno ) ); // No such file or directory
+      return false;
+  }
+
+}
+
 bool libRR_write_binary_data_to_file(uint8_t * data, size_t len, string file_name) {
         std::ofstream file(file_name, std::ios_base::binary);
         file.write(reinterpret_cast <char*> (data),len);
@@ -163,6 +221,13 @@ bool libRR_read_binary_data_from_file(uint8_t * data, size_t len, string file_na
         file.read(reinterpret_cast <char*> (data),len);
         file.close();
         return !file.fail();
+}
+
+extern retro_video_refresh_t video_cb;
+void libRR_video_cb(const void *fb, unsigned int width, unsigned int height, unsigned int pitch) {
+  unsigned int length = pitch * height;
+  video_cb(fb, width, height, pitch);
+  libRR_set_framebuffer(fb, length, width, height, pitch);
 }
 
 // fb -0 the framebuffer object from libretro
@@ -225,6 +290,42 @@ string libRR_load_save_state(int frame) {
 
   return libRR_current_playthrough.dump(4);
 } 
+
+string libRR_delete_save_state(int frame) {
+  string filename = current_playthrough_directory+"save_"+to_string(frame)+".sav";
+  string png_filename = filename+".png";
+  libRR_delete_file(filename);
+  libRR_delete_file(png_filename);
+
+  json j = libRR_current_playthrough["states"];
+  int i=0;
+  json next_latest_state;
+  for (json::iterator it = j.begin(); it != j.end(); ++it) {
+    json current = *it;
+    if (current["frame"] == frame) {
+      // Delete this frame
+      current["frame"] = -1;
+      libRR_current_playthrough["states"].erase(i);
+    } else if (next_latest_state.is_null() || current["frame"]>next_latest_state["frame"]) {
+      // if the one we are deleting is latest then we need to find the next latest
+      next_latest_state = current;
+    }
+    i++;
+  }
+
+  int latest_state_number = libRR_current_playthrough["current_state"]["frame"];
+  if (frame == latest_state_number && !next_latest_state.is_null()) {
+      // User is deleting the last known state so we need special handling
+      libRR_current_playthrough["current_state"] = next_latest_state;
+      libRR_current_playthrough["last_frame"] = next_latest_state["frame"];
+      printf("Since we are deleting the latest state, we will go back to: %d \n", (int)next_latest_state["frame"]);
+      // next we want to remove some entries from the button log
+      libRR_resave_button_state_to_file(current_playthrough_directory+"button_log.bin", (int)next_latest_state["frame"]);
+  }
+
+  save_playthough_metadata();
+  return libRR_current_playthrough.dump(4);
+}
 
 string libRR_create_save_state(string name, int frame) {
 
@@ -468,6 +569,9 @@ string libRR_parse_message_from_web(string message)
   }
   else if (category == "save_state") {
     return libRR_create_save_state(message_json["state"]["name"], RRCurrentFrame);
+  }
+  else if (category == "delete_state") {
+    return libRR_delete_save_state(message_json["state"]["frame"]);
   }
   else if (category == "load_state") {
     printf("WEB UI: Requested Load State\n");

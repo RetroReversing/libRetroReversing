@@ -28,7 +28,7 @@ string printBytesToStr(uint8_t* mem, uint32_t length, bool swapEndian) ;
 string printBytesToStr(uint8_t* mem, uint32_t length) ;
 string printWordsToStr(uint8_t* mem, uint32_t length);
 void save_dram_rw_to_json();
-void readJsonToObject(string filename, json& json_object);
+void readJsonToObject(string filename, json& json_object, string default_json="{}");
 void saveJsonToFile(string filename, json& json_object);
 
 #define Swap4Bytes(val) \
@@ -53,7 +53,7 @@ struct libRR_paths {
     string retro_base_directory;
     string retro_cd_base_directory;
     string retro_cd_path;
-    string retro_cd_base_name;
+    // string retro_cd_base_name;
 };
 
 // Current state send back to web

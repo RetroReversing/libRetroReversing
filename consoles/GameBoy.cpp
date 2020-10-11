@@ -5,23 +5,22 @@
 
 extern "C" {
 
+  // SameBoy doesn't have this defined so:
+  char retro_base_directory[4096];
+
   struct retro_memory_map libRR_retromap = { 0 };
 
-  struct retro_memory_descriptor libRR_mmap[0];
-  int libRR_mmap_descriptors = 0;
+  struct retro_memory_descriptor libRR_mmap[11] = { 0 };
+  // int libRR_mmap_descriptors = 11;
 
-  // void libRR_set_retro_memmap(retro_environment_t environ_cb)
-  // {
-  //   // This should set the memory map for each console
-  //   libRR_retromap.descriptors = libRR_mmap;
-  //   libRR_retromap.num_descriptors = libRR_mmap_descriptors;
-  //   environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &libRR_retromap);
-  // }
-
-  void libRR_setup_console_details(retro_environment_t environ_cb) {
-    printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
-    // libRR_set_retro_memmap(environ_cb);
-  }
+  // SameBoy's libretro doesn't have these paths defined
+  string retro_cd_base_directory = "libRR_RemeberToSetCDBase";
+  string retro_cd_path = "libRR_RemeberToSetCDPATH";
+  string retro_cd_base_name = "libRR_RemeberToBaseName";
+  // char retro_system_directory[4096];
+  // char retro_save_directory[4096];
+  // char retro_game_path[4096];
+  // end Sameboy libretro differences
 
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)
   {
@@ -30,6 +29,11 @@ extern "C" {
     }
     libRR_retromap.descriptors = libRR_mmap;
     libRR_retromap.num_descriptors = num_descriptors;
+  }
+
+  void libRR_setup_console_details(retro_environment_t environ_cb) {
+    printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
+    // libRR_set_retro_memmap(environ_cb);
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {

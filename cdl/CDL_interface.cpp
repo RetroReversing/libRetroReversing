@@ -52,7 +52,7 @@ bool should_reverse_jumps = false;
 bool should_change_jumps = false;
 int frame_last_reversed = 0;
 int time_last_reversed = 0;
-string game_name = "";
+string libRR_game_name = "";
 string ucode_crc = "";
 
 // string next_dma_type = "";
@@ -108,7 +108,7 @@ void cdl_keyevents(int keysym, int keymod) {
 
 bool createdCartBackup = false;
 void backupCart() {
-    game_name = alphabetic_only_name((char*)rom_name.c_str(), 21);
+    libRR_game_name = alphabetic_only_name((char*)rom_name.c_str(), 21);
     std::cout << "TODO: backup";
     createdCartBackup = true;
 }
@@ -572,7 +572,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target) {
     // } else {
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
-    t.func_name = game_name+"_func_"+jump_target_str;
+    t.func_name = libRR_game_name+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
     // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
@@ -614,7 +614,7 @@ void cdl_log_jump_always(int take_jump, uint32_t jump_target, uint8_t* jump_targ
     } else {
         t.caller_offset = n2hexstr(previous_function_backup);
     }
-    t.func_name = game_name+"_func_"+jump_target_str;
+    t.func_name = libRR_game_name+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
     t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
