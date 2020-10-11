@@ -85,11 +85,11 @@ export function PlaySettings( { setCurrentDialog, playerState, setPlayerState })
     </Button>
     </Grid>
 
-    <Grid item>
+    {/* <Grid item>
       <Button color="inherit" onClick={changeLogButtons} startIcon={<SportsEsportsIcon />}>
       {playerState.logButtons? "Stop Logging Buttons":"Start Logging Buttons"}
       </Button>
-    </Grid>
+    </Grid> */}
 
     <Grid item>
       <Button color="inherit" startIcon={<SettingsIcon />}>

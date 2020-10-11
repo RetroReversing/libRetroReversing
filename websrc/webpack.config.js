@@ -11,6 +11,16 @@ module.exports = {
   devServer: {
     contentBase: path.join(__dirname, './'), // where dev server will look for static files, not compiled
     publicPath: '/', //relative path to output path where  devserver will look for compiled files
+    proxy: {
+      '/postresponse': {
+        target: 'http://localhost:1234/',
+        changeOrigin: true,
+      },
+      '/game': {
+        target: 'http://localhost:1234/',
+        changeOrigin: true,
+      },
+    }
   },
   output: {
     filename: 'libRRUI.bundle.js',

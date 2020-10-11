@@ -38,8 +38,8 @@ void to_json(json& j, const libRR_emulator_state& p) {
             {"memory_descriptors", p.memory_descriptors},
             {"paths", p.paths},
             {"save_states", p.libRR_save_states},
-            {"current_state", p.current_state},
-            {"last_frame", p.last_frame},
+            // {"current_state", p.current_state},
+            // {"last_frame", p.last_frame},
             {"game_name", p.game_name},
         };
 }

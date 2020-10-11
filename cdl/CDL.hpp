@@ -64,8 +64,8 @@ struct libRR_emulator_state {
     std::vector<retro_memory_descriptor> memory_descriptors;
     libRR_paths paths;
     std::vector<libRR_save_state> libRR_save_states;
-    libRR_save_state current_state;
-    int last_frame;
+    // libRR_save_state current_state;
+    // int last_frame;
 };
 void to_json(json& j, const libRR_emulator_state& p);
 // void from_json(const json& j, libRR_emulator_state& p);

@@ -55,7 +55,6 @@ function setupAdditionalTabs(allInfo, tabs) {
 }
 
 let tabs = {
-  input: <InputHistory />,
   functions: <FunctionList />,
   data_structures: <DataStructures />,
   game_info: <GameInformation />
@@ -90,6 +89,7 @@ function App() {
   tabs = {...tabs, 
     main: <MainPage mainState={gameInformation} fullState={fullState} />,
     resources: <ResourceList cdData={cdData} />,
+    input: <InputHistory mainState={gameInformation} fullState={fullState} />,
     }
   
   const dialogs = {
@@ -140,7 +140,7 @@ function App() {
               <MenuIcon />
           </IconButton>
           <Typography variant="h6">
-            SaturnRE
+            {gameInformation?.library_name}RE
           </Typography>
 
           <PlaySettings setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />

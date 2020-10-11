@@ -83,7 +83,9 @@ void libRR_get_list_of_memory_regions()
     }
   }
 
+  printf("Saving current_state.memory_descriptors\n");
   current_state.memory_descriptors = memory_descriptors;
+  printf("Saving current_state\n");
   game_json["current_state"] = current_state;
 }
 
