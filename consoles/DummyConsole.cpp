@@ -10,6 +10,10 @@ extern "C" {
   struct retro_memory_descriptor libRR_mmap[0];
   int libRR_mmap_descriptors = 0;
 
+  // Delay slot variables
+  uint32_t libRR_delay_slot_pc;
+  bool libRR_isDelaySlot = false;
+
   // void libRR_set_retro_memmap(retro_environment_t environ_cb)
   // {
   //   // This should set the memory map for each console

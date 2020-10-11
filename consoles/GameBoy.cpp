@@ -22,6 +22,10 @@ extern "C" {
   // char retro_game_path[4096];
   // end Sameboy libretro differences
 
+  // GameBoy does not have delay slots, but need to be defined anyway
+  uint32_t libRR_delay_slot_pc;
+  bool libRR_isDelaySlot = false;
+
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)
   {
     for (int i=0; i<=10; i++) {
