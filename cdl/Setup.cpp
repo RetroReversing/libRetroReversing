@@ -65,7 +65,7 @@ void init_playthrough(string name) {
   cout << "About to save playthough metadata" << std::endl;
   save_playthough_metadata();
   cout << "About to read button state to memory" << std::endl;
-  libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin");
+  libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", 0);
   if (!libRR_current_playthrough["last_frame"].is_null()) {
     libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
   }
@@ -574,6 +574,10 @@ string libRR_parse_message_from_web(string message)
   }
   else if (category == "delete_state") {
     return libRR_delete_save_state(message_json["state"]["frame"]);
+  }
+  else if (category == "change_input_buttons") {
+    libRR_resave_button_state_to_file(current_playthrough_directory+"button_log.bin", -1, message_json["state"]["buttonChanges"]);
+    return "Done";
   }
   else if (category == "load_state") {
     printf("WEB UI: Requested Load State\n");

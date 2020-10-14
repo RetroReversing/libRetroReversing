@@ -2,7 +2,10 @@
   height: 25px;
   padding-bottom: 20px;
 }
+.inputButton-img:hover {
+  cursor: pointer;
+}
 
-.inputButton-img:disabled {
+.inputButton-img.disabled {
   opacity: 0.2;
 }

@@ -13,8 +13,10 @@ import { VariableSizeList as List } from 'react-window';
 import { map, filter, noop } from 'lodash';
 import VirtualizedTable from './util/VirtualTable';
 import Checkbox from '@material-ui/core/Checkbox';
+import Box from '@material-ui/core/Box';
+
 import FrameHintPopOver from '../popovers/FrameHintPopover';
-import { requestFileFromServer } from '../server';
+import { requestFileFromServer, sendActionToServer } from '../server';
 import "./InputHistory.css";
 
 
@@ -35,15 +37,6 @@ const RETRO_DEVICE_ID_JOYPAD_R2 =      13
 const RETRO_DEVICE_ID_JOYPAD_L3 =      14
 const RETRO_DEVICE_ID_JOYPAD_R3 =      15
 
-function changeButtonState() {
-  console.error("changeButtonState");
-}
-
-function getButtonElement(buttonNumber, disabled) {
-  let image_name = ButtonToNameMap[buttonNumber] || "?";
-  return <input type="image" src={"/images/controller-icons/"+image_name} className="inputButton-img" disabled={disabled} onClick={changeButtonState}/>;
-}
-
 const ButtonToNameMap = {
   [RETRO_DEVICE_ID_JOYPAD_SELECT]: "Vita_Select.png", 
   [RETRO_DEVICE_ID_JOYPAD_START]: "Vita_Start.png",
@@ -63,18 +56,29 @@ const ButtonToNameMap = {
   [RETRO_DEVICE_ID_JOYPAD_R3]: "XboxOne_Right_Stick_Click.png",
 }
 
-export function ShowButtonsForInput({ input }) {
-  // if (input === 0) {
-  //   return null;
-  // }
+export function ShowButtonsForInput({ input, frame, buttonChanges, setButtonChanges }) {
+
+  function changeButtonState(frame, buttonNumber, disabled) {
+    let newValue = input;
+    newValue ^= 1 << buttonNumber;
+    const newButtonChanges = {...buttonChanges, [frame]: newValue};
+    setButtonChanges(newButtonChanges);
+  }
+  
+  function getButtonElement(frame, buttonNumber, input, disabled) {
+    let image_name = ButtonToNameMap[buttonNumber] || "?";
+    let classNames = "inputButton-img";
+    if (disabled) {
+      classNames += " disabled";
+    }
+    return <img src={"/images/controller-icons/"+image_name} className={classNames} onClick={()=>changeButtonState(frame, buttonNumber, !disabled)}/>;
+  }
+
   let resultingElements = [];
   for (let i=0; i<16; i++) {
-    // let name = ButtonToNameMap[i] || "?";
     let isButtonPressed = (input & 1 << i);
-    // if (isButtonPressed>0) {
-      const element = getButtonElement(i, isButtonPressed===0); //<span onClick={changeButtonState} disabled={isButtonPressed===0}>{name}</span>
+      const element = getButtonElement(frame, i, input, isButtonPressed===0); //<span onClick={changeButtonState} disabled={isButtonPressed===0}>{name}</span>
       resultingElements.push(element);
-    // }
   }
   return resultingElements;
 }
@@ -87,17 +91,35 @@ export function InputHistory( {mainState, fullState}) {
   const [loading, setLoading] = useState(true);
   const [buttonLog, setButtonLog] = useState(null);
   const [startFrame, setStartFrame] = useState(0);
+  const [buttonChanges, setButtonChanges] = useState({});
 
   useEffect(() => {
     
     setLoading(true);
     requestFileFromServer("button_log.bin").then((buttonLog) => {
-      console.error("Go the Button Log!", typeof(buttonLog), buttonLog, new Blob([buttonLog]));
       const view = new DataView(buttonLog);
       setButtonLog(view);
       setLoading(false);
     });
   }, []);
+
+  useEffect(()=> {
+    if (Object.keys(buttonChanges).length < 1) {
+      console.info("No changes to buttons");
+      return;
+    }
+
+    const payload = {
+      category: 'change_input_buttons',
+      state: {
+        buttonChanges
+      },
+    };
+    sendActionToServer(payload).then((result) => {
+      console.info("Should have saved to server", result);
+    });
+
+  }, [buttonChanges]);
 
   const columns = [
     {
@@ -115,11 +137,11 @@ export function InputHistory( {mainState, fullState}) {
     //   label: "Save",
     //   dataKey: "save"
     // },
-    {
-      width: 200,
-      label: "Breakpoint",
-      dataKey: "breakpoint"
-    }
+    // {
+    //   width: 200,
+    //   label: "Breakpoint",
+    //   dataKey: "breakpoint"
+    // }
   ];
 
   const [order, setOrder] = React.useState('Location');
@@ -144,16 +166,24 @@ export function InputHistory( {mainState, fullState}) {
     // Technically our button log supports 64bit (8 byte values)
     const left = buttonLog?.getUint32(frame_index*8, true);
     // const right = buttonLog?.getUint32(index*8+ 4, true);
-    const input = buttonLog?.getUint32(frame_index*8, true); // 967
-    const inputElement = <ShowButtonsForInput input={input} />;
+    let input = buttonLog?.getUint32(frame_index*8, true);
+
+    if (frame_index in buttonChanges) {
+      input = buttonChanges[frame_index];
+    }
+
+    const inputElement = <ShowButtonsForInput input={input} frame={frame_index} buttonChanges={buttonChanges} setButtonChanges={setButtonChanges} />;
     return { frame, input: inputElement, save, breakpoint };
   }
 
-return (<TableContainer component={Paper}>
-  <TextField id="start-frame" label="Start Frame" value={startFrame} onChange={(e)=>setStartFrame(+e.target.value || 0)} />
+return (<Box>
+  <Box p={2}>
+    <TextField ml={2} id="start-frame" label="Start Frame" value={startFrame} onChange={(e)=>setStartFrame(+e.target.value || 0)} />
+  </Box>
+  <TableContainer component={Paper}>
   <Paper style={{ height: 600, width: "100%" }}>
     <VirtualizedTable orderBy={order} setOrderBy={setOrder} order={orderDirection} setOrder={setOrderDirection} rowCount={number_of_rows-startFrame} rowGetter={rowGetter}
             columns={columns} />
       </Paper>
-  </TableContainer>);
+  </TableContainer></Box>);
 }

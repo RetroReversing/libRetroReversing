@@ -145,3 +145,16 @@ As long as you know the index as an integaer you can do:
 int i = 2;
 libRR_current_playthrough["states"].erase(i);
 ```
+
+### loop through keys of object
+```c
+for (auto& el : o.items()) {
+  std::cout << el.key() << " : " << el.value() << "\n";
+}
+```
+
+### Useful functions
+* `uint32_t hex_to_int(string str)`
+* `n2hexstr`
+* `std::stoi()` (string to integer)
+* `to_string()` (integer to string)

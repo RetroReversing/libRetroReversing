@@ -112,16 +112,25 @@ void log_input_state(retro_input_state_t input_cb) {
 }
 
 // max_number is used if you want to only save up to a particular frame number
-void libRR_resave_button_state_to_file(string filename, int max_number) {
+void libRR_resave_button_state_to_file(string filename, int max_number, json changes) {
   std::fstream output_file;
   // read the state before we open it as an output file
-  libRR_read_button_state_from_file(filename);
+  libRR_read_button_state_from_file(filename, 0);
   output_file = std::fstream(filename, std::ios::out | std::ios::binary);
   printf("libRR_resave_button_state_to_file max_number: %d\n", max_number);
   int frame_number = 0;
   while (!playback_button_history.empty()) { 
     unsigned long long button_state = playback_button_history.front();
-    output_file.write(reinterpret_cast<char*>(&button_state),sizeof(unsigned long long));
+
+    // check for changes via the UI
+    if (changes.contains(to_string(frame_number))) {
+      unsigned long long newValue = changes[to_string(frame_number)];
+      printf("We have a change for frame number: %d value: %d \n", frame_number, newValue);
+      output_file.write(reinterpret_cast<char*>(&newValue),sizeof(unsigned long long));
+    }
+    else {
+      output_file.write(reinterpret_cast<char*>(&button_state),sizeof(unsigned long long));
+    }
     playback_button_history.pop(); 
     if (frame_number == max_number) {
       printf("Resaving button log, found Max value %d \n", frame_number);
@@ -130,7 +139,14 @@ void libRR_resave_button_state_to_file(string filename, int max_number) {
     frame_number++;
   } 
   output_file.close();
-  libRR_read_button_state_from_file(filename);
+  libRR_read_button_state_from_file(filename, RRCurrentFrame);
+}
+
+
+extern string current_playthrough_directory;
+string libRR_change_input_buttons(json changes) {
+  libRR_resave_button_state_to_file(current_playthrough_directory+"button_log.bin", -1, changes);
+  return "Success";
 }
 
 // 
@@ -139,14 +155,13 @@ void libRR_resave_button_state_to_file(string filename, int max_number) {
 void libRR_save_button_state_to_file(string filename) {
   std::fstream output_file;
   // read the state before we open it as an output file
-  libRR_read_button_state_from_file(filename);
+  libRR_read_button_state_from_file(filename, 0);
   output_file = std::fstream(filename, std::ios::out | std::ios::binary);
   printf("libRR_save_button_state_to_file\n");
 
   if (libRR_should_append_history) {
     // Use was playing back a history and now added additional logging
     printf("\n\n\nAppending history to previous\n\n\n");
-    // libRR_read_button_state_from_file(filename);
     while (!playback_button_history.empty()) { 
       unsigned long long button_state = playback_button_history.front();
       output_file.write(reinterpret_cast<char*>(&button_state),sizeof(unsigned long long));
