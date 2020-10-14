@@ -123,6 +123,7 @@ function App() {
 
   const [playerState, setPlayerState] = useState({ 
     paused: true, 
+    speed: 100,
     logButtons: false,
     recordInput: false,
     playbackLogged: false,

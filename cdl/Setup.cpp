@@ -511,6 +511,7 @@ void upload_linker_map(json linker_map) {
 }
 
 // Settings
+double libRR_playback_speed = 100;
 string libRR_parse_message_from_web(string message)
 {
   // printf("New Web Message %s \n", message.c_str());
@@ -544,10 +545,14 @@ string libRR_parse_message_from_web(string message)
     exit(0);
   }
   else if (category == "play") {
-    printf("Play!\n");
+    printf("Got Play request from UI %s\n", message_json["state"].dump().c_str());
     player_settings p2 = message_json["state"].get<player_settings>();
     libRR_settings = p2;
     libRR_full_function_log = p2.fullLogging;
+
+    // Set the speed here
+    libRR_playback_speed = message_json["state"]["speed"];
+    printf("The speed will be %d \n", libRR_playback_speed);
     
     if (libRR_current_playthrough["last_frame"] != 0) {
       // std::cout << p2.dump(4) << std::endl;
