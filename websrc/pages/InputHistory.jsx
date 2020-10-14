@@ -15,6 +15,9 @@ import VirtualizedTable from './util/VirtualTable';
 import Checkbox from '@material-ui/core/Checkbox';
 import FrameHintPopOver from '../popovers/FrameHintPopover';
 import { requestFileFromServer } from '../server';
+import "./InputHistory.css";
+
+
 const RETRO_DEVICE_ID_JOYPAD_B =     0
 const RETRO_DEVICE_ID_JOYPAD_Y =        1
 const RETRO_DEVICE_ID_JOYPAD_SELECT =   2
@@ -32,37 +35,48 @@ const RETRO_DEVICE_ID_JOYPAD_R2 =      13
 const RETRO_DEVICE_ID_JOYPAD_L3 =      14
 const RETRO_DEVICE_ID_JOYPAD_R3 =      15
 
+function changeButtonState() {
+  console.error("changeButtonState");
+}
+
+function getButtonElement(buttonNumber, disabled) {
+  let image_name = ButtonToNameMap[buttonNumber] || "?";
+  return <input type="image" src={"/images/controller-icons/"+image_name} className="inputButton-img" disabled={disabled} onClick={changeButtonState}/>;
+}
+
 const ButtonToNameMap = {
-  [RETRO_DEVICE_ID_JOYPAD_SELECT]: "Select",
-  [RETRO_DEVICE_ID_JOYPAD_START]: "Start",
-  [RETRO_DEVICE_ID_JOYPAD_B]: "B",
-  [RETRO_DEVICE_ID_JOYPAD_A]: "A",
-  [RETRO_DEVICE_ID_JOYPAD_Y]: "Y",
-  [RETRO_DEVICE_ID_JOYPAD_X]: "X",
-  [RETRO_DEVICE_ID_JOYPAD_UP]: "UP",
-  [RETRO_DEVICE_ID_JOYPAD_DOWN]: "DOWN",
-  [RETRO_DEVICE_ID_JOYPAD_LEFT]: "LEFT",
-  [RETRO_DEVICE_ID_JOYPAD_RIGHT]: "RIGHT",
-  [RETRO_DEVICE_ID_JOYPAD_L]: "L",
-  [RETRO_DEVICE_ID_JOYPAD_R]: "R",
-  [RETRO_DEVICE_ID_JOYPAD_L2]: "L2",
-  [RETRO_DEVICE_ID_JOYPAD_R2]: "R2",
-  [RETRO_DEVICE_ID_JOYPAD_R3]: "R3",
+  [RETRO_DEVICE_ID_JOYPAD_SELECT]: "Vita_Select.png", 
+  [RETRO_DEVICE_ID_JOYPAD_START]: "Vita_Start.png",
+  [RETRO_DEVICE_ID_JOYPAD_B]: "XboxOne_B.png",
+  [RETRO_DEVICE_ID_JOYPAD_A]: "XboxOne_A.png",
+  [RETRO_DEVICE_ID_JOYPAD_Y]: "XboxOne_Y.png",
+  [RETRO_DEVICE_ID_JOYPAD_X]: "XboxOne_X.png",
+  [RETRO_DEVICE_ID_JOYPAD_UP]: "XboxOne_Dpad_Up.png",
+  [RETRO_DEVICE_ID_JOYPAD_DOWN]: "XboxOne_Dpad_Down.png",
+  [RETRO_DEVICE_ID_JOYPAD_LEFT]: "XboxOne_Dpad_Left.png",
+  [RETRO_DEVICE_ID_JOYPAD_RIGHT]: "XboxOne_Dpad_Right.png",
+  [RETRO_DEVICE_ID_JOYPAD_L]: "XboxOne_LB.png",
+  [RETRO_DEVICE_ID_JOYPAD_R]: "XboxOne_RB.png",
+  [RETRO_DEVICE_ID_JOYPAD_L2]: "XboxOne_LT.png",
+  [RETRO_DEVICE_ID_JOYPAD_R2]: "XboxOne_RT.png",
+  [RETRO_DEVICE_ID_JOYPAD_L3]: "XboxOne_Left_Stick_Click.png",
+  [RETRO_DEVICE_ID_JOYPAD_R3]: "XboxOne_Right_Stick_Click.png",
 }
 
 export function ShowButtonsForInput({ input }) {
-  if (input === 0) {
-    return null;
-  }
-  let resultingString = "";
+  // if (input === 0) {
+  //   return null;
+  // }
+  let resultingElements = [];
   for (let i=0; i<16; i++) {
-    let name = ButtonToNameMap[i] || "?";
+    // let name = ButtonToNameMap[i] || "?";
     let isButtonPressed = (input & 1 << i);
-    if (isButtonPressed>0) {
-      resultingString += name + " "
-    }
+    // if (isButtonPressed>0) {
+      const element = getButtonElement(i, isButtonPressed===0); //<span onClick={changeButtonState} disabled={isButtonPressed===0}>{name}</span>
+      resultingElements.push(element);
+    // }
   }
-  return resultingString;
+  return resultingElements;
 }
 
 
@@ -92,7 +106,7 @@ export function InputHistory( {mainState, fullState}) {
       dataKey: "frame"
     },
     {
-      width: 200,
+      width: 500,
       label: "Input",
       dataKey: "input"
     },
