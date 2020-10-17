@@ -45,6 +45,25 @@ extern "C" {
       total_time_elapsed = 0;
     }
 
+    // Check if reached end of what player wants to run
+    if (libRR_settings.endAt == RRCurrentFrame) {
+      // should now check the action to see if we pause or loop
+      if (libRR_settings.loopFrame == 0) {
+        // restart game
+        libRR_reset(0);
+        retro_reset();
+      }
+      else if (libRR_settings.loopFrame > 0) {
+        printf("Time to loop back to state: %d\n", libRR_settings.loopFrame);
+        libRR_load_save_state(libRR_settings.loopFrame);
+        return !libRR_settings.paused;
+      } else {
+        printf("User wanted to pause after this frame\n");
+        libRR_settings.paused = true;
+      }
+    }
+
+    // Check if paused from the UI
     if (!libRR_settings.paused) {
       RRCurrentFrame++;
     } else {

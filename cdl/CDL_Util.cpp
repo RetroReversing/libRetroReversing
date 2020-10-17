@@ -7,6 +7,8 @@ void to_json(json& j, const player_settings& p) {
         {"recordInput", p.recordInput},
         {"playbackLogged", p.playbackLogged},
         {"fullLogging", p.fullLogging},
+        {"endAt", p.endAt},
+        {"loopFrame", p.loopFrame},
     };
 }
 void from_json(const json& j, player_settings& p) {
@@ -14,6 +16,8 @@ void from_json(const json& j, player_settings& p) {
     j.at("recordInput").get_to(p.recordInput);
     j.at("playbackLogged").get_to(p.playbackLogged);
     j.at("fullLogging").get_to(p.fullLogging);
+    j.at("endAt").get_to(p.endAt);
+    j.at("loopFrame").get_to(p.loopFrame);
 }
 
 // libRR_paths

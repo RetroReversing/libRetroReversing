@@ -14,7 +14,14 @@ import Select from '@material-ui/core/Select';
 import Box from '@material-ui/core/Box';
 
 
-export default function ResumeDialog( { setCurrentDialog, playerState, setPlayerState, open = true }) {
+export default function ResumeDialog( { fullState, setCurrentDialog, playerState, setPlayerState, open = true }) {
+
+  const available_save_states = fullState?.playthrough?.states;
+  const [startAt, setStartAt] = useState(-1);
+  const [endAt, setEndAt] = useState(-1);
+  const [endAction, setEndAction] = useState(-1);
+
+  console.error("Sorted Save States", available_save_states);
 
   const handleClose = () => {
     setCurrentDialog('');
@@ -23,7 +30,16 @@ export default function ResumeDialog( { setCurrentDialog, playerState, setPlayer
   function run() {
     
     console.error("Going to run with with settings:", playerState);
-    const newPlayerState = {...playerState, paused:false};
+    let loopFrame = +endAction;
+    if (loopFrame === 1) {
+      loopFrame = startAt;
+    }
+    const newPlayerState = {...playerState, 
+      paused:false,
+      startAt,
+      endAt,
+      loopFrame
+    };
     setPlayerState(newPlayerState);
 
     const payload = {
@@ -47,46 +63,51 @@ export default function ResumeDialog( { setCurrentDialog, playerState, setPlayer
               <InputLabel htmlFor="start-from">Start from</InputLabel>
               <Select
                 native
-                value={"Start of Game"}
-                onChange={()=>null}
+                value={startAt}
+                onChange={(e)=>setStartAt(+e.target.value)}
                 inputProps={{
                   name: 'start',
                   id: 'start-from',
                 }}
               >
-                <option aria-label="Start of Game" value="Start of Game">Start of Game</option>
-                <option value={10}>State 1</option>
+                <option value={-1}>Current Location</option>
+                <option value={0}>Start of Game</option>
+                {available_save_states.map((state)=> {
+                  return <option value={state.frame}>{state.name}</option>
+                })}
               </Select>
             </FormControl>
             <FormControl style={{marginRight: 20}}>
               <InputLabel htmlFor="end-at">End at</InputLabel>
               <Select
                 native
-                value={"Keep going"}
-                onChange={()=>null}
+                value={endAt}
+                onChange={(e)=>setEndAt(+e.target.value)}
                 inputProps={{
                   name: 'end',
                   id: 'end-at',
                 }}
               >
-                <option value="Manual Pause">Keep going</option>
-                <option value={10}>State 1</option>
+                <option value={-1}>Keep going</option>
+                {available_save_states.map((state)=> {
+                  return <option value={+state.frame}>{state.name}</option>
+                })}
               </Select>
             </FormControl>
             <FormControl style={{marginRight: 20}}>
               <InputLabel htmlFor="on-end">On End</InputLabel>
               <Select
                 native
-                value={"Pause game"}
-                onChange={()=>null}
+                value={endAction}
+                onChange={(e)=>setEndAction(+e.target.value)}
                 inputProps={{
                   name: 'on-end',
                   id: 'on-end',
                 }}
               >
-                <option value="Loop from start checkpoint">Loop from start checkpoint</option>
-                <option value="Loop from start of game">Loop from start of game</option>
-                <option value="Pause game">Pause game</option>
+                <option value={1}>Loop from start checkpoint</option>
+                <option value={0}>Loop from start of game</option>
+                <option value={-1}>Pause game</option>
               </Select>
             </FormControl>
             <FormControl style={{marginRight: 20, minWidth:200, marginTop: 20}}>

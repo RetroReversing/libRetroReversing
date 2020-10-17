@@ -43,6 +43,8 @@ struct player_settings {
     bool playbackLogged;
     bool recordInput;
     bool fullLogging;
+    int endAt; // frame to end the current playthought
+    int loopFrame;
 };
 void to_json(json& j, const player_settings& p);
 void from_json(const json& j, player_settings& p);

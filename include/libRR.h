@@ -52,6 +52,9 @@ extern void libRR_resave_button_state_to_file(string filename = "button_log.bin"
 extern void libRR_save_button_state_to_file(string filename  = "button_log.bin");
 extern void libRR_read_button_state_from_file(string filename  = "button_log.bin", int start_frame=0);
 
+// Save states
+string libRR_load_save_state(int frame);
+
 // Scripting support
 void libRR_run_script(string code);
 int libRR_get_current_lba();

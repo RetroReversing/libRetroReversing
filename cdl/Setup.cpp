@@ -19,7 +19,7 @@ string libRR_project_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
 int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
-player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false};
+player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .endAt = -1, .loopFrame = -1};
 
 std::map<string, libRR_emulator_state> playthroughs = {};
 libRR_emulator_state current_state = {};
@@ -546,6 +546,20 @@ string libRR_parse_message_from_web(string message)
   }
   else if (category == "play") {
     printf("Got Play request from UI %s\n", message_json["state"].dump().c_str());
+
+    int startAt = message_json["state"]["startAt"].get<int>();
+    // First of all Load state if requested
+    if (startAt == 0) {
+      printf("Restart game\n");
+      libRR_reset(0);
+      retro_reset();
+    }
+    else if (startAt != -1) {
+      printf("Load state: %d\n", startAt);
+      // libRR_reset(0);
+      libRR_load_save_state(startAt);
+    }
+
     player_settings p2 = message_json["state"].get<player_settings>();
     libRR_settings = p2;
     libRR_full_function_log = p2.fullLogging;
@@ -563,12 +577,13 @@ string libRR_parse_message_from_web(string message)
     return game_json.dump(4);
   }
   else if (category == "pause") {
-    printf("Pause!\n");
+    printf("Pause request from UI %s\n", message_json["state"].dump().c_str());
     player_settings p2 = message_json["state"].get<player_settings>();
-    std::cout << p2.paused << std::endl;
     libRR_settings = p2;
     libRR_full_function_log = p2.fullLogging;
-    return game_json.dump(4);
+    return "Paused";
+    // printf("Returning game_json dump (sometimes segfaults?) \n");
+    // return game_json.dump(4);
   }
   else if (category == "restart") {
     libRR_reset(0);
