@@ -17,8 +17,8 @@ import Box from '@material-ui/core/Box';
 export default function ResumeDialog( { fullState, setCurrentDialog, playerState, setPlayerState, open = true }) {
 
   const available_save_states = fullState?.playthrough?.states;
-  const [startAt, setStartAt] = useState(-1);
-  const [endAt, setEndAt] = useState(-1);
+  // const [startAt, setStartAt] = useState(-1);
+  // const [endAt, setEndAt] = useState(-1);
   const [endAction, setEndAction] = useState(-1);
 
   console.error("Sorted Save States", available_save_states);
@@ -32,12 +32,12 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
     console.error("Going to run with with settings:", playerState);
     let loopFrame = +endAction;
     if (loopFrame === 1) {
-      loopFrame = startAt;
+      loopFrame = playerState?.startAt;
     }
     const newPlayerState = {...playerState, 
       paused:false,
-      startAt,
-      endAt,
+      // startAt,
+      // endAt,
       loopFrame
     };
     setPlayerState(newPlayerState);
@@ -63,8 +63,10 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
               <InputLabel htmlFor="start-from">Start from</InputLabel>
               <Select
                 native
-                value={startAt}
-                onChange={(e)=>setStartAt(+e.target.value)}
+                value={playerState?.startAt}
+                onChange={(e)=>setPlayerState({
+                  ...playerState, startAt:+e.target.value
+                })}
                 inputProps={{
                   name: 'start',
                   id: 'start-from',
@@ -81,8 +83,10 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
               <InputLabel htmlFor="end-at">End at</InputLabel>
               <Select
                 native
-                value={endAt}
-                onChange={(e)=>setEndAt(+e.target.value)}
+                value={playerState?.endAt}
+                onChange={(e)=>setPlayerState({
+                  ...playerState, endAt:+e.target.value
+                })}
                 inputProps={{
                   name: 'end',
                   id: 'end-at',

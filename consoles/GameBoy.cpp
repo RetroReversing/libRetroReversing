@@ -26,6 +26,11 @@ extern "C" {
   uint32_t libRR_delay_slot_pc;
   bool libRR_isDelaySlot = false;
 
+  // Bank switching
+  uint32_t libRR_bank_size = 0x4000; // 16KB
+  uint32_t libRR_current_bank = 0;
+
+
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)
   {
     for (int i=0; i<=10; i++) {

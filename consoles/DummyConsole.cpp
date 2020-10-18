@@ -14,6 +14,10 @@ extern "C" {
   uint32_t libRR_delay_slot_pc;
   bool libRR_isDelaySlot = false;
 
+  // Bank switching
+  uint32_t libRR_bank_size = 0;
+  uint32_t libRR_current_bank = 0;
+
   // void libRR_set_retro_memmap(retro_environment_t environ_cb)
   // {
   //   // This should set the memory map for each console

@@ -23,20 +23,19 @@ SendJSON(struct mg_connection *conn, const char* json_str)
 }
 
   
+char buf[1024*1024*4]; // Needs to hold large JSON
 int
 PostResponser(struct mg_connection *conn, void *cbdata)
 {
 	long long r_total = 0;
 	int r, s;
 
-	char buf[2048*16];
-	memset(buf, 0, sizeof buf);
+	memset(buf, 0, sizeof(buf));
 
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 
 	if (0 != strcmp(ri->request_method, "POST")) {
 		/* Not a POST request */
-		char buf[1024];
 		int ret = mg_get_request_link(conn, buf, sizeof(buf));
 
 		mg_printf(conn,
@@ -76,7 +75,7 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 		r = mg_read(conn, buf, sizeof(buf));
 	}
 	
-  cout << "\n\n" << buf << "\n\n\n";
+  // cout << "\n\n" << buf << "\n\n\n";
 	string result = libRR_parse_message_from_web(buffer_to_string(buf));
 	SendJSON(conn, result.c_str());
 
