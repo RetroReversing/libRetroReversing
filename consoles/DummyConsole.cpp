@@ -17,6 +17,7 @@ extern "C" {
   // Bank switching
   uint32_t libRR_bank_size = 0;
   uint32_t libRR_current_bank = 0;
+  bool libRR_bank_switching_available = false;
 
   // void libRR_set_retro_memmap(retro_environment_t environ_cb)
   // {

@@ -55,6 +55,11 @@ extern void libRR_read_button_state_from_file(string filename  = "button_log.bin
 // Save states
 string libRR_load_save_state(int frame);
 
+// Bank Switching
+extern uint32_t libRR_current_bank;
+extern uint32_t libRR_bank_size;
+extern bool libRR_bank_switching_available;
+
 // Scripting support
 void libRR_run_script(string code);
 int libRR_get_current_lba();

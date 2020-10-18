@@ -506,7 +506,39 @@ void libRR_display_message(const char *format, ...)
   free(str);
 }
 
+void save_updates_to_function_json() {
+  game_json["functions"] = functions;
+  printf("Saving functions.json \n");
+  saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
+}
+
+void edit_function(json state) {
+  for (auto& it : functions) {
+    if (it.second.func_offset == state["func_offset"]) {
+      printf("Found function to update %s \n", state["func_offset"].dump().c_str());
+      functions[it.first].func_name = state["func_name"];
+      // functions[it.first].additional = message_json["state"]["additional"];
+      break;
+    }
+  }
+  save_updates_to_function_json();
+}
+
 void upload_linker_map(json linker_map) {
+  // This function currently renames all the functions based on the sym file
+  for (auto& it : functions) {
+    string function_offset = it.second.func_offset;
+    if (linker_map["libraryFunctions"].contains(function_offset)) {
+      // linker_map[function_offset];
+      printf("Found: %s \n", function_offset.c_str());
+      functions[it.first].func_name = linker_map["libraryFunctions"][function_offset]["name"];
+    }
+    else {
+      // printf("Can't find Function: %s \n", function_offset.c_str());
+    }
+    
+  }
+  save_updates_to_function_json();
 
 }
 
@@ -620,6 +652,7 @@ string libRR_parse_message_from_web(string message)
     saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
   }
   else if (category == "edit_function") {
+    // TODO: instead call: edit_function(message_json["state"]);
     printf("Edit Function %s\n", message_json["state"].dump().c_str());
     for (auto& it : functions) {
       if (it.second.func_offset == message_json["state"]["func_offset"]) {
@@ -634,9 +667,9 @@ string libRR_parse_message_from_web(string message)
     saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
   }
   else if (category == "upload_linker_map") {
-    saveJsonToFile(libRR_project_directory+"/linker_map.json", message_json["state"]);
     upload_linker_map(message_json["state"]);
-    printf("Uploaded linker map\n");
+    saveJsonToFile(libRR_project_directory+"/linker_map.json", message_json["state"]);
+    return "Uploaded linker map";
   }
   else if (category == "game_information") {
     printf("get game information \n");

@@ -476,8 +476,22 @@ void cdl_log_jump_cached(int take_jump, uint32_t jump_target, uint8_t* jump_targ
 int number_of_functions = 0;
 bool libRR_full_function_log = false;
 int last_return_address = 0;
+uint32_t libRR_call_depth = 0; // Tracks how big our stack trace is in terms of number of function calls
 
-void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target) {
+// We store the stackpointers in backtrace_stackpointers everytime a function gets called
+uint16_t libRR_backtrace_stackpointers[0x200]; // 0x200 should be tons of function calls
+uint32_t libRR_backtrace_size = 0; // Used with backtrace_stackpointers - Tracks how big our stack trace is in terms of number of function calls
+
+// libRR_log_return_statement
+// stack_pointer is used to make sure our function stack doesn't exceed the actual stack pointer
+void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer) {
+    libRR_call_depth--;
+
+    // check the integrety of the call stack
+    if (libRR_call_depth < 0) {
+        printf("Function seems to have returned without changing the stack, PC: %d \n", current_pc);
+    }
+
     auto function_returning_from = function_stack.back();
     auto presumed_return_address = previous_ra.back();
     if (return_target != presumed_return_address) {
@@ -552,7 +566,47 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // TODO: find out how long the function is
 }
 
-void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target) {
+void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
+    string bank_number = "";
+    uint32_t calculated_jump_target = jump_target;
+    // TODO: need to calculate full address of both current_pc and jump_target based on which is the current ROM Bank
+    if (libRR_bank_switching_available) {
+        bank_number = "00_";
+        if (current_pc > libRR_bank_size) {
+            // current PC may either be in bank 1 or a higher bank
+        }
+        if (jump_target > libRR_bank_size) {
+            bank_number = n2hexstr(libRR_current_bank, 2)+"_";
+            // jump target may be either in bank 1 or a higher bank
+            // printf("Current Bank is:  %s jump target: %s \n", n2hexstr(libRR_current_bank).c_str(), n2hexstr(jump_target).c_str());
+            calculated_jump_target = jump_target + ((libRR_current_bank-1) * libRR_bank_size);
+        }
+    }
+    
+    // Start Stacktrace handling
+    libRR_call_depth++;
+    // Make sure the backtract size doesn't go bigger than the size of backtrace_sps array
+    // otherwise just ignore it
+    // if (libRR_backtrace_size < sizeof(libRR_backtrace_stackpointers) / sizeof(libRR_backtrace_stackpointers[0])) {
+
+    //     // not actually sure purpose of this
+    //     while (libRR_backtrace_size) {
+    //         if (libRR_backtrace_stackpointers[libRR_backtrace_size - 1] < stack_pointer) {
+    //             libRR_backtrace_size--;
+    //         }
+    //         else {
+    //             break;
+    //         }
+    //     }
+
+    //     // Add the current stackpointer to our list
+    //     libRR_backtrace_stackpointers[libRR_backtrace_size] = stack_pointer;
+    //     // gb->backtrace_returns[gb->backtrace_size].bank = bank_for_addr(gb, jump_target);
+    //     // gb->backtrace_returns[gb->backtrace_size].addr = jump_target;
+    //     libRR_backtrace_size++;
+    // }
+    // End Stacktrace handling
+    
     last_return_address = current_pc;
     function_stack.push_back(jump_target);
     previous_ra.push_back(current_pc);
@@ -566,13 +620,13 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target) {
     // We have never logged this function so lets create it
     auto t = cdl_labels();
     string jump_target_str = n2hexstr(jump_target);
-    t.func_offset = jump_target_str;
+    t.func_offset = n2hexstr(calculated_jump_target);
     // if (functions.find(previous_function_backup) != functions.end()) {
     //     t.caller_offset = functions[previous_function_backup].func_name+" (ra:"+n2hexstr(ra)+")";
     // } else {
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
-    t.func_name = libRR_game_name+"_func_"+jump_target_str;
+    t.func_name = /*libRR_game_name+*/bank_number+"func_"+jump_target_str;
     t.func_stack = function_stack.size();
     // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;

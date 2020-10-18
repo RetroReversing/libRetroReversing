@@ -4,7 +4,7 @@ import {map, max, padStart, keys } from 'lodash';
 import { FixedSizeList as List } from 'react-window';
 import "./DisasmViewer.css";
 
-function n2hexstr(offset) {
+export function n2hexstr(offset) {
   if (!offset) {return 0;}
   return padStart(offset.toString(16).toUpperCase(), 8, '0');
 }

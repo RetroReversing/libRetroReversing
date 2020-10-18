@@ -29,6 +29,7 @@ extern "C" {
   // Bank switching
   uint32_t libRR_bank_size = 0x4000; // 16KB
   uint32_t libRR_current_bank = 0;
+  bool libRR_bank_switching_available = true;
 
 
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)

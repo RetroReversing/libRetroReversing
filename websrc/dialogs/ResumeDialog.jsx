@@ -74,7 +74,7 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
               >
                 <option value={-1}>Current Location</option>
                 <option value={0}>Start of Game</option>
-                {available_save_states.map((state)=> {
+                {available_save_states?.map((state)=> {
                   return <option value={state.frame}>{state.name}</option>
                 })}
               </Select>
@@ -93,7 +93,7 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
                 }}
               >
                 <option value={-1}>Keep going</option>
-                {available_save_states.map((state)=> {
+                {available_save_states?.map((state)=> {
                   return <option value={+state.frame}>{state.name}</option>
                 })}
               </Select>

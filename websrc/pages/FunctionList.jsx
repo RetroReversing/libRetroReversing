@@ -45,7 +45,6 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
   const [orderBy, setOrderBy] = React.useState('Location');
   const [order, setOrder] = React.useState('asc');
   const [rows, setRows] = React.useState(window.allInformation?.functions || []);
-  console.error("view_function", params, location, params.currentSubTab, order, orderBy);
 
   const getItemSize = (openedFunction, index) => {
     const rows =  window.allInformation?.functions;
@@ -107,8 +106,8 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
   }
 
   if (rows.length <1) {
-    console.error("Chdecking for rows", window.allInformation?.functions);
-    if (window.allInformation?.functions) {
+    console.error("Checking for rows", window.allInformation?.functions);
+    if (window.allInformation?.functions?.length > 1) {
       setRows(window.allInformation?.functions);
       console.error("Updated rows", window.allInformation?.functions);
     }
