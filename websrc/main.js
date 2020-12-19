@@ -49,6 +49,7 @@ import {
 import { Breadcrumbs } from '@material-ui/core';
 import Link from '@material-ui/core/Link';
 import EditFunctionDialog from './dialogs/EditFunctionDialog';
+import ExportFunctionDialog from './dialogs/ExportFunctionDialog';
 import LoadLinkerMapFileDialog from './dialogs/LoadLinkerMapFileDialog';
 
 function createBreadcrumbs(params) {
@@ -141,6 +142,7 @@ function App() {
     'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} />,
     'resume': <ResumeDialog setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} fullState={fullState} />,
     'edit_function': <EditFunctionDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />,
+    'export_function': <ExportFunctionDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />,
     'load_linker_map': <LoadLinkerMapFileDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />
   }
 

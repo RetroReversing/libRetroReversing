@@ -34,8 +34,8 @@ function getInstructionSize(instruction_name) {
 
 function convertToPseudoCode(asm) {
   const [instruction_name, params] = asm.split('(');
-  const paramsArray = params.replace(')','').split(',');
-  if (paramsArray.length < 1) {
+  const paramsArray = params?.replace(')','')?.split(',');
+  if (!paramsArray || paramsArray.length < 1) {
     return instruction_name;
   }
   let mappedValue = mapInstructionToPseudo[instruction_name] || instruction_name;
@@ -54,21 +54,36 @@ function convertToPseudoCode(asm) {
 }
 
 const createRow = (start_offset, { index, style }) => {
-  index = index*2;
+  // TODO: need to figure out how to make a row, only if it has an assembly instruction
+  // the problem is instructions take various sizes
+  // need to log the byte size of each instruction
+  // index = index*2;
   const offset = start_offset+index;
   const offset_str = padStart(offset.toString(16).toUpperCase(), 8, '0');
   // console.error("offset:",offset, offset.toString(16), offset_str, window?.allInformation?.assembly[offset_str]);
   const assemblyInstruction = window?.allInformation?.assembly?.[offset_str];
 
-  let rowInner = <div className="disasmCol">{JSON.stringify(window?.allInformation?.assembly?.[offset_str]) || 'Not executed'}</div>;
+  let rowInner = <div className="disasmCol">{JSON.stringify(window?.allInformation?.assembly?.[offset_str]) || 'Unknown'}</div>;
 
   if (assemblyInstruction && Object.keys(assemblyInstruction)?.length === 1) {
     const firstKey = Object.keys(assemblyInstruction)[0];
     rowInner = (<Fragment>
-      <div className="disasmCol disasmColBytes">0x{assemblyInstruction[firstKey].bytes}</div>
+      <div className="disasmCol disasmColBytes">0x{assemblyInstruction[firstKey].bytes} ({assemblyInstruction[firstKey].bytes_length})</div>
       <div className="disasmCol">{firstKey.replace(',', ', ')}</div>
       <div className="disasmCol">{convertToPseudoCode(firstKey)}</div>
     </Fragment>);
+  } else if (!assemblyInstruction) {
+    // TODO: check lenght of previous instruction as that will define whether to say Not executed or not
+    const prev_offset_str = padStart((start_offset+index-1).toString(16).toUpperCase(), 8, '0');
+    const previousAssemblyInstruction = window?.allInformation?.assembly?.[prev_offset_str];
+    const firstKey = previousAssemblyInstruction? Object.keys(previousAssemblyInstruction)[0]:null;
+    console.error("previousAssemblyInstruction:", previousAssemblyInstruction);
+    if (previousAssemblyInstruction && previousAssemblyInstruction[firstKey]?.bytes_length >1) {
+      return null;
+    }
+    // TODO: handle 3 or 4 byte instructions
+
+    rowInner = <div className="disasmCol">Not executed</div>;
   }
 
   return <div style={style} className="disasmRow">
@@ -87,12 +102,12 @@ export function DisasmViewer({ memory, functionObj }) {
   // const max_return = map(values(returns), (val)=> parseInt(val.substring(1), 16));
 
   // const returnsumBy(returns, (a,b)=>console.error("sumBy",a,b)) TODO: just get max return
-  console.error(function_name, returns, memory, n2hexstr(start_offset), max_return, returns, "asm:",window?.allInformation?.assembly, disassembly);
+  console.error(function_name, returns, memory, n2hexstr(start_offset), "MAX return:", max_return, returns, "asm:",window?.allInformation?.assembly, disassembly);
   // const end_offset = memory.offset+20;
   const end_offset = max_return+2;
   // const rows= window?.allInformation?.assembly;
 
-  let length_of_function = (end_offset - start_offset)/2; // divided by 2 for saturn but will vary per console
+  let length_of_function = (end_offset - start_offset);///2; // divided by 2 for saturn but will vary per console
 
   if (length_of_function>300) {
     length_of_function = 300;

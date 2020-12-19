@@ -9,9 +9,10 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import { sendActionToServer } from '../server';
 import { FormControl, FormLabel, FormGroup, FormControlLabel, Switch } from '@material-ui/core';
 import ChipInput from 'material-ui-chip-input'
+import Checkbox from '@material-ui/core/Checkbox';
 
 
-export default function EditFunctionDialog( { currentDialogParameters, setCurrentDialog, playerState, setPlayerState, open = true }) {
+export default function ExportFunctionDialog( { currentDialogParameters, setCurrentDialog, playerState, setPlayerState, open = true }) {
   const [functionSettings, setFunctionSettings] = React.useState(currentDialogParameters);
 
   const handleClose = () => {
@@ -25,7 +26,7 @@ export default function EditFunctionDialog( { currentDialogParameters, setCurren
     // setPlayerState(newPlayerState);
 
     const payload = {
-      category: 'edit_function',
+      category: 'export_function',
       state: functionSettings
     };
     sendActionToServer(payload);
@@ -35,18 +36,16 @@ export default function EditFunctionDialog( { currentDialogParameters, setCurren
   return (
     <div>
       <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">Edit Function</DialogTitle>
+        <DialogTitle id="form-dialog-title">Export Function</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            
+            This will export the assembly source code for the current function to the source folder, which can then be commited to Git.
           </DialogContentText>
           <form noValidate autoComplete="off">
-            <TextField onChange={(e)=> setFunctionSettings({...functionSettings, func_name:e.target.value})} value={functionSettings?.func_name} style={{display:'block'}} id="standard-basic" label="Name" fullWidth />
-            <TextField onChange={(e)=> setFunctionSettings({...functionSettings, export_path:e.target.value})} value={functionSettings?.export_path || "/functions/"+functionSettings?.func_name+".s"} fullWidth style={{display:'block'}} id="standard-basic" label="Export Path" />
-            <TextField style={{display:'block'}} id="standard-basic" label="Parameter Count" type="number" min={0} />
+            <FormControlLabel disabled control={<Checkbox name="exportAsm" />} label="Export Assembly" />
+            <FormControlLabel disabled control={<Checkbox name="exportJs" />} label="Export Javascript" />
+            <FormControlLabel disabled control={<Checkbox name="exportC" />} label="Export C" />
           </form>
-
-          {JSON.stringify(functionSettings)}
           
         </DialogContent>
         <DialogActions>
