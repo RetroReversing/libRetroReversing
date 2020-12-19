@@ -16,6 +16,7 @@ json playthroughs_json = {};
 json libRR_current_playthrough = {};
 json playthough_function_usage = {};
 string libRR_project_directory = "";
+string libRR_export_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
 int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
@@ -119,11 +120,13 @@ void libRR_setup_directories() {
   libRR_setup_retro_base_directory();
 
   libRR_project_directory = retro_base_directory;
-  libRR_project_directory+= "/RE_projects/";
-  libRR_project_directory+=current_state.libretro_system_info.library_name;
-  libRR_project_directory+="/"+current_state.game_name+"/";
+  libRR_project_directory += "/RE_projects/";
+  libRR_project_directory += current_state.libretro_system_info.library_name;
+  libRR_project_directory += "/" + current_state.game_name + "/";
+  libRR_export_directory += libRR_project_directory + "src/";
   std::__fs::filesystem::create_directories( libRR_project_directory);
-  std::__fs::filesystem::create_directories( libRR_project_directory+ "/playthroughs/");
+  std::__fs::filesystem::create_directories( libRR_project_directory + "/playthroughs/");
+  std::__fs::filesystem::create_directories( libRR_export_directory);
   cout << "Created project directory: " << libRR_project_directory << std::endl;
 }
 
@@ -650,6 +653,11 @@ string libRR_parse_message_from_web(string message)
     string name = message_json["state"]["name"];
     game_json["notes"][category][name] = message_json["state"];
     saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
+  }
+  else if (category == "export_function") {
+    printf("Export Function %s\n", message_json["state"].dump().c_str());
+    libRR_export_all_files();
+    return "Done";
   }
   else if (category == "edit_function") {
     // TODO: instead call: edit_function(message_json["state"]);

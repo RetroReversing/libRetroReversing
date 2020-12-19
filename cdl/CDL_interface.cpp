@@ -47,6 +47,7 @@ extern std::map<uint32_t,uint32_t> rdram_reads;
 std::map<uint32_t,bool> offsetHasAssembly;
 void find_most_similar_function(uint32_t function_offset, string bytes);
 
+bool libRR_finished_boot_rom = false;
 string last_reversed_address = "";
 bool should_reverse_jumps = false;
 bool should_change_jumps = false;
@@ -482,10 +483,12 @@ uint32_t libRR_call_depth = 0; // Tracks how big our stack trace is in terms of 
 uint16_t libRR_backtrace_stackpointers[0x200]; // 0x200 should be tons of function calls
 uint32_t libRR_backtrace_size = 0; // Used with backtrace_stackpointers - Tracks how big our stack trace is in terms of number of function calls
 
+extern uint32_t libRR_pc_lookahead;
+
 // libRR_log_return_statement
 // stack_pointer is used to make sure our function stack doesn't exceed the actual stack pointer
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer) {
-    libRR_call_depth--;
+    // printf("libRR_log_return_statement pc:%d return:%d stack:%d\n", current_pc, return_target, 65534-stack_pointer);
 
     // check the integrety of the call stack
     if (libRR_call_depth < 0) {
@@ -495,21 +498,26 @@ void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uin
     auto function_returning_from = function_stack.back();
     auto presumed_return_address = previous_ra.back();
     if (return_target != presumed_return_address) {
-        printf("Presumed return: %d actual return: %d\n", presumed_return_address, return_target);
+        // printf("ERROR: Presumed return: %d actual return: %d current_pc: %d\n", presumed_return_address, return_target, current_pc);
+        // sometimes code manually pushes the ret value to the stack and returns
+        // if so we don't want to log as a function return
+        // but in the future we might want to consider making the previous jump a function call
+        return;
+    } else {
+        libRR_call_depth--;
+        // Remove from stacks
+        function_stack.pop_back();
+        previous_ra.pop_back();
     }
-    // Remove from stacks
-    function_stack.pop_back();
-    previous_ra.pop_back();
-    // TODO: log function_returning_from as a return statement (possible end of function)
 
     if (!libRR_full_function_log) {
         return;
     }
-    // For saturn we remove 2 from the program counter, but this will vary per console
-    // we only want to return 2 and not 4 because we want to include the delay slot instruction
-    current_pc -= 2; 
+    
+    current_pc -= libRR_pc_lookahead; 
     string current_function = n2hexstr(function_returning_from);
     string current_pc_str = n2hexstr(current_pc);
+    // printf("Returning from function: %s current_pc:%s \n", current_function.c_str(), current_pc_str.c_str());
     // string function_key = current_function;
     playthough_function_usage[current_function]["returns"][current_pc_str] = return_target;
 
@@ -521,7 +529,7 @@ void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uin
         if (playthough_function_usage[current_function]["signatures"].contains(length_str)) {
 
         } else {
-            printf("About to get length: %d \n", length);
+            printf("Function Signature: About to get length: %d \n", length);
             playthough_function_usage[current_function]["signatures"][n2hexstr(length)] = libRR_get_data_for_function(function_returning_from, length+1, true, true);
         }
     }    
@@ -585,6 +593,8 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     
     // Start Stacktrace handling
     libRR_call_depth++;
+    // printf("libRR_log_function_call pc: %d target: %d full: %d libRR_call_depth:%d \n", current_pc, jump_target, calculated_jump_target, libRR_call_depth);
+    
     // Make sure the backtract size doesn't go bigger than the size of backtrace_sps array
     // otherwise just ignore it
     // if (libRR_backtrace_size < sizeof(libRR_backtrace_stackpointers) / sizeof(libRR_backtrace_stackpointers[0])) {
@@ -1324,11 +1334,64 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d, unsigned ea) {
-    replace(name, "%EA", "0x"+n2hexstr(ea));
-    libRR_log_instruction(current_pc, name, instruction_bytes, arguments, m, n, imm, d);
+// 
+// Gameboy Z80 Start
+// 
+string libRR_gameboy_da8_contant_replace(int16_t da8) {
+    // TODO: read these from JSON config instead
+    if (da8 == (int16_t)0xFF0F) { 
+        return "rIF";
+    }
+    if (da8 == (int16_t)0xFF40) { 
+        return "rLCDC";
+    }
+    if (da8 == (int16_t)0xffff) { 
+        return "rIE"; // Interrupt enable
+    }
+    return "0x"+n2hexstr(da8);
 }
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d) {
+
+extern "C" void libRR_log_instruction_z80(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
+    std::string name(c_name);
+    replace(name, "%da8%", libRR_gameboy_da8_contant_replace(operand));
+    
+    libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
+}
+
+extern "C" void libRR_log_instruction_z80_s_d(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* source, const char* destination) {
+     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
+    std::string name(c_name);
+    replace(name, "%s%", source);
+    replace(name, "%d%", destination);
+    
+    libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
+}
+
+
+// 
+// Z80 End
+// 
+
+// current_pc - current program counter
+// instruction bytes as integer used for hex
+// arguments  - number of arguments - currently not really used for anything
+// m - used for register number, replaces Rm with R1/R2 etc
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes, unsigned m, unsigned n, unsigned imm, unsigned d, unsigned ea) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
+    replace(name, "%EA", "0x"+n2hexstr(ea));
+    libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes, m, n, imm, d);
+}
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes, unsigned m, unsigned n, unsigned imm, unsigned d) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
     replace(name, "#imm", "#"+to_string(imm));
     replace(name, "disp", ""+to_string(d));
     if (name.find("SysRegs") != std::string::npos) {
@@ -1336,24 +1399,38 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
         replace(name, "SysRegs[#1]", "MACL");
         replace(name, "SysRegs[#2]", "PR");
     }
-    libRR_log_instruction(current_pc, name, instruction_bytes, arguments, m, n);
+    libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes, m, n);
 }
 
 
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n) {
-    if (!libRR_full_function_log) {
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes, unsigned m, unsigned n) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     replace(name, "Rm", "R"+to_string(m));
     replace(name, "Rn", "R"+to_string(n));
-    libRR_log_instruction(current_pc, name, instruction_bytes, arguments);
+    libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
 }
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments) {
-    if (!libRR_full_function_log) {
+
+extern "C" void libRR_log_instruction(uint32_t current_pc, const char* name, uint32_t instruction_bytes, int number_of_bytes)
+{
+    // printf("libRR_log_instruction pc:%d name: %s bytes: %d\n", current_pc, name, instruction_bytes);
+    std::string str(name);
+    libRR_log_instruction(current_pc, str, instruction_bytes, number_of_bytes);
+}
+
+
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
-    // For saturn we remove 2 from the program counter, but this will vary per console
-    current_pc -= 4; // was -2
+    
+    if (libRR_console == "Saturn") {
+        // For saturn we remove 2 from the program counter, but this will vary per console
+        current_pc -= 4; // was -2
+    }
+
+
     // string current_function = n2hexstr(function_stack.back());
     string current_pc_str = n2hexstr(current_pc);
     
@@ -1363,7 +1440,9 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
         // printf("Delay Slot %s \n", current_pc_str.c_str());
         libRR_isDelaySlot = false;
     }
-    string hexBytes = n2hexstr((uint16_t)instruction_bytes);
+    // TODO: Hex bytes should change based on number_of_bytes
+    string hexBytes = n2hexstr((uint32_t)instruction_bytes, number_of_bytes*2);
     libRR_disassembly[current_pc_str][name]["frame"]=RRCurrentFrame;
     libRR_disassembly[current_pc_str][name]["bytes"]=hexBytes;
+    libRR_disassembly[current_pc_str][name]["bytes_length"]=number_of_bytes;
 }

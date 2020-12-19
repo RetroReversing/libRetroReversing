@@ -386,3 +386,26 @@ string buffer_to_string(void* my_buf) {
     sstream << (char*)my_buf;
     return sstream.str();
 }
+
+uint16_t two_bytes_to_16bit_value(uint8_t byte1, uint8_t byte2) {
+    int result = (byte1 & 0xff) |
+             ((byte2 & 0xff) << 8);
+    return result;
+}
+
+uint32_t three_bytes_to_24bit_value(uint8_t byte1, uint8_t byte2, uint8_t byte3) {
+    uint32_t result = ((byte1 & 0xff) |
+            ( ((byte2 & 0xff) << 8) | 
+             ((byte3 & 0xff) << 16) ) );
+    // printf("three_bytes_to_24bit_value byte1: %d 2:%d 3:%d result:%d\n", byte1, byte2, byte3, result);
+    return result;
+}
+
+uint32_t four_bytes_to_32bit_value(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint8_t byte4) {
+    uint32_t result = ((byte1 & 0xff) |
+             ((byte2 & 0xff) << 8) | 
+             ((byte3 & 0xff) << 16) |
+             ((byte4 & 0xff) << 24)
+             );
+    return result;
+}

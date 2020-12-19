@@ -77,7 +77,7 @@ npm run production
 npm run dev
 ```
 
-Now go to `http://localhost:8081`
+Now go to `http://localhost:8080`
 
 ---
 # To Add to a new core

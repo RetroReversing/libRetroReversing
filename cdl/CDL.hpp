@@ -207,6 +207,9 @@ void add_tag_to_function(string tag, uint32_t labelAddr);
 uint32_t map_assembly_offset_to_rom_offset(uint32_t assembly_offset, uint32_t tlb_mapped_addr);
 string print_function_stack_trace();
 bool is_auto_generated_function_name(string func_name);
+uint16_t two_bytes_to_16bit_value(uint8_t byte1, uint8_t byte2);
+uint32_t three_bytes_to_24bit_value(uint8_t byte1, uint8_t byte2, uint8_t byte3);
+uint32_t four_bytes_to_32bit_value(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint8_t byte4);
 
 extern int   l_CurrentFrame;
 extern string rom_name;
