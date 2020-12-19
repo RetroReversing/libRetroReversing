@@ -30,6 +30,12 @@ extern "C" {
   void libRR_log_branch(uint32_t current_pc, uint32_t target_pc) {
 
   }
+  const char* libRR_console = "Saturn";
+
+  // libRR_pc_lookahead is used to subtract from the Program counter in order to get the actual location of the Return instruction
+  // For saturn we remove 2 from the program counter, but this will vary per console
+  // we only want to return 2 and not 4 because we want to include the delay slot instruction
+  uint32_t libRR_pc_lookahead = 2;
   
   // void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
   //   printf("%d\n",1);
@@ -61,6 +67,10 @@ extern "C" {
     game_json["VDP2"]["CRAM_Mode"] = VDP2::CRAM_Mode;
     // Documentation only needs to be added once
     game_json["Documentation"]["Memory"]["VDP2CRAM"] = "Colour RAM for VDP2 - basically the palette for the background layer";
+  }
+
+  void libRR_export_all_files() {
+    printf("Saturn: Export All files to Reversing Project, depends on which core we are using");
   }
 
 }

@@ -150,5 +150,8 @@ void libRR_setup_console_details() {
   define_console_memory_region("Cartridge Memory (Mirror)", 0xE00000, 0xFFFFFF, 0x2100); // 2MB Mirror
 }
 
+void libRR_export_all_files() {
+    printf("PokemonMini: Export All files to Reversing Project, depends on which core we are using");
+}
 
 }

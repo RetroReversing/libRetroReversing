@@ -93,6 +93,7 @@ log_message(const struct mg_connection *conn, const char *message)
 }
 
 extern string libRR_project_directory;
+extern string libRR_export_directory;
 
 struct mg_callbacks callbacks;
 void setup_web_server() {
@@ -100,23 +101,31 @@ void setup_web_server() {
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.log_message = log_message;
 	string url_rewrite = "/game/="+libRR_project_directory;
-   /* Initialize the library */
-    mg_init_library(0);
-    const char *options[] = {
-      "document_root",
-		"./libRetroReversing/websrc/dist",
-		"listening_ports",
-		"1234",
-		"request_timeout_ms",
-		"10000",
-		"error_log_file",
-		"error.log",
-    "enable_directory_listing",
-    "yes",
-		"url_rewrite_patterns",
-		url_rewrite.c_str(),
-    0
-	};
+	/* Initialize the library */
+	mg_init_library(0);
+	const char *options[] = {
+		"document_root",
+	"./libRetroReversing/websrc/dist",
+	"listening_ports",
+	"127.0.0.1:1234", //"1234",
+	"request_timeout_ms",
+	"10000",
+	"error_log_file",
+	"error.log",
+	"enable_directory_listing",
+	"no",
+	// "allow_sendfile_call",
+	// "no",
+	"access_control_allow_methods",
+	"", //"POST,GET,OPTIONS", // Make sure to disable CONNECT http method
+	"access_control_allow_headers",
+	"",
+	"access_control_allow_origin",
+	"localhost",
+	"url_rewrite_patterns",
+	url_rewrite.c_str(),
+	0
+};
 
     /* Start the server */
     ctx = mg_start(&callbacks, 0, options);

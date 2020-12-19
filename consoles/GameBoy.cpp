@@ -5,6 +5,8 @@
 
 extern "C" {
 
+  const char* libRR_console = "GameBoy";
+
   // SameBoy doesn't have this defined so:
   char retro_base_directory[4096];
 
@@ -21,6 +23,11 @@ extern "C" {
   // char retro_save_directory[4096];
   // char retro_game_path[4096];
   // end Sameboy libretro differences
+
+  // libRR_pc_lookahead is used to subtract from the Program counter in order to get the actual location of the Return instruction
+  // For saturn we remove 2 from the program counter, but this will vary per console
+  // we only want to return 2 and not 4 because we want to include the delay slot instruction
+  uint32_t libRR_pc_lookahead = 0;
 
   // GameBoy does not have delay slots, but need to be defined anyway
   uint32_t libRR_delay_slot_pc;
@@ -105,6 +112,13 @@ extern "C" {
     //     file << "   - [0x" << t.func_offset <<", \"" <<  t.func_name << "\"]\n";
     // }
 
+  }
+
+  void libRR_export_all_files() {
+    printf("GameBoy: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
+    // TODO: loop through all the functions and export the assembly to their files
+    // TODO: copy common files from the /gameboy files folder
+    // TODO: read json file of which files to put where
   }
 
 

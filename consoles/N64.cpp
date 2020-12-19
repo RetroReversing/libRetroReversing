@@ -150,3 +150,9 @@ void cdl_log_memory_mappings(mem_mapping* mappings, uint32_t number_of_mappings)
         fileConfig["memMap"][i] = s.str();
     }
 }
+
+extern "C" {
+  void libRR_export_all_files() {
+    printf("N64: Export All files to Reversing Project, depends on which core we are using");
+  }
+}

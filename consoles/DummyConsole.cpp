@@ -5,6 +5,8 @@
 
 extern "C" {
 
+  const char* libRR_console = "Dummy";
+
   struct retro_memory_map libRR_retromap = { 0 };
 
   struct retro_memory_descriptor libRR_mmap[0];
@@ -18,6 +20,8 @@ extern "C" {
   uint32_t libRR_bank_size = 0;
   uint32_t libRR_current_bank = 0;
   bool libRR_bank_switching_available = false;
+
+  uint32_t libRR_pc_lookahead = 0;
 
   // void libRR_set_retro_memmap(retro_environment_t environ_cb)
   // {
@@ -102,6 +106,9 @@ extern "C" {
 
   }
 
+  void libRR_export_all_files() {
+    printf("Dummy: Export All files to Reversing Project, depends on which core we are using");
+  }
 
 }
 

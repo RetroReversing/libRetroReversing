@@ -9,7 +9,7 @@ using json = nlohmann::json;
 
 #define BitVal(data,y) ( (data>>y) & 1) 
 
-void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments);
+void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments=0);
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n);
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d);
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int arguments, unsigned m, unsigned n, unsigned imm, unsigned d, unsigned ea);
@@ -29,6 +29,16 @@ extern struct retro_memory_descriptor libRR_mmap[];
 extern int libRR_mmap_descriptors;
 extern struct retro_memory_map libRR_retromap;
 extern int libRR_last_logged_frame;
+extern const char* libRR_console;
+
+// 
+// Paths
+// 
+extern string libRR_project_directory;
+extern string libRR_export_directory;
+
+// whether we have finished the boot rom process or not
+extern bool libRR_finished_boot_rom;
 
 // JSON
 extern json game_json;
@@ -135,6 +145,7 @@ string libRR_parse_message_from_web(string message);
 // Override with Console specific
 void libRR_setup_console_details(retro_environment_t environ_cb);
 void libRR_handle_emulator_close();
+void libRR_export_all_files();
 
 // extern "C" {
   void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int total);
