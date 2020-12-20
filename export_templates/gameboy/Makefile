@@ -2,8 +2,9 @@ roms := {{ GAME_NAME }}.gb
 
 rom_obj := \
 main.o \
+common.o \
 
-game_obj        := $(rom_obj:.o=_red.o)
+game_obj        := $(rom_obj:.o=_rr.o)
 
 
 
@@ -28,7 +29,7 @@ RGBLINK ?= $(RGBDS)rgblink
 .SECONDEXPANSION:
 .PRECIOUS:
 .SECONDARY:
-.PHONY: all red blue blue_debug clean tidy compare tools
+.PHONY: all red clean tidy compare tools
 
 all: $(roms)
 game:        {{ GAME_NAME }}.gb
@@ -37,7 +38,7 @@ clean: tidy
 	find gfx \( -iname '*.1bpp' -o -iname '*.2bpp' -o -iname '*.pic' \) -delete
 
 tidy:
-	rm -f $(roms) $(game_obj) $(roms:.gbc=.map) $(roms:.gbc=.sym) rgbdscheck.o
+	rm -f $(roms) $(game_obj) $(roms:.gb=.map) $(roms:.gb=.sym) rgbdscheck.o
 	$(MAKE) clean -C tools/
 
 compare: $(roms)
@@ -55,7 +56,7 @@ endif
 
 $(gameobj):        RGBASMFLAGS += -D _libRR
 
-rgbdscheck.o: rgbdscheck.asm
+rgbdscheck.o: common/rgbdscheck.asm
 	$(RGBASM) -o $@ $<
 
 # The dep rules have to be explicit or else missing files won't be reported.
@@ -73,7 +74,7 @@ ifeq (,$(filter clean tidy tools,$(MAKECMDGOALS)))
 $(info $(shell $(MAKE) -C tools))
 
 # Dependencies for objects (drop _red and _blue from asm file basenames)
-$(foreach obj, $(game_obj), $(eval $(call DEP,$(obj),$(obj:_red.o=.asm))))
+$(foreach obj, $(game_obj), $(eval $(call DEP,$(obj),$(obj:_rr.o=.asm))))
 
 endif
 
@@ -85,9 +86,13 @@ game_pad        = 0x00
 
 game_opt        = -jsv -n 0 -k 01 -l 0x33 -m 0x13 -r 03 -t "{{ GAME_NAME }}"
 
-%.gbc: $$(%_obj) layout.link
-	$(RGBLINK) -p $($*_pad) -d -m $*.map -n $*.sym -l layout.link -o $@ $(filter %.o,$^)
-	$(RGBFIX) -p $($*_pad) $($*_opt) $@
+%.gb: $$(game_obj) layout.link
+	$(RGBLINK) -p $(game_pad) -d -m $*.map -n $*.sym -l layout.link -o $@ $(filter %.o,$^)
+	$(RGBFIX) -p $(game_pad) $(game_opt) $@
+
+%.gbc: $$(game_obj) layout.link
+	$(RGBLINK) -p $(game_pad) -d -m $*.map -n $*.sym -l layout.link -o $@ $(filter %.o,$^)
+	$(RGBFIX) -p $(game_pad) $(game_opt) $@
 
 
 ### Misc file-specific graphics rules

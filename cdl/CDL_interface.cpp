@@ -579,12 +579,12 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     uint32_t calculated_jump_target = jump_target;
     // TODO: need to calculate full address of both current_pc and jump_target based on which is the current ROM Bank
     if (libRR_bank_switching_available) {
-        bank_number = "00_";
+        bank_number = "00";
         if (current_pc > libRR_bank_size) {
             // current PC may either be in bank 1 or a higher bank
         }
         if (jump_target > libRR_bank_size) {
-            bank_number = n2hexstr(libRR_current_bank, 2)+"_";
+            bank_number = n2hexstr(libRR_current_bank, 2);
             // jump target may be either in bank 1 or a higher bank
             // printf("Current Bank is:  %s jump target: %s \n", n2hexstr(libRR_current_bank).c_str(), n2hexstr(jump_target).c_str());
             calculated_jump_target = jump_target + ((libRR_current_bank-1) * libRR_bank_size);
@@ -636,9 +636,11 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     // } else {
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
-    t.func_name = /*libRR_game_name+*/bank_number+"func_"+jump_target_str;
+    t.func_name = /*libRR_game_name+*/"_"+bank_number+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
     t.export_path = "";
+    t.bank_number = bank_number;
+    t.bank_offset = jump_target;
     // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
     t.many_memory_reads = false;

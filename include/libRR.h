@@ -147,6 +147,7 @@ string libRR_parse_message_from_web(json message);
 
 // Source sxport
 void libRR_export_template_files(string template_directory_name);
+extern string libRR_export_assembly_extention;
 
 // Override with Console specific
 void libRR_setup_console_details(retro_environment_t environ_cb);

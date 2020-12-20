@@ -139,6 +139,8 @@ struct cdl_labels {
     bool generatedSignature;
     json additional;
     string export_path;
+    string bank_number="";
+    uint32_t bank_offset; // offset without taking into account bank switching
 };
 struct cdl_jump_return {
     string func_offset;

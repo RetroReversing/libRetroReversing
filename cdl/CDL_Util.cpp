@@ -144,6 +144,8 @@ void to_json(json& j, const cdl_labels& p) {
         {"isRenamed", p.isRenamed},
         {"additional", p.additional},
         {"export_path", p.export_path},
+        {"bank_number", p.bank_number},
+        {"bank_offset", p.bank_offset},
         // {"function_bytes_endian", p.function_bytes_endian},
         // {"read_addresses", p.read_addresses},
         // {"write_addresses", p.write_addresses},
@@ -164,6 +166,8 @@ void from_json(const json& j, cdl_labels& p) {
     j.at("stack_trace").get_to(p.stack_trace);
     j.at("isRenamed").get_to(p.isRenamed);
     j.at("export_path").get_to(p.export_path);
+    j.at("bank_number").get_to(p.bank_number);
+    j.at("bank_offset").get_to(p.bank_offset);
     p.additional = j.at("additional");//.get_to(p.additional);
     // j.at("function_bytes_endian").get_to(p.function_bytes_endian);
     // j.at("read_addresses").get_to(p.read_addresses);

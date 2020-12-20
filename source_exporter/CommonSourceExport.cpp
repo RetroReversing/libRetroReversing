@@ -13,8 +13,8 @@ void libRR_export_template_files(string template_directory_name) {
     json files_json;
     string export_template_directory = "./libRetroReversing/export_templates/"+template_directory_name+"/";
     readJsonToObject(export_template_directory+"files.json", files_json);
-    cout << "Exporter Name is: " << files_json["name"].dump() << "\n";
-    libRR_export_assembly_extention = files_json["asm_extenstion"].dump();
+    cout << "Exporter Name is: " << files_json["name"] << "\n";
+    libRR_export_assembly_extention = (string)files_json["asm_extenstion"];
 
     // Create required directories
     json dirs = files_json["dirs"];

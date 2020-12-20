@@ -117,15 +117,71 @@ extern "C" {
 
   }
 
+  string generate_asm_for_function(const unsigned int offset, cdl_labels function) {
+    string contents = "; TODO: generate ASM\n";
+    string bank_number = function.bank_number;
+    string offset_str = "$"+ n2hexstr(function.bank_offset);
+    if ((uint8_t)offset == (uint8_t)0x40) {
+      return "; Ignore Vblank for now";
+    }
+
+    if (function.bank_offset< 0x4000 || bank_number == "0") {
+      contents += "SECTION \"" + function.func_name + "\",ROM0["+offset_str+"]\n\n";
+    } 
+    else if (function.bank_offset >= 0xff80) {
+      return "; Ignore HRAM for now";
+    }
+    else {
+      contents += "SECTION \"" + function.func_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n\n";
+    }
+
+    contents += function.func_name + "::\n";
+    contents += "\txor a\n";
+    contents += "\tret\n";
+    // TODO: get ASM for function
+    return contents;
+  }
+
 
   void libRR_export_all_files() {
     printf("GameBoy: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
-    // TODO: loop through all the functions and export the assembly to their files
-
-    // TODO: generate main.asm file
-
     // Copy over common template files
     libRR_export_template_files("gameboy");
+
+    string main_asm_contents = "";
+    for (auto& it : functions) {
+      printf("test\n");
+      cout << "offset:" << it.first << " name: " << functions[it.first].func_name << "\n";
+      string export_path = "";
+      if (functions[it.first].export_path.length()>0) {
+        export_path = functions[it.first].export_path;
+      } else {
+        // Use a default generated export path
+        export_path = "/functions/" + functions[it.first].func_name + libRR_export_assembly_extention;
+      }
+      main_asm_contents+="INCLUDE \"."+export_path+"\"\n";
+
+      string output_file_path = libRR_export_directory + export_path;
+      // create any folder that needs to be created
+      std::__fs::filesystem::create_directories(codeDataLogger::dirnameOf(output_file_path));
+
+
+      string contents = generate_asm_for_function(it.first, it.second);
+      codeDataLogger::writeStringToFile(output_file_path, contents);
+      cout << "Written file to: " << output_file_path << "\n";
+      
+
+      // if (it.second.func_offset == state["func_offset"]) {
+      //   printf("Found function to update %s \n", state["func_offset"].dump().c_str());
+      //   functions[it.first].func_name = state["func_name"];
+      //   functions[it.first].export_path = state["export_path"];
+      //   // functions[it.first].additional = message_json["state"]["additional"];
+      //   break;
+      // }
+  }
+
+    // Generate main.asm file, which includes the other files
+    codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
     
   }
 
