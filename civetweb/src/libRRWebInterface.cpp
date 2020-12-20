@@ -22,21 +22,23 @@ SendJSON(struct mg_connection *conn, const char* json_str)
 	return (int)json_str_len;
 }
 
-  
-char buf[1024*1024*4]; // Needs to hold large JSON
+#define BUF_SIZE 1024*1024*4
+// char buf[1024*1024*4]; // Needs to hold large JSON
 int
 PostResponser(struct mg_connection *conn, void *cbdata)
 {
+	json message_json;
 	long long r_total = 0;
 	int r, s;
 
-	memset(buf, 0, sizeof(buf));
+	char* buf = new char[BUF_SIZE];
+	memset(buf, 0, BUF_SIZE);
 
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 
 	if (0 != strcmp(ri->request_method, "POST")) {
 		/* Not a POST request */
-		int ret = mg_get_request_link(conn, buf, sizeof(buf));
+		int ret = mg_get_request_link(conn, buf, BUF_SIZE);
 
 		mg_printf(conn,
 		          "HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n");
@@ -64,7 +66,7 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 	//           "close\r\nTransfer-Encoding: chunked\r\n");
 	// mg_printf(conn, "Content-Type: application/json\r\n\r\n");
 
-	r = mg_read(conn, buf, sizeof(buf));
+	r = mg_read(conn, buf, BUF_SIZE);
 	while (r > 0) {
 		r_total += r;
 		// s = mg_send_chunk(conn, buf, r);
@@ -72,12 +74,16 @@ PostResponser(struct mg_connection *conn, void *cbdata)
 			/* Send error */
 			break;
 		}
-		r = mg_read(conn, buf, sizeof(buf));
+		r = mg_read(conn, buf, BUF_SIZE);
 	}
 	
   // cout << "\n\n" << buf << "\n\n\n";
-	string result = libRR_parse_message_from_web(buffer_to_string(buf));
+	printf("About to start Parsing message_json\n");
+	message_json = json::parse(buffer_to_string(buf));
+	printf("Finished Parsing message_json\n");
+	string result = libRR_parse_message_from_web(message_json);
 	SendJSON(conn, result.c_str());
+	delete[] buf;
 
 	return 1;
 }

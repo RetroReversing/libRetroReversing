@@ -1,7 +1,7 @@
 #include "CDL_FileWriting.hpp"
 
 namespace codeDataLogger {
-    extern std::string last_loaded_cdl;
+    std::string last_loaded_cdl;
     void copyOverOtherStatesDiffContents(std::ostream* file) {
         std::ifstream sourcecdlDiff(last_loaded_cdl.c_str(), std::ios_base::binary);
         for( std::string line; getline( sourcecdlDiff, line ); )
@@ -64,5 +64,34 @@ namespace codeDataLogger {
         int size = readInteger32(file);
         printf("Block Size: %d",(int)size);
         file->read(buffer, size);
+    }
+
+    std::string readFileToString(std::string file_path) {
+        std::ifstream t(file_path);
+        std::string str;
+        if (!t.good()) { return "File not found"; }
+
+        t.seekg(0, std::ios::end);   
+        str.reserve(t.tellg());
+        t.seekg(0, std::ios::beg);
+
+        str.assign((std::istreambuf_iterator<char>(t)),
+                    std::istreambuf_iterator<char>());
+        return str;
+    }
+
+    void writeStringToFile(std::string file_path, std::string contents) {
+        std::ofstream out(file_path);
+        if (!out.good()) { std::cout << "File not found" << file_path << "\n"; }
+        out << contents;
+        out.close();
+    }
+
+    std::string dirnameOf(const std::string& fname)
+    {
+        size_t pos = fname.find_last_of("\\/");
+        return (std::string::npos == pos)
+            ? ""
+            : fname.substr(0, pos);
     }
 }

@@ -17,9 +17,11 @@ namespace codeDataLogger {
     uint8_t readInteger8(std::ifstream* file);
     uint32_t readInteger32(std::ifstream* file);
     std::string readString(std::ifstream* file, int num);
+    std::string readFileToString(std::string file_path);
+    void writeStringToFile(std::string file_path, std::string contents);
     void readBlock(std::ifstream* file, char* buffer);
     void writeDataBytes(std::ostream* file, int start_range_address, int range_size, unsigned char* memory);
     void writeDataBytes(const std::ofstream& file, int start_range_address, int range_size, unsigned char* memory);
-    
+    std::string dirnameOf(const std::string& fname);
 }
 #endif /* CDL_FileWriting_hpp */

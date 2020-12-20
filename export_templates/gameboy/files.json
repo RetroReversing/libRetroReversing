@@ -1,0 +1,15 @@
+{
+  "name": "Gameboy RGBDS Source Exporter",
+  "dirs": [
+    "common"
+  ],
+  "files": [
+    "Makefile",
+    "README.md",
+    "INSTALL.md",
+    ".gitignore",
+    "common/rgbdscheck.asm"
+  ],
+  "main": "main.asm",
+  "asm_extenstion": ".asm"
+}

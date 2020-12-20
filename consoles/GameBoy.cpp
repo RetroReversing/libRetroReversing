@@ -1,7 +1,10 @@
 #include <queue>
 #include "../civetweb/include/civetweb.h"
 #include "../include/libRR.h"
+#include "../cdl/mustache.hpp"
 #include "../cdl/CDL.hpp"
+#include "../cdl/CDL_FileWriting.hpp"
+using namespace kainjow::mustache;
 
 extern "C" {
 
@@ -114,11 +117,16 @@ extern "C" {
 
   }
 
+
   void libRR_export_all_files() {
     printf("GameBoy: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
     // TODO: loop through all the functions and export the assembly to their files
-    // TODO: copy common files from the /gameboy files folder
-    // TODO: read json file of which files to put where
+
+    // TODO: generate main.asm file
+
+    // Copy over common template files
+    libRR_export_template_files("gameboy");
+    
   }
 
 

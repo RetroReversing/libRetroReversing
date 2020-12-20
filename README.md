@@ -146,6 +146,15 @@ int i = 2;
 libRR_current_playthrough["states"].erase(i);
 ```
 
+### loop through items in array
+```c
+json j = files_json["files"];
+for (json::iterator it = j.begin(); it != j.end(); ++it) {
+  json current = *it;
+  cout << current.dump() << "\n";
+}
+```
+
 ### loop through keys of object
 ```c
 for (auto& el : o.items()) {

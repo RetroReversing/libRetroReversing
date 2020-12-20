@@ -31,6 +31,9 @@ extern struct retro_memory_map libRR_retromap;
 extern int libRR_last_logged_frame;
 extern const char* libRR_console;
 
+// Game Name
+extern string libRR_game_name;
+
 // 
 // Paths
 // 
@@ -140,7 +143,10 @@ unsigned long long libRR_playback_next_input_state();
 bool libRR_run_frame();
 
 // Web
-string libRR_parse_message_from_web(string message);
+string libRR_parse_message_from_web(json message);
+
+// Source sxport
+void libRR_export_template_files(string template_directory_name);
 
 // Override with Console specific
 void libRR_setup_console_details(retro_environment_t environ_cb);

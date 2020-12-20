@@ -35,7 +35,7 @@ namespace codeDataLogger {
 
     //std::ifstream sourcecdlDiff;
     bool has_loaded_state = false;
-    std::string last_loaded_cdl = "";
+    extern std::string last_loaded_cdl = "";
 
     void resetDiff() {
         memcpy(cdl_memchunk_rom_previous,codeDataLogger::cdl_memchunk_, codeDataLogger::cdl_romsize);

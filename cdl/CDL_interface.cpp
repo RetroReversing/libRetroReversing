@@ -638,6 +638,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     // }
     t.func_name = /*libRR_game_name+*/bank_number+"func_"+jump_target_str;
     t.func_stack = function_stack.size();
+    t.export_path = "";
     // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
     t.many_memory_reads = false;

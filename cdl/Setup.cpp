@@ -61,7 +61,7 @@ void init_playthrough(string name) {
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
     functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
-  } 
+  }
   
   cout << "About to save playthough metadata" << std::endl;
   save_playthough_metadata();
@@ -520,6 +520,7 @@ void edit_function(json state) {
     if (it.second.func_offset == state["func_offset"]) {
       printf("Found function to update %s \n", state["func_offset"].dump().c_str());
       functions[it.first].func_name = state["func_name"];
+      functions[it.first].export_path = state["export_path"];
       // functions[it.first].additional = message_json["state"]["additional"];
       break;
     }
@@ -541,17 +542,18 @@ void upload_linker_map(json linker_map) {
     }
     
   }
+  printf("About to save updated to functions.json \n");
   save_updates_to_function_json();
 
 }
 
 // Settings
 double libRR_playback_speed = 100;
-string libRR_parse_message_from_web(string message)
+string libRR_parse_message_from_web(json message_json) //string message)
 {
   // printf("New Web Message %s \n", message.c_str());
 
-  auto message_json = json::parse(message);
+  // auto message_json = json::parse(message);
   string category = message_json["category"].get<std::string>();
   
   libRR_get_list_of_memory_regions();
@@ -666,6 +668,7 @@ string libRR_parse_message_from_web(string message)
       if (it.second.func_offset == message_json["state"]["func_offset"]) {
         printf("Found function to update %s \n", message_json["state"]["func_offset"].dump().c_str());
         functions[it.first].func_name = message_json["state"]["func_name"];
+        functions[it.first].export_path = message_json["state"]["export_path"];
         // functions[it.first].additional = message_json["state"]["additional"];
         break;
       }
@@ -695,16 +698,19 @@ string libRR_parse_message_from_web(string message)
   game_json["playthrough"] = libRR_current_playthrough;
   game_json["cd_tracks"] = libRR_cd_tracks;
   printf("About to set functions\n");
+  std::cout << "function map size is " << functions.size() << '\n';
   game_json["functions"] = functions;
   // cout << game_json["functions"].dump() << std::endl;
   printf("About to set function_usage\n");
   game_json["function_usage"] = playthough_function_usage;
   printf("About to set functions_playthrough\n");
   // game_json["functions_playthough"] = function_playthough_info;
+  printf("About to set assembly\n");
   game_json["assembly"] = libRR_disassembly;
+  printf("About to set console specific json\n");
   add_console_specific_game_json();
-  printf("About to set return dump to client\n");
+  printf("About to return dump to client\n");
   
-  return game_json.dump(4);
+  return game_json.dump(2);
 
 }

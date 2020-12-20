@@ -138,6 +138,7 @@ struct cdl_labels {
     bool many_memory_reads;
     bool generatedSignature;
     json additional;
+    string export_path;
 };
 struct cdl_jump_return {
     string func_offset;

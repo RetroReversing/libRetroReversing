@@ -8,6 +8,7 @@ SOURCES_CXX_RR += \
     libRetroReversing/cdl/CDL_interface.cpp \
     libRetroReversing/cdl/CDL_JSON.cpp \
     libRetroReversing/cdl/CDL_Util.cpp \
+    libRetroReversing/cdl/CDL_FileWriting.cpp \
     libRetroReversing/cdl/InputLogger.cpp \
     libRetroReversing/cdl/Setup.cpp \
     libRetroReversing/cdl/Interpreter.cpp \
@@ -16,6 +17,7 @@ SOURCES_CXX_RR += \
     libRetroReversing/cdl/CD.cpp \
     libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     libRetroReversing/png/lodepng.cpp \
+    libRetroReversing/source_exporter/CommonSourceExport.cpp \
     libRetroReversing/consoles/$(libRetroReversingConsole).cpp
 
 
