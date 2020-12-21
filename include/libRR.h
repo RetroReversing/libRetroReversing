@@ -153,6 +153,7 @@ extern string libRR_export_assembly_extention;
 void libRR_setup_console_details(retro_environment_t environ_cb);
 void libRR_handle_emulator_close();
 void libRR_export_all_files();
+string get_builtin_function_name(const unsigned int offset, int bank);
 
 // extern "C" {
   void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int total);

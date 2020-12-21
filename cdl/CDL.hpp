@@ -123,7 +123,7 @@ struct cdl_labels {
     string func_name;
     string stack_trace;
     uint32_t func_stack;
-    uint32_t return_offset_from_start;
+    uint32_t return_offset_from_start; // max return offset
     string function_bytes;
     string function_bytes_endian;
     // uint32_t parameter_count;

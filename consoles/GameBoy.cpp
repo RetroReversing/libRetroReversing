@@ -121,25 +121,67 @@ extern "C" {
     string contents = "; TODO: generate ASM\n";
     string bank_number = function.bank_number;
     string offset_str = "$"+ n2hexstr(function.bank_offset);
+    int return_offset_from_start = function.return_offset_from_start;
+
+    contents += "; end:" + n2hexstr(return_offset_from_start) + "\n";
+
     if ((uint8_t)offset == (uint8_t)0x40) {
-      return "; Ignore Vblank for now";
+      return "; Ignore Vblank for now\n\n";
     }
 
     if (function.bank_offset< 0x4000 || bank_number == "0") {
       contents += "SECTION \"" + function.func_name + "\",ROM0["+offset_str+"]\n\n";
     } 
     else if (function.bank_offset >= 0xff80) {
-      return "; Ignore HRAM for now";
+      return "; Ignore HRAM for now\n\n";
     }
     else {
       contents += "SECTION \"" + function.func_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n\n";
     }
 
     contents += function.func_name + "::\n";
-    contents += "\txor a\n";
-    contents += "\tret\n";
-    // TODO: get ASM for function
+
+    if (return_offset_from_start > 100) {
+      contents += "; return offset too large:" + n2hexstr(return_offset_from_start) + "\n\n";
+      return contents;
+    }
+
+    // loop through disassembly
+    for (int i=offset; i<=offset+return_offset_from_start;) {
+      int instruction_length = 1;
+      bool has_written_line = false;
+      if (libRR_disassembly[n2hexstr(i)].contains("label_name")) {
+        contents += (string)libRR_disassembly[n2hexstr(i)]["label_name"] + "\n";
+      }
+      contents += "\t";
+      for (auto& el : libRR_disassembly[n2hexstr(i)].items()) {
+        std::cout << el.key() << " : " << el.value() << "\n";
+        if (el.key() == "label_name") {
+          continue;
+        } else {
+          contents += el.key() + " ;";
+          instruction_length = el.value()["bytes_length"];
+        }
+        has_written_line = true;
+      }
+      if (!has_written_line) {
+        contents += "nop ; not executed offset: ";
+        contents += n2hexstr(i);
+      }
+      contents +="\n";
+      i+=instruction_length;
+    }
+    contents += "\n";
+
     return contents;
+  }
+
+  // get_builtin_function_name - If the address matches a built in function then return the name
+  string get_builtin_function_name(const unsigned int offset, int bank) {
+    if (bank == 0 && (uint8_t)offset == (uint8_t)0x40) {
+      return "vblank";
+    }
+    return "";
   }
 
 
@@ -148,9 +190,8 @@ extern "C" {
     // Copy over common template files
     libRR_export_template_files("gameboy");
 
-    string main_asm_contents = "";
+    string main_asm_contents = "INCLUDE \"./common/constants.asm\"\n";
     for (auto& it : functions) {
-      printf("test\n");
       cout << "offset:" << it.first << " name: " << functions[it.first].func_name << "\n";
       string export_path = "";
       if (functions[it.first].export_path.length()>0) {
@@ -171,13 +212,6 @@ extern "C" {
       cout << "Written file to: " << output_file_path << "\n";
       
 
-      // if (it.second.func_offset == state["func_offset"]) {
-      //   printf("Found function to update %s \n", state["func_offset"].dump().c_str());
-      //   functions[it.first].func_name = state["func_name"];
-      //   functions[it.first].export_path = state["export_path"];
-      //   // functions[it.first].additional = message_json["state"]["additional"];
-      //   break;
-      // }
   }
 
     // Generate main.asm file, which includes the other files

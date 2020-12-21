@@ -162,7 +162,17 @@ for (auto& el : o.items()) {
 }
 ```
 
-### Useful functions
+---
+## Function Logging
+
+### Finding a previously defined function
+```
+  if (functions.find(function_returning_from) != functions.end() ) {
+  }
+```
+
+---
+## Useful functions
 * `uint32_t hex_to_int(string str)`
 * `n2hexstr`
 * `std::stoi()` (string to integer)

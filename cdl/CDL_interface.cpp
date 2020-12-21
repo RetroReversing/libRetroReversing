@@ -521,6 +521,14 @@ void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uin
     // string function_key = current_function;
     playthough_function_usage[current_function]["returns"][current_pc_str] = return_target;
 
+    // Add max return to functions
+    if (functions.find(function_returning_from) != functions.end() ) {
+        uint32_t relative_return_pc = current_pc - function_returning_from;
+        if (relative_return_pc > functions[function_returning_from].return_offset_from_start) {
+            functions[function_returning_from].return_offset_from_start = relative_return_pc;
+        }
+    }
+
     // TODO: Calculate Function Signature so we can check for its name
     int length = current_pc - function_returning_from;
     string length_str = n2hexstr(length);
@@ -741,7 +749,7 @@ void cdl_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint3
     jump_returns[previous_function_backup] = t;
 
     uint64_t length = pc-previous_function_backup;
-    labels[previous_function_backup].return_offset_from_start = length;
+    // labels[previous_function_backup].return_offset_from_start = length;
     if (length<2) {
         return;
     }
@@ -1342,6 +1350,14 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
 // 
 string libRR_gameboy_da8_contant_replace(int16_t da8) {
     // TODO: read these from JSON config instead
+    switch(da8) {
+        case 0x0091:
+            return "LY_VBLANK";
+        case 0xFF0F:
+            return "rIF";
+        case (int16_t)0xFF00:
+            return "rJOYP";
+    }
     if (da8 == (int16_t)0xFF0F) { 
         return "rIF";
     }
@@ -1351,7 +1367,15 @@ string libRR_gameboy_da8_contant_replace(int16_t da8) {
     if (da8 == (int16_t)0xffff) { 
         return "rIE"; // Interrupt enable
     }
-    return "0x"+n2hexstr(da8);
+    return "$"+n2hexstr(da8);
+}
+
+extern "C" const char* libRR_log_jump_label(int32_t offset) {
+    string current_pc_str = n2hexstr(offset);
+    if (!libRR_disassembly[current_pc_str].contains("label_name")) {
+        libRR_disassembly[current_pc_str]["label_name"] = ".LAB_" + n2hexstr(offset);
+    }
+    return ((string)libRR_disassembly[current_pc_str]["label_name"]).c_str();
 }
 
 extern "C" void libRR_log_instruction_z80(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand) {
@@ -1362,6 +1386,15 @@ extern "C" void libRR_log_instruction_z80(uint32_t current_pc, const char* c_nam
     replace(name, "%da8%", libRR_gameboy_da8_contant_replace(operand));
     
     libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
+}
+
+extern "C" void libRR_log_instruction_z80_register(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand, const char* register_name) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
+    std::string name(c_name);
+    replace(name, "%r%",register_name);
+    libRR_log_instruction_z80(current_pc, name.c_str(), instruction_bytes, number_of_bytes, opcode, operand);
 }
 
 extern "C" void libRR_log_instruction_z80_s_d(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* source, const char* destination) {
