@@ -555,6 +555,8 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // Instead of using function name, we just use the location
     string function_name = /*game_name + "_func_" +*/ n2hexstr(jump_target);
     // printf("libRR_log_full_function_call Full function logging on %s \n", print_function_stack_trace().c_str());
+
+
     // This is playthough specific
     if (!playthough_function_usage.contains(function_name)) {
         // printf("Adding new function %s \n", function_name.c_str());
@@ -568,6 +570,7 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
         // we have already ran this frame before, probably replaying, no need to add more logging
         return;
     }
+
     if (RRCurrentFrame > playthough_function_usage[function_name]["last_frame_access"]) {
         playthough_function_usage[function_name]["last_frame_access"] = RRCurrentFrame;
         playthough_function_usage[function_name]["number_of_frames"]= (int)playthough_function_usage[function_name]["number_of_frames"]+1;
@@ -577,16 +580,37 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
         // we are in the same frame so its called more than once per frame
         playthough_function_usage[function_name]["number_of_calls_per_frame"]=(int)playthough_function_usage[function_name]["number_of_calls_per_frame"]+1;
     }
+
     // TODO: log read/writes to memory
     // TODO: calculate return and paramerters
     // TODO: find out how long the function is
 }
 
+void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target) {
+    // cout << "Long Jump from:" << n2hexstr(current_pc) << " to:" << n2hexstr(jump_target) << "\n";
+    string target_bank_number = "0000";
+    string pc_bank_number = "0000";
+    if (jump_target >= libRR_bank_0_max_addr) {
+        target_bank_number = n2hexstr(libRR_current_bank, 4);
+    }
+    if (current_pc >= libRR_bank_0_max_addr) {
+        pc_bank_number = n2hexstr(libRR_current_bank, 4);
+    }
+    libRR_long_jumps[target_bank_number][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
+}
+
+void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
+    // printf("Interrupt call at:%s target:%s \n", n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
+}
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
+    // TODO: find out why uncommeting the following causes a segfault
+    // if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+    //     return;
+    // }
     string bank_number = "0000";
     uint32_t calculated_jump_target = jump_target;
     if (libRR_bank_switching_available) {
-        if (current_pc > libRR_bank_size) {
+        if (current_pc >= libRR_bank_size) {
             // current PC may either be in bank 1 or a higher bank
         }
         if (jump_target > libRR_bank_size) {
@@ -596,6 +620,10 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
             calculated_jump_target = jump_target + ((libRR_current_bank-1) * libRR_bank_size);
         }
     }
+
+    string jump_target_str = n2hexstr(jump_target);
+    string function_name = "_"+bank_number+"_func_"+jump_target_str;
+    libRR_called_functions[bank_number][n2hexstr(jump_target)] = function_name;
     
     // Start Stacktrace handling
     libRR_call_depth++;
@@ -635,14 +663,13 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     }
     // We have never logged this function so lets create it
     auto t = cdl_labels();
-    string jump_target_str = n2hexstr(jump_target);
     t.func_offset = n2hexstr(calculated_jump_target);
     // if (functions.find(previous_function_backup) != functions.end()) {
     //     t.caller_offset = functions[previous_function_backup].func_name+" (ra:"+n2hexstr(ra)+")";
     // } else {
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
-    t.func_name = /*libRR_game_name+*/"_"+bank_number+"_func_"+jump_target_str;
+    t.func_name = function_name; // /*libRR_game_name+*/"_"+bank_number+"_func_"+jump_target_str;
     t.func_stack = function_stack.size();
     t.export_path = "";
     t.bank_number = bank_number;
@@ -698,6 +725,9 @@ void cdl_log_jump_always(int take_jump, uint32_t jump_target, uint8_t* jump_targ
 }
 void cdl_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, struct r4300_core* r4300) {
     uint32_t previous_function_backup = -1;
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
 
     // if (previous_function_backup > ra) {
     //     // cout << std::hex << " Odd the prev function start should never be before return address ra:" << ra << " previous_function_backup:" << previous_function_backup << "\n";
@@ -1338,8 +1368,10 @@ json libRR_memory_reads = {};
 json libRR_rom_reads = {};
 json libRR_consecutive_memory_reads = {};
 json libRR_consecutive_rom_reads = {};
+json libRR_called_functions = {};
+json libRR_long_jumps = {};
 int32_t previous_consecutive_rom_read = 0; // previous read address to check if this read is part of the chain
-int8_t previous_consecutive_rom_bank = 0; // previous read address to check if this read is part of the chain
+int16_t previous_consecutive_rom_bank = 0; // previous read address to check if this read is part of the chain
 int32_t current_consecutive_rom_start = 0; // start address of the current chain
 
 bool replace(std::string& str, const std::string& from, const std::string& to) {
@@ -1378,8 +1410,13 @@ string libRR_gameboy_da8_contant_replace(int16_t da8) {
 extern "C" const char* libRR_log_jump_label(int32_t offset) {
     string current_pc_str = n2hexstr(offset);
     string current_bank_str = n2hexstr(libRR_current_bank, 4);
+    // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
+    if (offset <libRR_bank_0_max_addr) {
+        current_bank_str="0000";
+    }
+
     if (!libRR_disassembly[current_bank_str][current_pc_str].contains("label_name")) {
-        libRR_disassembly[current_bank_str][current_pc_str]["label_name"] = ".LAB_" + n2hexstr(offset);
+        libRR_disassembly[current_bank_str][current_pc_str]["label_name"] = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
     }
     return ((string)libRR_disassembly[current_bank_str][current_pc_str]["label_name"]).c_str();
 }
@@ -1388,9 +1425,9 @@ extern "C" void libRR_log_memory_read(int8_t bank, int32_t offset, const char* t
     libRR_log_rom_read(bank, offset, type, byte_size, bytes);
 }
 
-extern "C" void libRR_log_rom_read(int8_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes) {
-    string bank_str = n2hexstr(bank);
-    string previous_bank_str = n2hexstr(previous_consecutive_rom_bank);
+extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes) {
+    string bank_str = n2hexstr(bank, 4);
+    string previous_bank_str = n2hexstr(previous_consecutive_rom_bank, 4);
     string offset_str = n2hexstr(offset);
     string current_consecutive_rom_start_str = n2hexstr(current_consecutive_rom_start);
     // Check to see if the last read address is the same or 1 away

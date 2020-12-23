@@ -192,7 +192,7 @@ void libRR_read_button_state_from_file(string filename, int start_frame) {
   while (myfile.read(reinterpret_cast<char*>(&frameInputBitField), sizeof(unsigned long long)))
   {
     if (loading_frame >= start_frame) {
-      std::cout << ' ' << frameInputBitField; 
+      // std::cout << ' ' << frameInputBitField; 
       playback_button_history.push(frameInputBitField);
     }
     loading_frame++;

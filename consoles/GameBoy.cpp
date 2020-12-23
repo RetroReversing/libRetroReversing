@@ -42,6 +42,8 @@ extern "C" {
   uint32_t libRR_bank_0_max_addr = libRR_bank_size;
   bool libRR_bank_switching_available = true;
 
+  bool should_stop_writing_asm(int offset, int i, string bank_number);
+
 
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)
   {
@@ -142,7 +144,7 @@ extern "C" {
 
     contents += function.func_name + "::\n";
 
-    if (return_offset_from_start > 100) {
+    if (return_offset_from_start > 200) {
       contents += "; return offset too large:" + n2hexstr(return_offset_from_start) + "\n\n";
       return contents;
     }
@@ -151,8 +153,14 @@ extern "C" {
     for (int i=offset; i<=offset+return_offset_from_start;) {
       int instruction_length = 1;
       bool has_written_line = false;
+
+
+      if (should_stop_writing_asm(offset, i, bank_number)) {
+        break;
+      }
+
       if (libRR_disassembly[bank_number][n2hexstr(i)].contains("label_name")) {
-        contents += (string)libRR_disassembly[bank_number][n2hexstr(i)]["label_name"] + "\n";
+        contents += (string)libRR_disassembly[bank_number][n2hexstr(i)]["label_name"] + ":\n";
       }
       contents += "\t";
       for (auto& el : libRR_disassembly[bank_number][n2hexstr(i)].items()) {
@@ -213,6 +221,16 @@ extern "C" {
     libRR_log_memory_read(bank, offset, type, byte_size, bytes);
   }
 
+  string write_callers(json callers) {
+    string contents = "";
+    for (auto& byteValue : callers.items()) {
+      contents += "; Called by: ";
+      contents += byteValue.key();
+      contents += "\n";
+    }
+    return contents;
+  }
+
   string write_each_rom_byte(json dataRange) {
     string contents = "";
     for (auto& byteValue : dataRange.items()) {
@@ -223,6 +241,117 @@ extern "C" {
       contents += "\n";
     }
     return contents;
+  }
+
+  bool should_stop_writing_asm(int offset, int i, string bank_number) {
+    if (i == offset) {
+      return false;
+    }
+    // Check if this address is the starting address of another jump definition
+      if (libRR_long_jumps[bank_number].contains(n2hexstr(i))) {
+        cout << "Address has been defined as another jump:" << bank_number << "::" << n2hexstr(i) << "\n";
+        // contents += "; Address defined as another jump\n";
+        return true;
+      }
+      // Check if this address is the starting address of data
+      if (libRR_consecutive_rom_reads[bank_number].contains(n2hexstr(i))) {
+        cout << "Address has been defined as data:" << bank_number << "::" << n2hexstr(i) << "\n";
+        // contents += "; Address defined as another jump\n";
+        return true;
+      }
+      // Check if this address is the starting address of function
+      if (libRR_called_functions[bank_number].contains(n2hexstr(i))) {
+        cout << "Address has been defined as a function:" << bank_number << "::" << n2hexstr(i) << "\n";
+        // contents += "; Address defined as another jump\n";
+        return true;
+      }
+      return false;
+  }
+
+  string write_asm_until_null(string bank_number, string offset_str) {
+    string contents = "";
+    int offset = hex_to_int(offset_str);
+    int return_offset_from_start = 200; // this is just the max, will most likely stop before this
+    
+    // First Check if this address is the starting address of function
+      if (libRR_called_functions[bank_number].contains(n2hexstr(offset))) {
+        cout << "Jump has already been defined as a function:" << bank_number << "::" << n2hexstr(offset) << "\n";
+        if (libRR_disassembly[bank_number][n2hexstr(offset)].contains("label_name")) {
+          contents += (string)libRR_disassembly[bank_number][n2hexstr(offset)]["label_name"] + " EQU $";
+          contents += n2hexstr(offset);
+        }
+        contents += "; Address Also defined as function\n";
+        return contents;
+      }
+
+    // loop through disassembly
+    for (int i=offset; i<=offset+return_offset_from_start;) {
+      int instruction_length = 1;
+      bool has_written_line = false;
+
+      
+
+      if (should_stop_writing_asm(offset, i, bank_number)) {
+        break;
+      }
+
+      if (libRR_disassembly[bank_number][n2hexstr(i)].contains("label_name")) {
+        contents += (string)libRR_disassembly[bank_number][n2hexstr(i)]["label_name"] + ":\n";
+      }
+      contents += "\t";
+      for (auto& el : libRR_disassembly[bank_number][n2hexstr(i)].items()) {
+        // std::cout << el.key() << " : " << el.value() << "\n";
+        if (el.key() == "label_name") {
+          continue;
+        } else {
+          contents += el.key() + " ;";
+          instruction_length = el.value()["bytes_length"];
+        }
+
+        // TODO: check for RET, CALL or JUMP instructions and exist if so, startswith
+
+        has_written_line = true;
+      }
+      if (!has_written_line) {
+        contents += "nop ; not executed offset: ";
+        contents += n2hexstr(i);
+        // break; // break in the first non executed instruction
+        // std::cout << "Not written: bank:" << bank_number << " offset:" << n2hexstr(i) << " " << libRR_disassembly[bank_number][n2hexstr(i)].dump() << "\n";
+      } else {
+        // write offset anyway for debugging
+        contents += n2hexstr(i);
+      }
+      contents +="\n";
+      i+=instruction_length;
+    }
+    
+    return contents;
+  }
+
+  void libRR_export_jump_data() {
+    string output_file_path = libRR_export_directory + "jumps.asm";
+    string contents = "; Contains Long Jump data\n";
+    contents +="INCLUDE \"./common/constants.asm\"\n";
+    // libRR_long_jumps
+
+    for (auto& bank : libRR_long_jumps.items()) {
+      contents += "\n\n;;;;;;;;;;;\n; Bank:";
+      contents += bank.key();
+      contents += "\n";
+      for (auto& dataSection : bank.value().items()) {
+          contents += "\nSECTION \"JMP_" + bank.key() + "_" + dataSection.key();
+          if (bank.key() == "0000") {
+            contents += "\",ROM0[$"+dataSection.key()+"]\n";
+        } else {
+            contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
+        }
+        contents += write_callers(dataSection.value());
+        contents += write_asm_until_null(bank.key(), dataSection.key());
+      }
+    }
+
+    codeDataLogger::writeStringToFile(output_file_path, contents);
+    cout << "Written jumps.asm to: " << output_file_path << "\n";
   }
 
   void libRR_export_rom_data() {
@@ -243,7 +372,7 @@ extern "C" {
           continue;
         }
         contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
-        if (bank.key() == "00") {
+        if (bank.key() == "0000") {
             contents += "\",ROM0[$"+dataSection.key()+"]\n";
         } else {
             contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
@@ -262,6 +391,7 @@ extern "C" {
     // Copy over common template files
     libRR_export_template_files("gameboy");
     libRR_export_rom_data();
+    libRR_export_jump_data();
 
     string main_asm_contents = "INCLUDE \"./common/constants.asm\"\n";
     for (auto& it : functions) {

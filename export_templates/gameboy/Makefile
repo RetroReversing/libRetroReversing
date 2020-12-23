@@ -4,6 +4,7 @@ rom_obj := \
 data.o \
 main.o \
 common.o \
+jumps.o \
 
 game_obj        := $(rom_obj:.o=_rr.o)
 

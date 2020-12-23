@@ -75,13 +75,13 @@ SECTION "joypad", ROM0[$0060]
 	reti
 
 
-SECTION "Header", ROM0[$0100]
+;SECTION "Header", ROM0[$0100]
 
-Start::
+;Start::
 ; Nintendo requires all Game Boy ROMs to begin with a nop ($00) and a jp ($C3)
 ; to the starting address.
-	nop
-	jp _Start
+;	nop
+;	jp _Start
 
 
 ; The Game Boy cartridge header data is patched over by rgbfix.
@@ -89,5 +89,6 @@ Start::
 
 ;	ds $0150 - @
 
-_Start::
-	nop
+;_Start::
+;	nop
+

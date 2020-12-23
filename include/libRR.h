@@ -52,8 +52,10 @@ extern json libRR_memory_reads;
 extern json libRR_rom_reads;
 extern json libRR_consecutive_memory_reads;
 extern json libRR_consecutive_rom_reads;
+extern json libRR_called_functions;
+extern json libRR_long_jumps;
 extern int32_t previous_consecutive_rom_read; // previous read address to check if this read is part of the chain
-extern int8_t previous_consecutive_rom_bank; // previous read address to check if this read is part of the chain
+extern int16_t previous_consecutive_rom_bank; // previous read address to check if this read is part of the chain
 extern int32_t current_consecutive_rom_start; // start address of the current chain
 
 // Console specific
@@ -61,6 +63,8 @@ void add_console_specific_game_json();
 
 // CPU
 void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer=0);
+void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
+void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target);
 void libRR_log_branch(uint32_t current_pc, uint32_t target_pc);
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer=0);
 

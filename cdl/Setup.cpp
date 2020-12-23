@@ -59,6 +59,8 @@ void init_playthrough(string name) {
   readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"], "[]");
   readJsonToObject(libRR_project_directory+"/assembly.json", libRR_disassembly);
   readJsonToObject(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
+  readJsonToObject(libRR_project_directory+"/called_functions.json", libRR_called_functions);
+  readJsonToObject(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
   cout << "About to set functions array" << std::endl;
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
@@ -266,9 +268,12 @@ void save_constant_metadata() {
   printf("Save Constant Game Meta Data");
   // These files are Game specific rather than playthrough specific
   saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
-  saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
   saveJsonToFile(libRR_project_directory+"/assembly.json", libRR_disassembly);
   saveJsonToFile(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
+  saveJsonToFile(libRR_project_directory+"/called_functions.json", libRR_called_functions);
+  saveJsonToFile(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
+  game_json["functions"] = functions;
+  saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
 }
 
 void save_playthough_metadata() {

@@ -2,6 +2,17 @@
 
 GBC EQU $11
 
+; UNTAKEN_JUMP EQU $01
+UNTAKEN_JUMP_2: MACRO
+	nop
+  nop
+ENDM
+UNTAKEN_LONG_JUMP: MACRO
+	nop
+  nop
+  nop
+ENDM
+
 ; memory map
 VRAM_Begin  EQU $8000
 VRAM_End    EQU $a000
@@ -128,3 +139,5 @@ rUNKNOWN5   EQU $ff75 ; (8Fh) - Bit 4-6 (Read/Write)
 rUNKNOWN6   EQU $ff76 ; (00h) - Always 00h (Read Only)
 rUNKNOWN7   EQU $ff77 ; (00h) - Always 00h (Read Only)
 rIE         EQU $ffff ; Interrupt Enable (R/W)
+
+

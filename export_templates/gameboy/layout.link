@@ -29,8 +29,8 @@ ROM0
 	"joypad"
 	; $0061
 	; "High Home"
-	org $100
-	"Header"
+;	org $100
+;	"Header"
 ;	org $150
 ;	"Home"
 ROMX $1
