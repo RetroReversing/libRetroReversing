@@ -38,7 +38,8 @@ extern "C" {
 
   // Bank switching
   uint32_t libRR_bank_size = 0x4000; // 16KB
-  uint32_t libRR_current_bank = 0;
+  uint16_t libRR_current_bank = 0;
+  uint32_t libRR_bank_0_max_addr = libRR_bank_size;
   bool libRR_bank_switching_available = true;
 
 
@@ -52,7 +53,7 @@ extern "C" {
   }
 
   void libRR_setup_console_details(retro_environment_t environ_cb) {
-    printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
+    //printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
     // libRR_set_retro_memmap(environ_cb);
   }
 
@@ -129,7 +130,7 @@ extern "C" {
       return "; Ignore Vblank for now\n\n";
     }
 
-    if (function.bank_offset< 0x4000 || bank_number == "0") {
+    if (function.bank_offset< 0x4000 || bank_number == "0000") {
       contents += "SECTION \"" + function.func_name + "\",ROM0["+offset_str+"]\n\n";
     } 
     else if (function.bank_offset >= 0xff80) {
@@ -150,12 +151,12 @@ extern "C" {
     for (int i=offset; i<=offset+return_offset_from_start;) {
       int instruction_length = 1;
       bool has_written_line = false;
-      if (libRR_disassembly[n2hexstr(i)].contains("label_name")) {
-        contents += (string)libRR_disassembly[n2hexstr(i)]["label_name"] + "\n";
+      if (libRR_disassembly[bank_number][n2hexstr(i)].contains("label_name")) {
+        contents += (string)libRR_disassembly[bank_number][n2hexstr(i)]["label_name"] + "\n";
       }
       contents += "\t";
-      for (auto& el : libRR_disassembly[n2hexstr(i)].items()) {
-        std::cout << el.key() << " : " << el.value() << "\n";
+      for (auto& el : libRR_disassembly[bank_number][n2hexstr(i)].items()) {
+        // std::cout << el.key() << " : " << el.value() << "\n";
         if (el.key() == "label_name") {
           continue;
         } else {
@@ -167,6 +168,10 @@ extern "C" {
       if (!has_written_line) {
         contents += "nop ; not executed offset: ";
         contents += n2hexstr(i);
+        // std::cout << "Not written: bank:" << bank_number << " offset:" << n2hexstr(i) << " " << libRR_disassembly[bank_number][n2hexstr(i)].dump() << "\n";
+      } else {
+        // write offset anyway for debugging
+        // contents += n2hexstr(i);
       }
       contents +="\n";
       i+=instruction_length;
@@ -184,15 +189,83 @@ extern "C" {
     return "";
   }
 
+  void libRR_gameboy_log_memory_read(int32_t offset, const char* type, uint8_t byte_size, char* bytes) {
+    int8_t bank = 0;
+    if (offset >= 0x0000FE00) {
+      // OAM
+      // I/O registers
+      // HRAM
+      // Interrupts enable
+        return; 
+    }
+    if (offset >= 0x0000C000) {
+      // Work ram banks 0 and 1
+      return;
+    }
+    if (offset >= 0x00008000) {
+      // VRAM
+      return;
+    }
+    if (offset>= 0x00004000) {
+      bank = libRR_current_bank;
+    }
+
+    libRR_log_memory_read(bank, offset, type, byte_size, bytes);
+  }
+
+  string write_each_rom_byte(json dataRange) {
+    string contents = "";
+    for (auto& byteValue : dataRange.items()) {
+      contents += "\tdb $";
+      contents += byteValue.value();
+      contents += " ; ";
+      contents += byteValue.key();
+      contents += "\n";
+    }
+    return contents;
+  }
+
+  void libRR_export_rom_data() {
+    string output_file_path = libRR_export_directory + "data.asm";
+    string contents = "; Contains ROM static data\n";
+
+    // Loop through each bank
+    
+    for (auto& bank : libRR_consecutive_rom_reads.items()) {
+      // std::cout << "libRR_consecutive_rom_reads:" << bank.key() << " : " << bank.value() << "\n";
+      contents += "\n\n;;;;;;;;;;;\n; Bank:";
+      contents += bank.key();
+      contents += "\n";
+      for (auto& dataSection : bank.value().items()) {
+        // std::cout << "dataSection: " << bank.key() << "::" << dataSection.key() << " : " << dataSection.value() << "\n";
+        if (dataSection.value()["length"].is_null()) {
+          // TODO: Need to fix these null lengths
+          continue;
+        }
+        contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
+        if (bank.key() == "00") {
+            contents += "\",ROM0[$"+dataSection.key()+"]\n";
+        } else {
+            contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
+        }
+
+        contents += write_each_rom_byte(dataSection.value()["value"]);
+      }
+    }
+
+    codeDataLogger::writeStringToFile(output_file_path, contents);
+    cout << "Written data.asm to: " << output_file_path << "\n";
+  }
 
   void libRR_export_all_files() {
     printf("GameBoy: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
     // Copy over common template files
     libRR_export_template_files("gameboy");
+    libRR_export_rom_data();
 
     string main_asm_contents = "INCLUDE \"./common/constants.asm\"\n";
     for (auto& it : functions) {
-      cout << "offset:" << it.first << " name: " << functions[it.first].func_name << "\n";
+      // cout << "offset:" << it.first << " name: " << functions[it.first].func_name << "\n";
       string export_path = "";
       if (functions[it.first].export_path.length()>0) {
         export_path = functions[it.first].export_path;

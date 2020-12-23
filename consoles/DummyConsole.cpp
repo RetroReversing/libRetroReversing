@@ -18,7 +18,8 @@ extern "C" {
 
   // Bank switching
   uint32_t libRR_bank_size = 0;
-  uint32_t libRR_current_bank = 0;
+  uint16_t libRR_current_bank = 0;
+  uint32_t libRR_bank_0_max_addr = 0;
   bool libRR_bank_switching_available = false;
 
   uint32_t libRR_pc_lookahead = 0;

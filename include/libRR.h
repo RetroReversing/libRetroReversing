@@ -3,6 +3,7 @@
 #include "libretro.h"
 #include <string>
 using namespace std;
+#include "./libRR_c.h"
 
 #include "../cdl/nlohmann/json.hpp"
 using json = nlohmann::json;
@@ -47,6 +48,13 @@ extern bool libRR_finished_boot_rom;
 extern json game_json;
 // extern json function_playthough_info; //function_usage instead
 extern json libRR_disassembly;
+extern json libRR_memory_reads;
+extern json libRR_rom_reads;
+extern json libRR_consecutive_memory_reads;
+extern json libRR_consecutive_rom_reads;
+extern int32_t previous_consecutive_rom_read; // previous read address to check if this read is part of the chain
+extern int8_t previous_consecutive_rom_bank; // previous read address to check if this read is part of the chain
+extern int32_t current_consecutive_rom_start; // start address of the current chain
 
 // Console specific
 void add_console_specific_game_json();
@@ -69,8 +77,9 @@ extern void libRR_read_button_state_from_file(string filename  = "button_log.bin
 string libRR_load_save_state(int frame);
 
 // Bank Switching
-extern uint32_t libRR_current_bank;
+extern uint16_t libRR_current_bank;
 extern uint32_t libRR_bank_size;
+extern uint32_t libRR_bank_0_max_addr; // if address is smaller than this then it will be in bank 0 by default
 extern bool libRR_bank_switching_available;
 
 // Scripting support

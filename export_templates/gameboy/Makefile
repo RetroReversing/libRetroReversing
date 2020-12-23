@@ -1,6 +1,7 @@
 roms := {{ GAME_NAME }}.gb
 
 rom_obj := \
+data.o \
 main.o \
 common.o \
 

@@ -38,6 +38,7 @@ extern  char retro_cd_base_directory[4096];
 extern  char retro_cd_path[4096];
 
 void save_playthough_metadata();
+void save_constant_metadata();
 
 void init_playthrough(string name) {
   cout << "Init playthrough for " << name << std::endl;
@@ -57,6 +58,7 @@ void init_playthrough(string name) {
   readJsonToObject(libRR_project_directory+"/notes.json", game_json["notes"]);
   readJsonToObject(libRR_project_directory+"/functions.json", game_json["functions"], "[]");
   readJsonToObject(libRR_project_directory+"/assembly.json", libRR_disassembly);
+  readJsonToObject(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
   cout << "About to set functions array" << std::endl;
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
@@ -65,6 +67,8 @@ void init_playthrough(string name) {
   
   cout << "About to save playthough metadata" << std::endl;
   save_playthough_metadata();
+  cout << "About to save constant metadata" << std::endl;
+  save_constant_metadata();
   cout << "About to read button state to memory" << std::endl;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", 0);
   if (!libRR_current_playthrough["last_frame"].is_null()) {
@@ -82,11 +86,11 @@ void libRR_define_console_memory_region(string name, unsigned long long start, u
 void libRR_get_list_of_memory_regions()
 {
   // can we save the memory map to json and send to client?
-  printf("libRR_get_list_of_memory_regions number:%d \n", libRR_retromap.num_descriptors);
+  // printf("libRR_get_list_of_memory_regions number:%d \n", libRR_retromap.num_descriptors);
   std::vector<retro_memory_descriptor> memory_descriptors;
   for (int i = 0; i < libRR_retromap.num_descriptors; i++)
   {
-    printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
+    // printf("MMAP: %d %s \n", i, libRR_retromap.descriptors[i].addrspace);
     if (libRR_retromap.descriptors[i].ptr != NULL)
     {
       memory_descriptors.push_back(libRR_retromap.descriptors[i]);
@@ -258,6 +262,15 @@ void libRR_set_framebuffer(const void *fb, unsigned int length, unsigned int wid
   libRR_current_frame_buffer.pitch = pitch;
 }
 
+void save_constant_metadata() {
+  printf("Save Constant Game Meta Data");
+  // These files are Game specific rather than playthrough specific
+  saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
+  saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
+  saveJsonToFile(libRR_project_directory+"/assembly.json", libRR_disassembly);
+  saveJsonToFile(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
+}
+
 void save_playthough_metadata() {
   printf("Save Playthough Meta Data");
   if (libRR_current_playthrough.count("name") < 1) {
@@ -270,11 +283,6 @@ void save_playthough_metadata() {
   saveJsonToFile(current_playthrough_directory+"/resources.json", game_json["cd_data"]["root_files"]);
   saveJsonToFile(current_playthrough_directory+"/overrides.json", game_json["overrides"]);
   saveJsonToFile(current_playthrough_directory+"/function_usage.json", playthough_function_usage);
-
-  // These files are Game specific rather than playthrough specific
-  saveJsonToFile(libRR_project_directory+"/notes.json", game_json["notes"]);
-  saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
-  saveJsonToFile(libRR_project_directory+"/assembly.json", libRR_disassembly);
 }
 
 void libRR_reset(unsigned int reset_frame) {
@@ -358,6 +366,7 @@ string libRR_create_save_state(string name, int frame) {
       libRR_current_playthrough["last_frame"] = RRCurrentFrame;
   }
   save_playthough_metadata();
+  save_constant_metadata();
 
   if (!libRR_should_playback_input) {
     libRR_save_button_state_to_file(current_playthrough_directory+"button_log.bin");
@@ -603,21 +612,22 @@ string libRR_parse_message_from_web(json message_json) //string message)
 
     // Set the speed here
     libRR_playback_speed = message_json["state"]["speed"];
-    printf("The speed will be %d \n", libRR_playback_speed);
+    printf("The speed will be %f \n", libRR_playback_speed);
     
     if (libRR_current_playthrough["last_frame"] != 0) {
       // std::cout << p2.dump(4) << std::endl;
       std::cout << "Would load:" << libRR_current_playthrough["current_state"]["frame"].dump(4) << std::endl;
       // libRR_load_save_state(libRR_current_playthrough["current_state"]["frame"]);
     }
-
-    return game_json.dump(4);
+    return "Running";
+    //return game_json.dump(4);
   }
   else if (category == "pause") {
     printf("Pause request from UI %s\n", message_json["state"].dump().c_str());
     player_settings p2 = message_json["state"].get<player_settings>();
     libRR_settings = p2;
     libRR_full_function_log = p2.fullLogging;
+    save_constant_metadata();
     return "Paused";
     // printf("Returning game_json dump (sometimes segfaults?) \n");
     // return game_json.dump(4);
@@ -676,6 +686,7 @@ string libRR_parse_message_from_web(json message_json) //string message)
     game_json["functions"] = functions;
     printf("Saving functions.json \n");
     saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
+    return "Saved";
   }
   else if (category == "upload_linker_map") {
     upload_linker_map(message_json["state"]);
@@ -702,10 +713,12 @@ string libRR_parse_message_from_web(json message_json) //string message)
   game_json["functions"] = functions;
   // cout << game_json["functions"].dump() << std::endl;
   printf("About to set function_usage\n");
+  // cout << "playthorugh function usage:" << playthough_function_usage.dump() << "\n";
   game_json["function_usage"] = playthough_function_usage;
   printf("About to set functions_playthrough\n");
   // game_json["functions_playthough"] = function_playthough_info;
   printf("About to set assembly\n");
+  // TODO: only send assembly when requested not on every load
   game_json["assembly"] = libRR_disassembly;
   printf("About to set console specific json\n");
   add_console_specific_game_json();

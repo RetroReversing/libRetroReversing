@@ -583,16 +583,14 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
 }
 
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
-    string bank_number = "";
+    string bank_number = "0000";
     uint32_t calculated_jump_target = jump_target;
-    // TODO: need to calculate full address of both current_pc and jump_target based on which is the current ROM Bank
     if (libRR_bank_switching_available) {
-        bank_number = "00";
         if (current_pc > libRR_bank_size) {
             // current PC may either be in bank 1 or a higher bank
         }
         if (jump_target > libRR_bank_size) {
-            bank_number = n2hexstr(libRR_current_bank, 2);
+            bank_number = n2hexstr(libRR_current_bank, 4);
             // jump target may be either in bank 1 or a higher bank
             // printf("Current Bank is:  %s jump target: %s \n", n2hexstr(libRR_current_bank).c_str(), n2hexstr(jump_target).c_str());
             calculated_jump_target = jump_target + ((libRR_current_bank-1) * libRR_bank_size);
@@ -1336,6 +1334,13 @@ void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
 // C++
 
 json libRR_disassembly = {};
+json libRR_memory_reads = {};
+json libRR_rom_reads = {};
+json libRR_consecutive_memory_reads = {};
+json libRR_consecutive_rom_reads = {};
+int32_t previous_consecutive_rom_read = 0; // previous read address to check if this read is part of the chain
+int8_t previous_consecutive_rom_bank = 0; // previous read address to check if this read is part of the chain
+int32_t current_consecutive_rom_start = 0; // start address of the current chain
 
 bool replace(std::string& str, const std::string& from, const std::string& to) {
     size_t start_pos = str.find(from);
@@ -1372,10 +1377,62 @@ string libRR_gameboy_da8_contant_replace(int16_t da8) {
 
 extern "C" const char* libRR_log_jump_label(int32_t offset) {
     string current_pc_str = n2hexstr(offset);
-    if (!libRR_disassembly[current_pc_str].contains("label_name")) {
-        libRR_disassembly[current_pc_str]["label_name"] = ".LAB_" + n2hexstr(offset);
+    string current_bank_str = n2hexstr(libRR_current_bank, 4);
+    if (!libRR_disassembly[current_bank_str][current_pc_str].contains("label_name")) {
+        libRR_disassembly[current_bank_str][current_pc_str]["label_name"] = ".LAB_" + n2hexstr(offset);
     }
-    return ((string)libRR_disassembly[current_pc_str]["label_name"]).c_str();
+    return ((string)libRR_disassembly[current_bank_str][current_pc_str]["label_name"]).c_str();
+}
+
+extern "C" void libRR_log_memory_read(int8_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes) {
+    libRR_log_rom_read(bank, offset, type, byte_size, bytes);
+}
+
+extern "C" void libRR_log_rom_read(int8_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes) {
+    string bank_str = n2hexstr(bank);
+    string previous_bank_str = n2hexstr(previous_consecutive_rom_bank);
+    string offset_str = n2hexstr(offset);
+    string current_consecutive_rom_start_str = n2hexstr(current_consecutive_rom_start);
+    // Check to see if the last read address is the same or 1 away
+    // Check for the same is because sometimes data is checked by reading the first byte
+    if (previous_consecutive_rom_bank == bank && previous_consecutive_rom_read == offset) {
+        // do nothing if its the same byte read twice
+        previous_consecutive_rom_bank = bank;
+        libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"] = 1;
+        return;
+    }
+    if (previous_consecutive_rom_bank == bank && previous_consecutive_rom_read == (offset-1)) {
+        if (libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str].is_null()) {
+            // check to see if the current read is null and if so create it
+            libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"] = 1+ byte_size;
+        } else {
+            libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"] = ((uint32_t) libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"]) +byte_size;
+        }
+        for (int i=0; i<byte_size; i++) {
+            libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["value"][n2hexstr(offset+i)] = n2hexstr(bytes[i]);
+        }
+    } 
+    else {
+        cout << "previous consecutive length from:" << (int)previous_consecutive_rom_bank << "::" << n2hexstr(current_consecutive_rom_start) << " -> " << n2hexstr(previous_consecutive_rom_read) <<  " len:" << libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"] << "\n";
+        current_consecutive_rom_start = offset;
+        current_consecutive_rom_start_str = n2hexstr(current_consecutive_rom_start);
+        // initialise new consecutive run
+        libRR_consecutive_rom_reads[bank_str][current_consecutive_rom_start_str]["length"] = 1;
+        for (int i=0; i<byte_size; i++) {
+            libRR_consecutive_rom_reads[bank_str][current_consecutive_rom_start_str]["value"][n2hexstr(offset+i)] = n2hexstr(bytes[i]);
+        }
+    }
+    previous_consecutive_rom_read = offset+(byte_size-1); // add byte_size to take into account 2 byte reads
+    previous_consecutive_rom_bank = bank;
+
+    string value_str = "";
+    if (byte_size == 2) {
+        value_str = n2hexstr(two_bytes_to_16bit_value(bytes[1], bytes[0]));
+    } else {
+         value_str = n2hexstr(bytes[0]);
+    }
+    // libRR_rom_reads[bank_str][offset_str]["value"] = value_str;
+    // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 
 extern "C" void libRR_log_instruction_z80(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand) {
@@ -1478,7 +1535,13 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     }
     // TODO: Hex bytes should change based on number_of_bytes
     string hexBytes = n2hexstr((uint32_t)instruction_bytes, number_of_bytes*2);
-    libRR_disassembly[current_pc_str][name]["frame"]=RRCurrentFrame;
-    libRR_disassembly[current_pc_str][name]["bytes"]=hexBytes;
-    libRR_disassembly[current_pc_str][name]["bytes_length"]=number_of_bytes;
+    string current_bank_str = n2hexstr(libRR_current_bank, 4);
+
+    // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
+    if (current_pc <libRR_bank_0_max_addr) {
+        current_bank_str="0000";
+    }
+    libRR_disassembly[current_bank_str][current_pc_str][name]["frame"]=RRCurrentFrame;
+    libRR_disassembly[current_bank_str][current_pc_str][name]["bytes"]=hexBytes;
+    libRR_disassembly[current_bank_str][current_pc_str][name]["bytes_length"]=number_of_bytes;
 }
