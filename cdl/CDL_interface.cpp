@@ -7,6 +7,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "../cdl/CDL_FileWriting.hpp"
+
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
@@ -476,6 +478,7 @@ void cdl_log_jump_cached(int take_jump, uint32_t jump_target, uint8_t* jump_targ
 
 int number_of_functions = 0;
 bool libRR_full_function_log = false;
+bool libRR_full_trace_log = true;
 int last_return_address = 0;
 uint32_t libRR_call_depth = 0; // Tracks how big our stack trace is in terms of number of function calls
 
@@ -485,9 +488,46 @@ uint32_t libRR_backtrace_size = 0; // Used with backtrace_stackpointers - Tracks
 
 extern uint32_t libRR_pc_lookahead;
 
+string current_trace_log = "";
+const int trace_messages_until_flush = 40;
+int current_trace_count = 0;
+bool first_trace_write = true;
+void libRR_log_trace_str(string message) {
+    
+    if (!libRR_full_trace_log) {
+        return;
+    }
+    current_trace_log += message + "\n";
+    current_trace_count++;
+    if (current_trace_count >= trace_messages_until_flush) {
+        libRR_log_trace_flush();
+        current_trace_count = 0;
+        current_trace_log="";
+    }
+}
+void libRR_log_trace(const char* message) {
+    libRR_log_trace_str(message);
+}
+
+void libRR_log_trace_flush() {
+    if (!libRR_full_trace_log) {
+        return;
+    }
+    string output_file_path = libRR_export_directory + "trace_log.txt";
+    if (first_trace_write) {
+        codeDataLogger::writeStringToFile(output_file_path, current_trace_log);
+        first_trace_write = false;
+    } else {
+        codeDataLogger::appendStringToFile(output_file_path, current_trace_log);
+    }
+}
+
 // libRR_log_return_statement
 // stack_pointer is used to make sure our function stack doesn't exceed the actual stack pointer
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer) {
+    if (libRR_full_trace_log) {
+        libRR_log_trace_str("Return:"+n2hexstr(current_pc)+"->"+n2hexstr(return_target));
+    }
     // printf("libRR_log_return_statement pc:%d return:%d stack:%d\n", current_pc, return_target, 65534-stack_pointer);
 
     // check the integrety of the call stack
@@ -586,8 +626,12 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // TODO: find out how long the function is
 }
 
-void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target) {
+void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type) {
     // cout << "Long Jump from:" << n2hexstr(current_pc) << " to:" << n2hexstr(jump_target) << "\n";
+    if (libRR_full_trace_log) {
+        libRR_log_trace_str("Long Jump:"+n2hexstr(current_pc)+"->"+n2hexstr(jump_target)+" type:"+type);
+    }
+
     string target_bank_number = "0000";
     string pc_bank_number = "0000";
     if (jump_target >= libRR_bank_0_max_addr) {
@@ -596,11 +640,19 @@ void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target) {
     if (current_pc >= libRR_bank_0_max_addr) {
         pc_bank_number = n2hexstr(libRR_current_bank, 4);
     }
-    libRR_long_jumps[target_bank_number][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
+    libRR_long_jumps[target_bank_number][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=type;
 }
 
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
-    // printf("Interrupt call at:%s target:%s \n", n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
+    string pc_bank_number = "0000";
+    if (current_pc >= libRR_bank_0_max_addr) {
+        pc_bank_number = n2hexstr(libRR_current_bank, 4);
+    }
+
+    // 0x0040 is vblank 0x0050 is timer
+
+    printf("Interrupt call at: %s::%s target:%s \n", pc_bank_number.c_str(), n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
+    libRR_long_jumps["0000"][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
 }
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
     // TODO: find out why uncommeting the following causes a segfault
@@ -1578,7 +1630,7 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     if (current_pc <libRR_bank_0_max_addr) {
         current_bank_str="0000";
     }
-    libRR_disassembly[current_bank_str][current_pc_str][name]["frame"]=RRCurrentFrame;
+    // libRR_disassembly[current_bank_str][current_pc_str][name]["frame"]=RRCurrentFrame;
     libRR_disassembly[current_bank_str][current_pc_str][name]["bytes"]=hexBytes;
     libRR_disassembly[current_bank_str][current_pc_str][name]["bytes_length"]=number_of_bytes;
 }

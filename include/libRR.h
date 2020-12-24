@@ -64,13 +64,14 @@ void add_console_specific_game_json();
 // CPU
 void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer=0);
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
-void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target);
+void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type);
 void libRR_log_branch(uint32_t current_pc, uint32_t target_pc);
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer=0);
 
 extern bool libRR_full_function_log;
 extern bool libRR_isDelaySlot;
 extern uint32_t libRR_delay_slot_pc;
+void libRR_log_trace_str(string message);
 
 // Input 
 extern void libRR_resave_button_state_to_file(string filename = "button_log.bin", int max_number=-1, json changes = json::parse("{}"));

@@ -43,36 +43,36 @@ SECTION "rst38", ROM0[$0038]
 
 ; Game Boy hardware interrupts
 
-SECTION "vblank", ROM0[$0040]
+;SECTION "vblank", ROM0[$0040]
 	;jp VBlank
-  nop
-	nop
-	nop
+ ; nop
+;	nop
+;	nop
 
-	ds $48 - @, 0 ; unused
+;	ds $48 - @, 0 ; unused
 
-SECTION "lcd", ROM0[$0048]
-	rst $38
+;SECTION "lcd", ROM0[$0048]
+;	rst $38
+;
+;	ds $50 - @, 0 ; unused
 
-	ds $50 - @, 0 ; unused
-
-SECTION "timer", ROM0[$0050]
+;SECTION "timer", ROM0[$0050]
 	;jp Timer
-  nop
-	nop
-	nop
+;  nop
+;	nop
+;	nop
 
-	ds $58 - @, 0 ; unused
+;	ds $58 - @, 0 ; unused
 
-SECTION "serial", ROM0[$0058]
-	;jp Serial
-  nop
-	nop
-	nop
-	ds $60 - @, 0 ; unused
+;SECTION "serial", ROM0[$0058]
+;	;jp Serial
+;  nop
+;	nop
+;	nop
+;	ds $60 - @, 0 ; unused
 
-SECTION "joypad", ROM0[$0060]
-	reti
+;SECTION "joypad", ROM0[$0060]
+;	reti
 
 
 ;SECTION "Header", ROM0[$0100]

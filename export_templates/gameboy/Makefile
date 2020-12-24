@@ -1,4 +1,4 @@
-roms := {{ GAME_NAME }}.gb
+roms := {{ GAME_NAME }}_rr.gb
 
 rom_obj := \
 data.o \

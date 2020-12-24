@@ -11,6 +11,11 @@ extern const char* libRR_console;
 extern bool libRR_full_function_log;
 extern bool libRR_finished_boot_rom;
 
+// Trace logging
+extern bool libRR_full_trace_log;
+void libRR_log_trace(const char* message);
+void libRR_log_trace_flush();
+
 // ASM instruction logging
 void libRR_log_instruction(uint32_t current_pc, const char* name, uint32_t instruction_bytes, int number_of_bytes);
 void libRR_log_instruction_z80_register(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand, const char* register_name);

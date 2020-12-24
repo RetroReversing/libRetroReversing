@@ -17,16 +17,16 @@ ROM0
 	"rst30"
 	org $0038
 	"rst38"
-	org $0040
-	"vblank"
-	org $0048
-	"lcd"
-	org $0050
-	"timer"
-	org $0058
-	"serial"
-	org $0060
-	"joypad"
+;	org $0040
+;	"vblank"
+;	org $0048
+;	"lcd"
+;	org $0050
+;	"timer"
+;	org $0058
+;	"serial"
+;	org $0060
+;	"joypad"
 	; $0061
 	; "High Home"
 ;	org $100

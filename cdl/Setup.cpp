@@ -66,7 +66,7 @@ void init_playthrough(string name) {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
     functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
   }
-  
+
   cout << "About to save playthough metadata" << std::endl;
   save_playthough_metadata();
   cout << "About to save constant metadata" << std::endl;
@@ -272,6 +272,9 @@ void save_constant_metadata() {
   saveJsonToFile(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
   saveJsonToFile(libRR_project_directory+"/called_functions.json", libRR_called_functions);
   saveJsonToFile(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
+  
+  cout << "About to save trace log" << std::endl;
+  libRR_log_trace_flush();
   game_json["functions"] = functions;
   saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
 }

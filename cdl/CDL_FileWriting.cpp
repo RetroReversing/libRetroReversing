@@ -87,6 +87,14 @@ namespace codeDataLogger {
         out.close();
     }
 
+    void appendStringToFile(std::string file_path, std::string contents) {
+        std::ofstream out;
+        out.open(file_path, std::ios_base::app); // append instead of overwrite
+        if (!out.good()) { std::cout << "File not found" << file_path << "\n"; }
+        out << contents;
+        out.close();
+    }
+
     std::string dirnameOf(const std::string& fname)
     {
         size_t pos = fname.find_last_of("\\/");
