@@ -613,7 +613,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
         if (current_pc >= libRR_bank_size) {
             // current PC may either be in bank 1 or a higher bank
         }
-        if (jump_target > libRR_bank_size) {
+        if (jump_target >= libRR_bank_size) {
             bank_number = n2hexstr(libRR_current_bank, 4);
             // jump target may be either in bank 1 or a higher bank
             // printf("Current Bank is:  %s jump target: %s \n", n2hexstr(libRR_current_bank).c_str(), n2hexstr(jump_target).c_str());
@@ -1450,7 +1450,7 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
         }
     } 
     else {
-        cout << "previous consecutive length from:" << (int)previous_consecutive_rom_bank << "::" << n2hexstr(current_consecutive_rom_start) << " -> " << n2hexstr(previous_consecutive_rom_read) <<  " len:" << libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"] << "\n";
+        // cout << "previous consecutive length from:" << (int)previous_consecutive_rom_bank << "::" << n2hexstr(current_consecutive_rom_start) << " -> " << n2hexstr(previous_consecutive_rom_read) <<  " len:" << libRR_consecutive_rom_reads[previous_bank_str][current_consecutive_rom_start_str]["length"] << "\n";
         current_consecutive_rom_start = offset;
         current_consecutive_rom_start_str = n2hexstr(current_consecutive_rom_start);
         // initialise new consecutive run

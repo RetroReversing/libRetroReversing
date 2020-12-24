@@ -124,13 +124,15 @@ extern "C" {
     string contents = "; TODO: generate ASM\n";
     string bank_number = function.bank_number;
     string offset_str = "$"+ n2hexstr(function.bank_offset);
-    int return_offset_from_start = function.return_offset_from_start;
+    // Previous verion only got until last executed RET:
+    // int return_offset_from_start = function.return_offset_from_start;
+    int return_offset_from_start = 190;
 
     contents += "; end:" + n2hexstr(return_offset_from_start) + "\n";
 
-    if ((uint8_t)offset == (uint8_t)0x40) {
-      return "; Ignore Vblank for now\n\n";
-    }
+    // if ((uint8_t)offset == (uint8_t)0x40) {
+    //   return "; Ignore Vblank for now\n\n";
+    // }
 
     if (function.bank_offset< 0x4000 || bank_number == "0000") {
       contents += "SECTION \"" + function.func_name + "\",ROM0["+offset_str+"]\n\n";
@@ -179,7 +181,7 @@ extern "C" {
         // std::cout << "Not written: bank:" << bank_number << " offset:" << n2hexstr(i) << " " << libRR_disassembly[bank_number][n2hexstr(i)].dump() << "\n";
       } else {
         // write offset anyway for debugging
-        // contents += n2hexstr(i);
+        contents += n2hexstr(i);
       }
       contents +="\n";
       i+=instruction_length;
@@ -231,9 +233,15 @@ extern "C" {
     return contents;
   }
 
-  string write_each_rom_byte(json dataRange) {
+  string write_each_rom_byte(string bank_number, json dataRange) {
     string contents = "";
     for (auto& byteValue : dataRange.items()) {
+
+      // Check if this overlaps with the start of another block
+      if (libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
+        break;
+      }
+
       contents += "\tdb $";
       contents += byteValue.value();
       contents += " ; ";
@@ -271,13 +279,13 @@ extern "C" {
   string write_asm_until_null(string bank_number, string offset_str) {
     string contents = "";
     int offset = hex_to_int(offset_str);
-    int return_offset_from_start = 200; // this is just the max, will most likely stop before this
+    int return_offset_from_start = 1000; // this is just the max, will most likely stop before this
     
     // First Check if this address is the starting address of function
       if (libRR_called_functions[bank_number].contains(n2hexstr(offset))) {
         cout << "Jump has already been defined as a function:" << bank_number << "::" << n2hexstr(offset) << "\n";
         if (libRR_disassembly[bank_number][n2hexstr(offset)].contains("label_name")) {
-          contents += (string)libRR_disassembly[bank_number][n2hexstr(offset)]["label_name"] + " EQU $";
+          contents += "; "+(string)libRR_disassembly[bank_number][n2hexstr(offset)]["label_name"] + " EQU $";
           contents += n2hexstr(offset);
         }
         contents += "; Address Also defined as function\n";
@@ -292,7 +300,8 @@ extern "C" {
       
 
       if (should_stop_writing_asm(offset, i, bank_number)) {
-        break;
+        contents+=";stopped writing due to overlap with another section\n";
+        return contents;
       }
 
       if (libRR_disassembly[bank_number][n2hexstr(i)].contains("label_name")) {
@@ -324,6 +333,7 @@ extern "C" {
       contents +="\n";
       i+=instruction_length;
     }
+    contents+="; Reached max number of instruction bytes";
     
     return contents;
   }
@@ -331,7 +341,7 @@ extern "C" {
   void libRR_export_jump_data() {
     string output_file_path = libRR_export_directory + "jumps.asm";
     string contents = "; Contains Long Jump data\n";
-    contents +="INCLUDE \"./common/constants.asm\"\n";
+    // contents +="INCLUDE \"./common/constants.asm\"\n";
     // libRR_long_jumps
 
     for (auto& bank : libRR_long_jumps.items()) {
@@ -378,7 +388,7 @@ extern "C" {
             contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
         }
 
-        contents += write_each_rom_byte(dataSection.value()["value"]);
+        contents += write_each_rom_byte(bank.key(), dataSection.value()["value"]);
       }
     }
 
@@ -416,6 +426,7 @@ extern "C" {
       
 
   }
+    main_asm_contents+="\nINCLUDE \"jumps.asm\"\n";
 
     // Generate main.asm file, which includes the other files
     codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
