@@ -126,7 +126,7 @@ extern "C" {
     string offset_str = "$"+ n2hexstr(function.bank_offset);
     // Previous verion only got until last executed RET:
     // int return_offset_from_start = function.return_offset_from_start;
-    int return_offset_from_start = 190;
+    int return_offset_from_start = 1900;
 
     contents += "; end:" + n2hexstr(return_offset_from_start) + "\n";
 
@@ -144,9 +144,9 @@ extern "C" {
       contents += "SECTION \"" + function.func_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n\n";
     }
 
-    contents += function.func_name + "::\n";
+    contents += function.func_name + ":\n";
 
-    if (return_offset_from_start > 200) {
+    if (return_offset_from_start > 2000) {
       contents += "; return offset too large:" + n2hexstr(return_offset_from_start) + "\n\n";
       return contents;
     }
@@ -158,7 +158,8 @@ extern "C" {
 
 
       if (should_stop_writing_asm(offset, i, bank_number)) {
-        break;
+        contents += "; Stopped writing due to collision with another section\n\n";
+        return contents;
       }
 
       if (libRR_disassembly[bank_number][n2hexstr(i)].contains("label_name")) {
@@ -186,8 +187,7 @@ extern "C" {
       contents +="\n";
       i+=instruction_length;
     }
-    contents += "\n";
-
+    contents += "; Stopped writing to max instructions reached \n\n";
     return contents;
   }
 
@@ -235,12 +235,14 @@ extern "C" {
 
   string write_each_rom_byte(string bank_number, json dataRange) {
     string contents = "";
+    bool read_first_byte = false;
     for (auto& byteValue : dataRange.items()) {
 
-      // Check if this overlaps with the start of another block
-      if (libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
+      // Check if this overlaps with the start of another block (only after first byte)
+      if (read_first_byte && libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
         break;
       }
+      read_first_byte = true;
 
       contents += "\tdb $";
       contents += byteValue.value();
@@ -273,6 +275,12 @@ extern "C" {
         // contents += "; Address defined as another jump\n";
         return true;
       }
+
+      if (bank_number=="0000" && i>= libRR_bank_0_max_addr) {
+        cout << "Reached Max Bank 0 address \n";
+        return true;
+      }
+
       return false;
   }
 
@@ -381,6 +389,14 @@ extern "C" {
           // TODO: Need to fix these null lengths
           continue;
         }
+
+        if (bank.key() == "0000" && dataSection.key() == "000000B1") {
+          // Skip this as it always overlaps with code
+          // TODO: find out why
+          cout << "Skip 0xB1\n";
+          continue;
+        }
+
         contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
         if (bank.key() == "0000") {
             contents += "\",ROM0[$"+dataSection.key()+"]\n";
