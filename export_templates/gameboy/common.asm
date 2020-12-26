@@ -4,7 +4,7 @@ INCLUDE "./common/constants.asm"
 SECTION "NULL", ROM0
 NULL::
 
-_UNCALLED_FUNCTION::
+z_UNCALLED_FUNCTION::
 
 INCLUDE "./common/header.asm"
 

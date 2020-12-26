@@ -82,28 +82,34 @@ extern "C" {
 
   }
 
+  string write_section_header(string offset_str, string bank_number, string section_name, string contents) {
+    // first get the offset as int before appending "$"
+    int32_t offset = hex_to_int(offset_str);
+    offset_str = "$"+ offset_str;
+    if (offset< 0x4000 || bank_number == "0000") {
+      cout << "Bank 0 because: offset:" << offset_str << " bank_number:" << bank_number << "\n";
+      contents += "SECTION \"" + section_name + "\",ROM0["+offset_str+"]\n\n";
+    } 
+    else {
+      contents += "SECTION \"" + section_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n\n";
+    }
+    return contents;
+  }
+
   string generate_asm_for_function(const unsigned int offset, cdl_labels function) {
     string contents = "; TODO: generate ASM\n";
     string bank_number = function.bank_number;
-    string offset_str = "$"+ n2hexstr(function.bank_offset);
+    string offset_str = n2hexstr(function.bank_offset);
     // Previous verion only got until last executed RET:
     // int return_offset_from_start = function.return_offset_from_start;
     int return_offset_from_start = 1900;
 
     contents += "; end:" + n2hexstr(return_offset_from_start) + "\n";
 
-    // if ((uint8_t)offset == (uint8_t)0x40) {
-    //   return "; Ignore Vblank for now\n\n";
-    // }
+    contents += write_section_header(offset_str, bank_number, function.func_name, contents);
 
-    if (function.bank_offset< 0x4000 || bank_number == "0000") {
-      contents += "SECTION \"" + function.func_name + "\",ROM0["+offset_str+"]\n\n";
-    } 
-    else if (function.bank_offset >= 0xff80) {
+    if (function.bank_offset >= 0xff80) {
       return "; Ignore HRAM for now\n\n";
-    }
-    else {
-      contents += "SECTION \"" + function.func_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n\n";
     }
 
     contents += function.func_name + ":\n";
@@ -246,13 +252,13 @@ extern "C" {
       return false;
   }
 
-  string write_asm_until_null(string bank_number, string offset_str) {
+  string write_asm_until_null(string bank_number, string offset_str, bool is_function) {
     string contents = "";
     int offset = hex_to_int(offset_str);
     int return_offset_from_start = 1000; // this is just the max, will most likely stop before this
     
     // First Check if this address is the starting address of function
-      if (libRR_called_functions[bank_number].contains(n2hexstr(offset))) {
+      if (!is_function && libRR_called_functions[bank_number].contains(n2hexstr(offset))) {
         cout << "Jump has already been defined as a function:" << bank_number << "::" << n2hexstr(offset) << "\n";
         if (libRR_disassembly[bank_number][n2hexstr(offset)].contains("label_name")) {
           contents += "; "+(string)libRR_disassembly[bank_number][n2hexstr(offset)]["label_name"] + " EQU $";
@@ -326,7 +332,7 @@ extern "C" {
             contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
         }
         contents += write_callers(dataSection.value());
-        contents += write_asm_until_null(bank.key(), dataSection.key());
+        contents += write_asm_until_null(bank.key(), dataSection.key(), false);
       }
     }
 
@@ -339,7 +345,6 @@ extern "C" {
     string contents = "; Contains ROM static data\n";
 
     // Loop through each bank
-    
     for (auto& bank : libRR_consecutive_rom_reads.items()) {
       // std::cout << "libRR_consecutive_rom_reads:" << bank.key() << " : " << bank.value() << "\n";
       contents += "\n\n;;;;;;;;;;;\n; Bank:";
@@ -374,40 +379,101 @@ extern "C" {
     cout << "Written data.asm to: " << output_file_path << "\n";
   }
 
+  string get_function_name(string bank, string offset) {
+    string function_name = "_"+bank+"_func_"+offset;
+    return function_name;
+  }
+
+  string get_function_export_path(string offset, json func, string bank) {
+    string export_path = "";
+    if (func.contains("export_path") && ((string)func["export_path"]).length()>0) {
+      export_path = func["export_path"];
+    } else {
+      // Use a default generated export path
+      export_path = "/functions/" + get_function_name(bank, offset) + libRR_export_assembly_extention;
+    }
+    return export_path;
+  }
+
+  void libRR_export_function_data() {
+
+    string main_asm_contents = "INCLUDE \"./common/constants.asm\"\n";
+
+    // Loop through each bank
+    for (auto& bank : libRR_called_functions.items()) {
+
+      // Now loop over functions inside bank
+      for (auto& func : bank.value().items()) {
+        string bank_str = bank.key();
+        string func_offset_str = func.key();
+        int32_t func_offset = hex_to_int(func_offset_str);
+        string export_path = get_function_export_path(func_offset_str, func.value(), bank_str);
+
+        if (func_offset >= 0xff80) {
+          main_asm_contents += "; Ignore HRAM for now\n\n";
+          continue;
+        }
+        
+        main_asm_contents+="INCLUDE \"."+export_path+"\"\n";
+
+        // Now write the actual file
+        string output_file_path = libRR_export_directory + export_path;
+        // create any folder that needs to be created
+        std::__fs::filesystem::create_directories(codeDataLogger::dirnameOf(output_file_path));
+        string function_name = get_function_name(bank_str, func_offset_str);
+
+        string contents = "";
+        contents += write_section_header(func_offset_str, bank_str, function_name, contents);
+        contents += write_asm_until_null(bank_str, func_offset_str, true);
+        codeDataLogger::writeStringToFile(output_file_path, contents);
+        cout << "Written file to: " << output_file_path << "\n";
+
+      }
+
+      
+
+    }
+
+    main_asm_contents+="\nINCLUDE \"jumps.asm\"\n";
+
+    // Generate main.asm file, which includes the other files
+    codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
+
+  }
+
   void libRR_export_all_files() {
     printf("GameBoy: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
     // Copy over common template files
     libRR_export_template_files("gameboy");
     libRR_export_rom_data();
     libRR_export_jump_data();
+    libRR_export_function_data();
 
     string main_asm_contents = "INCLUDE \"./common/constants.asm\"\n";
-    for (auto& it : functions) {
-      // cout << "offset:" << it.first << " name: " << functions[it.first].func_name << "\n";
-      string export_path = "";
-      if (functions[it.first].export_path.length()>0) {
-        export_path = functions[it.first].export_path;
-      } else {
-        // Use a default generated export path
-        export_path = "/functions/" + functions[it.first].func_name + libRR_export_assembly_extention;
-      }
-      main_asm_contents+="INCLUDE \"."+export_path+"\"\n";
+  //   for (auto& it : functions) {
+  //     // cout << "offset:" << it.first << " name: " << functions[it.first].func_name << "\n";
+  //     string export_path = "";
+  //     if (functions[it.first].export_path.length()>0) {
+  //       export_path = functions[it.first].export_path;
+  //     } else {
+  //       // Use a default generated export path
+  //       export_path = "/functions/" + functions[it.first].func_name + libRR_export_assembly_extention;
+  //     }
+  //     main_asm_contents+="INCLUDE \"."+export_path+"\"\n";
 
-      string output_file_path = libRR_export_directory + export_path;
-      // create any folder that needs to be created
-      std::__fs::filesystem::create_directories(codeDataLogger::dirnameOf(output_file_path));
-
-
-      string contents = generate_asm_for_function(it.first, it.second);
-      codeDataLogger::writeStringToFile(output_file_path, contents);
-      cout << "Written file to: " << output_file_path << "\n";
+  //     string output_file_path = libRR_export_directory + export_path;
+  //     // create any folder that needs to be created
+  //     std::__fs::filesystem::create_directories(codeDataLogger::dirnameOf(output_file_path));
+  //     string contents = generate_asm_for_function(it.first, it.second);
+  //     codeDataLogger::writeStringToFile(output_file_path, contents);
+  //     cout << "Written file to: " << output_file_path << "\n";
       
 
-  }
+  // }
     main_asm_contents+="\nINCLUDE \"jumps.asm\"\n";
 
     // Generate main.asm file, which includes the other files
-    codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
+    // codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
     
   }
 
