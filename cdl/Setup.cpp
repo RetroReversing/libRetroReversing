@@ -180,7 +180,8 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
 
   current_state.game_name = extract_basename(info->path);
   printf("Game path: %s name: %s\n", info->path, current_state.game_name.c_str());
-  libRR_game_name = current_state.game_name;
+
+  libRR_game_name = alphabetic_only_name((char*)current_state.game_name.c_str(), current_state.game_name.length());
   current_state.libretro_game_info = *info;
   current_state.libRR_save_states = libRR_save_states;
 
@@ -272,7 +273,7 @@ void save_constant_metadata() {
   saveJsonToFile(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
   saveJsonToFile(libRR_project_directory+"/called_functions.json", libRR_called_functions);
   saveJsonToFile(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
-  
+
   cout << "About to save trace log" << std::endl;
   libRR_log_trace_flush();
   game_json["functions"] = functions;
@@ -727,11 +728,11 @@ string libRR_parse_message_from_web(json message_json) //string message)
   // game_json["functions_playthough"] = function_playthough_info;
   printf("About to set assembly\n");
   // TODO: only send assembly when requested not on every load
-  game_json["assembly"] = libRR_disassembly;
+  // game_json["assembly"] = libRR_disassembly;
   printf("About to set console specific json\n");
   add_console_specific_game_json();
   printf("About to return dump to client\n");
   
-  return game_json.dump(2);
+  return game_json.dump();
 
 }

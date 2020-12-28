@@ -111,7 +111,7 @@ void cdl_keyevents(int keysym, int keymod) {
 
 bool createdCartBackup = false;
 void backupCart() {
-    libRR_game_name = alphabetic_only_name((char*)rom_name.c_str(), 21);
+   // libRR_game_name = alphabetic_only_name((char*)rom_name.c_str(), 21);
     std::cout << "TODO: backup";
     createdCartBackup = true;
 }
@@ -651,7 +651,7 @@ void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
 
     // 0x0040 is vblank 0x0050 is timer
 
-    printf("Interrupt call at: %s::%s target:%s \n", pc_bank_number.c_str(), n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
+    // printf("Interrupt call at: %s::%s target:%s \n", pc_bank_number.c_str(), n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
     libRR_long_jumps["0000"][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
 }
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
@@ -1459,18 +1459,36 @@ string libRR_gameboy_da8_contant_replace(int16_t da8) {
     return "$"+n2hexstr(da8);
 }
 
-extern "C" const char* libRR_log_jump_label(int32_t offset) {
-    string current_pc_str = n2hexstr(offset);
+extern "C" void libRR_log_dma(int32_t offset) {
+    if (offset> 0x7fff) {
+        return;
+    }
+    cout << "DMA: " << n2hexstr(offset) << "\n";
+
+}
+
+extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return "";
+    }
+    
+    string offset_str = n2hexstr(offset);
     string current_bank_str = n2hexstr(libRR_current_bank, 4);
     // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
     if (offset <libRR_bank_0_max_addr) {
         current_bank_str="0000";
+    } 
+    else if (offset >libRR_bank_1_max_addr) {
+        // if its greater than the max bank value then its probably in ram
+        return "";
     }
 
-    if (!libRR_disassembly[current_bank_str][current_pc_str].contains("label_name")) {
-        libRR_disassembly[current_bank_str][current_pc_str]["label_name"] = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
+    string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
+    if (!libRR_disassembly[current_bank_str][offset_str].contains("label_name")) {
+        libRR_disassembly[current_bank_str][offset_str]["label_name"] = label_name;
     }
-    return ((string)libRR_disassembly[current_bank_str][current_pc_str]["label_name"]).c_str();
+    libRR_disassembly[current_bank_str][offset_str]["meta"]["label_callers"][current_bank_str + "_" + n2hexstr(current_pc)] = true;
+    return label_name.c_str();
 }
 
 extern "C" void libRR_log_memory_read(int8_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes) {
@@ -1596,6 +1614,9 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
 
 extern "C" void libRR_log_instruction(uint32_t current_pc, const char* name, uint32_t instruction_bytes, int number_of_bytes)
 {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
     // printf("libRR_log_instruction pc:%d name: %s bytes: %d\n", current_pc, name, instruction_bytes);
     std::string str(name);
     libRR_log_instruction(current_pc, str, instruction_bytes, number_of_bytes);
@@ -1606,8 +1627,12 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
+
+    // trace log each isntruction
+    // libRR_log_trace_str(name);
     
-    if (libRR_console == "Saturn") {
+    if (strcmp(libRR_console,"Saturn")==0) {
+        printf("isSaturn\n");
         // For saturn we remove 2 from the program counter, but this will vary per console
         current_pc -= 4; // was -2
     }
@@ -1615,7 +1640,6 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
 
     // string current_function = n2hexstr(function_stack.back());
     string current_pc_str = n2hexstr(current_pc);
-    
     // printf("libRR_log_instruction %s \n", current_function.c_str());
     if (libRR_isDelaySlot) {
         current_pc_str = n2hexstr(libRR_delay_slot_pc - 2); //subtract 2 as pc is ahead
@@ -1630,6 +1654,10 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     if (current_pc <libRR_bank_0_max_addr) {
         current_bank_str="0000";
     }
+
+    // trace the current pc
+    libRR_log_trace_str(current_bank_str+":"+current_pc_str);
+
     // libRR_disassembly[current_bank_str][current_pc_str][name]["frame"]=RRCurrentFrame;
     libRR_disassembly[current_bank_str][current_pc_str][name]["bytes"]=hexBytes;
     libRR_disassembly[current_bank_str][current_pc_str][name]["bytes_length"]=number_of_bytes;

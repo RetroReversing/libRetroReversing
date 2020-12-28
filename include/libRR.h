@@ -85,6 +85,7 @@ string libRR_load_save_state(int frame);
 extern uint16_t libRR_current_bank;
 extern uint32_t libRR_bank_size;
 extern uint32_t libRR_bank_0_max_addr; // if address is smaller than this then it will be in bank 0 by default
+extern uint32_t libRR_bank_1_max_addr; // if address is greater than this then its not ROM code
 extern bool libRR_bank_switching_available;
 
 // Scripting support
