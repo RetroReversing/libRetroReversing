@@ -160,8 +160,9 @@ bool libRR_run_frame();
 // Web
 string libRR_parse_message_from_web(json message);
 
-// Source sxport
+// Source export
 void libRR_export_template_files(string template_directory_name);
+bool libRR_replace_string(std::string& str, const std::string& from, const std::string& to);
 extern string libRR_export_assembly_extention;
 
 // Override with Console specific

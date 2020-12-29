@@ -8,6 +8,13 @@ using namespace kainjow::mustache;
 
 string libRR_export_assembly_extention = ".s";
 
+bool libRR_replace_string(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = str.find(from);
+    if(start_pos == std::string::npos)
+        return false;
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
 
 void libRR_export_template_files(string template_directory_name) {
     json files_json;

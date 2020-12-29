@@ -92,11 +92,10 @@ extern "C" {
     string contents = "";
     offset_str = "$"+ offset_str;
     if (offset< 0x4000 || bank_number == "0000") {
-      cout << "Bank 0 because: offset:" << offset_str << " bank_number:" << bank_number << "\n";
-      contents += "SECTION \"" + section_name + "\",ROM0["+offset_str+"]\n\n";
+      contents += "SECTION \"" + section_name + "\",ROM0["+offset_str+"]\n";
     } 
     else {
-      contents += "SECTION \"" + section_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n\n";
+      contents += "SECTION \"" + section_name + "\",ROMX["+offset_str+"],BANK[$"+bank_number+"]\n";
     }
     return contents;
   }
