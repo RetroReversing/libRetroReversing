@@ -13,7 +13,7 @@ extern bool libRR_full_function_log;
 extern bool libRR_finished_boot_rom;
 
 // Util
-const char* n2hexstr_c(int number, size_t hex_len = 4);
+const char* n2hexstr_c(int number, size_t hex_len);
 
 // Trace logging
 extern bool libRR_full_trace_log;

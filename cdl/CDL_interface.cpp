@@ -1536,7 +1536,7 @@ extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, con
     }
     std::string name(c_name);
     replace(name, "%r%",register_name);
-    libRR_log_instruction_z1int(current_pc, name.c_str(), instruction_bytes, number_of_bytes, opcode, operand);
+    libRR_log_instruction_1int(current_pc, name.c_str(), instruction_bytes, number_of_bytes, opcode, operand);
 }
 
 extern "C" void libRR_log_instruction_z80_s_d(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* source, const char* destination) {
