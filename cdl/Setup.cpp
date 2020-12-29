@@ -362,7 +362,8 @@ string libRR_create_save_state(string name, int frame) {
   free(data);
 
   // Save screenshot
-  libRR_create_png(current_playthrough_directory+filename+".png", libRR_current_frame_buffer);
+  string screenshot_name = current_playthrough_directory+filename+".png";
+  libRR_create_png(screenshot_name, libRR_current_frame_buffer);
 
   // Update History
   libRR_save_state state = {};

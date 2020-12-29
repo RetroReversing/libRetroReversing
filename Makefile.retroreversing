@@ -24,7 +24,7 @@ SOURCES_CXX_RR += \
 # TODO: use a local path instead of /usr/local/opt/nlohmann_json/include
 # CFLAGS += -I/usr/local/opt/nlohmann_json/include
 # CXXFLAGS += -I/usr/local/opt/nlohmann_json/include -std=c++11
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.15
 LDFLAGS += -lbfd -L/usr/local/opt/binutils/lib -liberty -lintl -liconv -mmacosx-version-min=10.9 -lc++
 
 
