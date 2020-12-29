@@ -4,8 +4,15 @@
 #include "../cdl/CDL.hpp"
 
 extern "C" {
+  // This is used for most SEGA 8bit and 16bit consoles, such as Master System, Game Gear and Mega Drive
+  const char* libRR_console = "GenesisPlusGX";
 
-  const char* libRR_console = "Dummy";
+  // GenesisPlusGX doesn't have this defined so:
+  char retro_base_directory[4096];
+  // The following will need to be added for Sega Mega CD support
+  string retro_cd_base_directory = "libRR_RememberToSetCDBase";
+  string retro_cd_path = "libRR_RememberToSetCDPATH";
+  string retro_cd_base_name = "libRR_RememberToBaseName";
 
   struct retro_memory_map libRR_retromap = { 0 };
 
@@ -26,7 +33,7 @@ extern "C" {
   uint32_t libRR_pc_lookahead = 0;
 
   void libRR_setup_console_details(retro_environment_t environ_cb) {
-    printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n");
+    // printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
     // libRR_set_retro_memmap(environ_cb);
   }
 

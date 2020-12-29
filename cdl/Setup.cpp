@@ -128,7 +128,7 @@ void libRR_setup_directories() {
   libRR_project_directory = retro_base_directory;
   libRR_project_directory += "/RE_projects/";
   libRR_project_directory += current_state.libretro_system_info.library_name;
-  libRR_project_directory += "/" + current_state.game_name + "/";
+  libRR_project_directory += "/" + libRR_game_name + "/";
   libRR_export_directory += libRR_project_directory + "src/";
   std::__fs::filesystem::create_directories( libRR_project_directory);
   std::__fs::filesystem::create_directories( libRR_project_directory + "/playthroughs/");
@@ -362,7 +362,8 @@ string libRR_create_save_state(string name, int frame) {
   free(data);
 
   // Save screenshot
-  libRR_create_png(current_playthrough_directory+filename+".png", libRR_current_frame_buffer);
+  string screenshot_name = current_playthrough_directory+filename+".png";
+  libRR_create_png(screenshot_name, libRR_current_frame_buffer);
 
   // Update History
   libRR_save_state state = {};
