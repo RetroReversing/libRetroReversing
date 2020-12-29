@@ -6,6 +6,7 @@
 extern "C" {
   // This is used for most SEGA 8bit and 16bit consoles, such as Master System, Game Gear and Mega Drive
   const char* libRR_console = "GenesisPlusGX";
+  int libRR_emulated_hardware = 0;
 
   // GenesisPlusGX doesn't have this defined so:
   char retro_base_directory[4096];
@@ -35,6 +36,8 @@ extern "C" {
   void libRR_setup_console_details(retro_environment_t environ_cb) {
     // printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
     // libRR_set_retro_memmap(environ_cb);
+    printf("libRR_setup_console_details hardware:%d\n", libRR_emulated_hardware);
+    libRR_finished_boot_rom = true;
   }
 
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)

@@ -7,9 +7,13 @@ extern "C" {
 #endif
 
 extern const char* libRR_console;
+extern int libRR_emulated_hardware; // used if the emulator core supports multiple consoles
 
 extern bool libRR_full_function_log;
 extern bool libRR_finished_boot_rom;
+
+// Util
+const char* n2hexstr_c(int number, size_t hex_len = 4);
 
 // Trace logging
 extern bool libRR_full_trace_log;
@@ -20,6 +24,7 @@ void libRR_log_trace_flush();
 void libRR_log_dma(int32_t offset);
 
 // ASM instruction logging
+const char* libRR_asm_format();
 void libRR_log_instruction(uint32_t current_pc, const char* name, uint32_t instruction_bytes, int number_of_bytes);
 void libRR_log_instruction_z80_register(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand, const char* register_name);
 void libRR_log_instruction_z80(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand);

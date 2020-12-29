@@ -11,6 +11,7 @@ extern "C" {
 
   struct retro_memory_descriptor libRR_mmap[0];
   int libRR_mmap_descriptors = 0;
+  int libRR_emulated_hardware = 0; // only used for emulators that support multiple consoles e.g GameGear/MasterSystem
 
   // Delay slot variables
   uint32_t libRR_delay_slot_pc;

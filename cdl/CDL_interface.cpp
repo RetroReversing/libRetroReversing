@@ -649,11 +649,10 @@ void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
         pc_bank_number = n2hexstr(libRR_current_bank, 4);
     }
 
-    // 0x0040 is vblank 0x0050 is timer
-
     // printf("Interrupt call at: %s::%s target:%s \n", pc_bank_number.c_str(), n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
     libRR_long_jumps["0000"][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
 }
+
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
     // TODO: find out why uncommeting the following causes a segfault
     // if (!libRR_full_function_log || !libRR_finished_boot_rom) {
@@ -679,28 +678,6 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     
     // Start Stacktrace handling
     libRR_call_depth++;
-    // printf("libRR_log_function_call pc: %d target: %d full: %d libRR_call_depth:%d \n", current_pc, jump_target, calculated_jump_target, libRR_call_depth);
-    
-    // Make sure the backtract size doesn't go bigger than the size of backtrace_sps array
-    // otherwise just ignore it
-    // if (libRR_backtrace_size < sizeof(libRR_backtrace_stackpointers) / sizeof(libRR_backtrace_stackpointers[0])) {
-
-    //     // not actually sure purpose of this
-    //     while (libRR_backtrace_size) {
-    //         if (libRR_backtrace_stackpointers[libRR_backtrace_size - 1] < stack_pointer) {
-    //             libRR_backtrace_size--;
-    //         }
-    //         else {
-    //             break;
-    //         }
-    //     }
-
-    //     // Add the current stackpointer to our list
-    //     libRR_backtrace_stackpointers[libRR_backtrace_size] = stack_pointer;
-    //     // gb->backtrace_returns[gb->backtrace_size].bank = bank_for_addr(gb, jump_target);
-    //     // gb->backtrace_returns[gb->backtrace_size].addr = jump_target;
-    //     libRR_backtrace_size++;
-    // }
     // End Stacktrace handling
     
     last_return_address = current_pc;
@@ -722,15 +699,15 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
     t.func_name = function_name; // /*libRR_game_name+*/"_"+bank_number+"_func_"+jump_target_str;
-    t.func_stack = function_stack.size();
-    t.export_path = "";
-    t.bank_number = bank_number;
-    t.bank_offset = jump_target;
+    //t.func_stack = function_stack.size();
+    //t.export_path = "";
+    //t.bank_number = bank_number;
+    //t.bank_offset = jump_target;
     // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
     t.many_memory_reads = false;
     t.many_memory_writes = false;
-    t.additional["callers"][print_function_stack_trace()] = RRCurrentFrame;
+    // t.additional["callers"][print_function_stack_trace()] = RRCurrentFrame;
     printf("Logged new function: %s target:%d number_of_functions:%d \n", t.func_name.c_str(), jump_target, number_of_functions);
     functions[jump_target] = t;
     number_of_functions++;
@@ -1542,23 +1519,24 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 
-extern "C" void libRR_log_instruction_z80(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand) {
+// Takes a single int argument and replaces it in the string
+extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     std::string name(c_name);
-    replace(name, "%da8%", libRR_gameboy_da8_contant_replace(operand));
+    replace(name, "%int%", libRR_gameboy_da8_contant_replace(operand));
     
     libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
 }
 
-extern "C" void libRR_log_instruction_z80_register(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand, const char* register_name) {
+extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand, const char* register_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     std::string name(c_name);
     replace(name, "%r%",register_name);
-    libRR_log_instruction_z80(current_pc, name.c_str(), instruction_bytes, number_of_bytes, opcode, operand);
+    libRR_log_instruction_z1int(current_pc, name.c_str(), instruction_bytes, number_of_bytes, opcode, operand);
 }
 
 extern "C" void libRR_log_instruction_z80_s_d(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* source, const char* destination) {
@@ -1622,6 +1600,10 @@ extern "C" void libRR_log_instruction(uint32_t current_pc, const char* name, uin
     libRR_log_instruction(current_pc, str, instruction_bytes, number_of_bytes);
 }
 
+// C version of the c++ template
+extern "C" const char* n2hexstr_c(int number, size_t hex_len) {
+    return n2hexstr(number, hex_len).c_str();
+}
 
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
