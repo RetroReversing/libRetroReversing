@@ -2,8 +2,11 @@
 #include "../civetweb/include/civetweb.h"
 #include "../include/libRR.h"
 #include "../cdl/CDL.hpp"
+#include "../cdl/CDL_FileWriting.hpp"
 
 extern "C" {
+
+  json allLabels = {};
 
   const char* libRR_console = "Dummy";
 

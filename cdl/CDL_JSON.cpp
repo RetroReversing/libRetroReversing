@@ -63,6 +63,7 @@ void saveJsonToFile(string filename, json& json_object) {
     cout << "Saving: " << filename << std::endl;
     string dump = json_object.dump(2);
     if (dump == "null" || dump == "{}") {
+        cout << "WARN: Nothing to write for file\n";
         return;
     }
     std::ofstream o(filename);

@@ -8,7 +8,6 @@ using namespace kainjow::mustache;
 
 extern "C" {
 
-  json unwrittenLabels = {};
   json allLabels = {};
 
   const char* libRR_console = "GameBoy";
