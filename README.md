@@ -177,3 +177,4 @@ for (auto& el : o.items()) {
 * `n2hexstr`
 * `std::stoi()` (string to integer)
 * `to_string()` (integer to string)
+* `libRR_replace_string(thestring, toreplace, replacement)` (replace substring in thestring)

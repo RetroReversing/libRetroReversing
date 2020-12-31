@@ -30,6 +30,7 @@ extern "C" {
     // libRR_set_retro_memmap(environ_cb);
   }
 
+// libRR_set_retro_memmap should be called to setup memory ranges in a function such as retro_set_memory_maps
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)
   {
     for (int i=0; i<=10; i++) {

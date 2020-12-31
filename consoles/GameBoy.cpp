@@ -16,8 +16,8 @@ extern "C" {
   // SameBoy doesn't have this defined so:
   char retro_base_directory[4096];
 
+  // both libRR_retromap and libRR_mmap are used to setup memory regions
   struct retro_memory_map libRR_retromap = { 0 };
-
   struct retro_memory_descriptor libRR_mmap[11] = { 0 };
   // int libRR_mmap_descriptors = 11;
 
@@ -49,6 +49,7 @@ extern "C" {
   bool should_stop_writing_asm(int offset, int i, string bank_number);
 
 
+// libRR_set_retro_memmap is be called to setup memory ranges in a function such as retro_set_memory_maps
   void libRR_set_retro_memmap(retro_memory_descriptor* descs, int num_descriptors)
   {
     for (int i=0; i<=10; i++) {
