@@ -626,6 +626,20 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // TODO: find out how long the function is
 }
 
+int get_current_bank_number_for_address(uint32_t addr) {
+    if (addr < libRR_slot_0_max_addr) {
+        return libRR_current_bank_slot_1;
+    }
+    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
+        return libRR_current_bank_slot_1;
+    } 
+    if (addr>= libRR_slot_1_max_addr) {
+        // target is in slot 2
+        return libRR_current_bank_slot_2;
+    }
+    return 0;
+}
+
 void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type) {
     // cout << "Long Jump from:" << n2hexstr(current_pc) << " to:" << n2hexstr(jump_target) << "\n";
     if (libRR_full_trace_log) {
@@ -634,20 +648,16 @@ void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* 
 
     string target_bank_number = "0000";
     string pc_bank_number = "0000";
-    if (jump_target >= libRR_bank_0_max_addr) {
-        target_bank_number = n2hexstr(libRR_current_bank, 4);
-    }
-    if (current_pc >= libRR_bank_0_max_addr) {
-        pc_bank_number = n2hexstr(libRR_current_bank, 4);
-    }
+    target_bank_number = n2hexstr(get_current_bank_number_for_address(jump_target), 4);
+
+    // now we need the bank number of the function we are calling
+    pc_bank_number = n2hexstr(get_current_bank_number_for_address(current_pc), 4);
     libRR_long_jumps[target_bank_number][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=type;
 }
 
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
     string pc_bank_number = "0000";
-    if (current_pc >= libRR_bank_0_max_addr) {
-        pc_bank_number = n2hexstr(libRR_current_bank, 4);
-    }
+    pc_bank_number = n2hexstr(get_current_bank_number_for_address(current_pc), 4);
 
     // printf("Interrupt call at: %s::%s target:%s \n", pc_bank_number.c_str(), n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
     libRR_long_jumps["0000"][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
@@ -664,12 +674,15 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
         if (current_pc >= libRR_bank_size) {
             // current PC may either be in bank 1 or a higher bank
         }
+        int bank = get_current_bank_number_for_address(jump_target);
+        bank_number = n2hexstr(bank, 4);
+
+        // TODO: the following might be gameboy specific
         if (jump_target >= libRR_bank_size) {
-            bank_number = n2hexstr(libRR_current_bank, 4);
-            // jump target may be either in bank 1 or a higher bank
-            // printf("Current Bank is:  %s jump target: %s \n", n2hexstr(libRR_current_bank).c_str(), n2hexstr(jump_target).c_str());
-            calculated_jump_target = jump_target + ((libRR_current_bank-1) * libRR_bank_size);
+            
+            calculated_jump_target = jump_target + ((bank-1) * libRR_bank_size);
         }
+        // END TODO
     }
 
     string jump_target_str = n2hexstr(jump_target);
@@ -1425,12 +1438,10 @@ extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) 
     }
     
     string offset_str = n2hexstr(offset);
-    string current_bank_str = n2hexstr(libRR_current_bank, 4);
-    // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
-    if (offset <libRR_bank_0_max_addr) {
-        current_bank_str="0000";
-    } 
-    else if (offset >libRR_bank_1_max_addr) {
+    int bank = get_current_bank_number_for_address(offset);
+    string current_bank_str = n2hexstr(bank, 4);
+    
+    if (offset >libRR_slot_2_max_addr) {
         // if its greater than the max bank value then its probably in ram
         return "";
     }
@@ -1609,12 +1620,13 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     }
     // TODO: Hex bytes should change based on number_of_bytes
     string hexBytes = n2hexstr((uint32_t)instruction_bytes, number_of_bytes*2);
-    string current_bank_str = n2hexstr(libRR_current_bank, 4);
+    int bank = get_current_bank_number_for_address(current_pc);
+    string current_bank_str = n2hexstr(bank, 4);
 
     // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
-    if (current_pc <libRR_bank_0_max_addr) {
-        current_bank_str="0000";
-    }
+    // if (current_pc <libRR_slot_0_max_addr) {
+    //     current_bank_str="0000";
+    // }
 
     // trace the current pc
     libRR_log_trace_str(current_bank_str+":"+current_pc_str);

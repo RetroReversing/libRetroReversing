@@ -22,9 +22,12 @@ extern "C" {
 
   // Bank switching
   uint32_t libRR_bank_size = 0;
-  uint16_t libRR_current_bank = 1;
-  uint32_t libRR_bank_0_max_addr = 0x4000;
-  uint32_t libRR_bank_1_max_addr = 0x7fff;
+  uint16_t libRR_current_bank_slot_0 = 1;
+  uint16_t libRR_current_bank_slot_1 = 2;
+  uint16_t libRR_current_bank_slot_2 = 3;
+  uint32_t libRR_slot_0_max_addr = 0x4000;
+  uint32_t libRR_slot_1_max_addr = 0x7fff;
+  uint32_t libRR_slot_2_max_addr = 0x7fff;
   bool libRR_bank_switching_available = false;
 
   uint32_t libRR_pc_lookahead = 0;

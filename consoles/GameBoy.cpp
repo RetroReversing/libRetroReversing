@@ -40,9 +40,12 @@ extern "C" {
 
   // Bank switching
   uint32_t libRR_bank_size = 0x4000; // 16KB
-  uint16_t libRR_current_bank = 1; // one by default for games that don't have mbc
-  uint32_t libRR_bank_0_max_addr = libRR_bank_size;
-  uint32_t libRR_bank_1_max_addr = 0x7fff;
+  uint16_t libRR_current_bank_slot_0 = 0; // 
+  uint16_t libRR_current_bank_slot_1 = 1; // one by default for games that don't have mbc
+  uint16_t libRR_current_bank_slot_2 = 1; // we don't have slot 2 available for switching
+  uint32_t libRR_slot_0_max_addr = libRR_bank_size;
+  uint32_t libRR_slot_1_max_addr = 0x7fff;
+  uint32_t libRR_slot_2_max_addr = 0x7fff; // Gb doesn't have a slot 2 for banking
   bool libRR_bank_switching_available = true;
 
   bool should_stop_writing_asm(int offset, int i, string bank_number);
@@ -177,7 +180,7 @@ extern "C" {
       return;
     }
     if (offset>= 0x00004000) {
-      bank = libRR_current_bank;
+      bank = libRR_current_bank_slot_1;
     }
 
     libRR_log_memory_read(bank, offset, type, byte_size, bytes);
@@ -236,11 +239,11 @@ extern "C" {
         return true;
       }
 
-      if (bank_number=="0000" && i>= libRR_bank_0_max_addr) {
+      if (bank_number=="0000" && i>= libRR_slot_0_max_addr) {
         cout << "Reached Max Bank 0 address \n";
         return true;
       }
-      if (i>= libRR_bank_1_max_addr) {
+      if (i>= libRR_slot_1_max_addr) {
         cout << "Reached Max Bank address \n";
         return true;
       }
@@ -327,8 +330,8 @@ void get_all_unwritten_labels() {
         section_name += "_";
         section_name += label.value()["offset"];
 
-        if (offset > libRR_bank_1_max_addr) {
-          cout << "offset > libRR_bank_1_max_addr" << section_name << "\n";
+        if (offset > libRR_slot_1_max_addr) {
+          cout << "offset > libRR_slot_1_max_addr" << section_name << "\n";
           continue;
         }
         contents += write_section_header(label.value()["offset"], label.value()["bank"], section_name);
