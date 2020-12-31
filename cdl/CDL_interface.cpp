@@ -1411,31 +1411,6 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 
-// 
-// Gameboy Z80 Start
-// 
-string libRR_gameboy_da8_contant_replace(int16_t da8) {
-    // TODO: read these from JSON config instead
-    switch(da8) {
-        case 0x0091:
-            return "LY_VBLANK";
-        case 0xFF0F:
-            return "rIF";
-        case (int16_t)0xFF00:
-            return "rJOYP";
-    }
-    if (da8 == (int16_t)0xFF0F) { 
-        return "rIF";
-    }
-    if (da8 == (int16_t)0xFF40) { 
-        return "rLCDC";
-    }
-    if (da8 == (int16_t)0xffff) { 
-        return "rIE"; // Interrupt enable
-    }
-    return "$"+n2hexstr(da8);
-}
-
 extern "C" void libRR_log_dma(int32_t offset) {
     if (offset> 0x7fff) {
         return;
@@ -1519,15 +1494,19 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 
-// Takes a single int argument and replaces it in the string
-extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand) {
+extern "C" void libRR_log_instruction_2int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, uint16_t operand2) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     std::string name(c_name);
-    replace(name, "%int%", libRR_gameboy_da8_contant_replace(operand));
+    replace(name, "%int%", libRR_contant_replace(operand));
+    replace(name, "%int2%", libRR_contant_replace(operand2));
     
     libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
+}
+// Takes a single int argument and replaces it in the string
+extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand) {
+    return libRR_log_instruction_2int(current_pc, c_name, instruction_bytes, number_of_bytes, operand, 0);
 }
 
 extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, const char* register_name) {

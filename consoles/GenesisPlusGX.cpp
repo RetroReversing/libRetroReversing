@@ -55,6 +55,10 @@ extern "C" {
     libRR_retromap.num_descriptors = num_descriptors;
   }
 
+  string libRR_contant_replace(int16_t da8) {
+    return "$"+n2hexstr(da8);
+  }
+
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
     printf("%d\n",1);
   }
@@ -77,19 +81,23 @@ extern "C" {
   void write_rom_mapping() {
   }
 
+  string get_slot_for_address(int32_t offset) {
+    if (offset < 0x4000) {
+      return "0";
+    }
+    if (offset < 0x8000) {
+      return "1";
+    }
+    return "2";
+  }
+
   string write_section_header(string offset_str, string bank_number, string section_name) {
     // first get the offset as int before appending "$"
     int32_t offset = hex_to_int(offset_str);
     string contents = "";
     offset_str = "$"+ offset_str;
-    if (offset< 0x4000 || bank_number == "0000") {
-      contents += ".BANK 0 SLOT 0\n";
-      contents += ".ORG "+offset_str;
-    } 
-    else {
-      contents += ".BANK " + bank_number + " SLOT 0\n";
-      contents += ".ORG "+offset_str;
-    }
+    contents += ".BANK " + bank_number + " SLOT "+get_slot_for_address(offset)+"\n";
+    contents += ".ORGA "+offset_str;
     return contents+"\n";
   }
 
@@ -338,7 +346,6 @@ void get_all_unwritten_labels() {
   void libRR_export_jump_data() {
     string output_file_path = libRR_export_directory + "jumps.asm";
     string contents = "; Contains Long Jump data\n";
-    contents+=write_gamegear_romheader();
 
     for (auto& bank : libRR_long_jumps.items()) {
       contents += write_bank_header_comment(bank.key());

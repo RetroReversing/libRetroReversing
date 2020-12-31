@@ -62,6 +62,31 @@ extern "C" {
     // libRR_set_retro_memmap(environ_cb);
   }
 
+  // 
+  // Gameboy Z80 Start
+  // 
+  string libRR_contant_replace(int16_t da8) {
+      // TODO: read these from JSON config instead
+      switch(da8) {
+          case 0x0091:
+              return "LY_VBLANK";
+          case 0xFF0F:
+              return "rIF";
+          case (int16_t)0xFF00:
+              return "rJOYP";
+      }
+      if (da8 == (int16_t)0xFF0F) { 
+          return "rIF";
+      }
+      if (da8 == (int16_t)0xFF40) { 
+          return "rLCDC";
+      }
+      if (da8 == (int16_t)0xffff) { 
+          return "rIE"; // Interrupt enable
+      }
+      return "$"+n2hexstr(da8);
+  }
+
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
     printf("%d\n",1);
   }
