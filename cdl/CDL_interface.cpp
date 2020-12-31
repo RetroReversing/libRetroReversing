@@ -626,20 +626,6 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // TODO: find out how long the function is
 }
 
-int get_current_bank_number_for_address(uint32_t addr) {
-    if (addr < libRR_slot_0_max_addr) {
-        return libRR_current_bank_slot_0;
-    }
-    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
-        return libRR_current_bank_slot_1;
-    } 
-    if (addr>= libRR_slot_1_max_addr) {
-        // target is in slot 2
-        return libRR_current_bank_slot_2;
-    }
-    return 0;
-}
-
 void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type) {
     // cout << "Long Jump from:" << n2hexstr(current_pc) << " to:" << n2hexstr(jump_target) << "\n";
     if (libRR_full_trace_log) {
@@ -1501,7 +1487,6 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     } else {
          value_str = n2hexstr(bytes[0]);
     }
-    // libRR_rom_reads[bank_str][offset_str]["value"] = value_str;
     // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 

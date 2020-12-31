@@ -66,6 +66,20 @@ extern "C" {
     // libRR_set_retro_memmap(environ_cb);
   }
 
+  int get_current_bank_number_for_address(uint32_t addr) {
+    if (addr < libRR_slot_0_max_addr) {
+        return libRR_current_bank_slot_0;
+    }
+    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
+        return libRR_current_bank_slot_1;
+    } 
+    if (addr>= libRR_slot_1_max_addr && addr < libRR_slot_2_max_addr) {
+        // target is in slot 2
+        return libRR_current_bank_slot_2;
+    }
+    return 0; // TODO: replace with -1 when we can handle it
+  }
+
   // 
   // Gameboy Z80 Start
   // 

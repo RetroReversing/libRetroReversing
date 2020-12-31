@@ -12,6 +12,8 @@ extern int libRR_emulated_hardware; // used if the emulator core supports multip
 extern bool libRR_full_function_log;
 extern bool libRR_finished_boot_rom;
 
+int get_current_bank_number_for_address(uint32_t addr);
+
 // Util
 const char* n2hexstr_c(int number, size_t hex_len);
 uint16_t two_bytes_to_16bit_value(uint8_t byte1, uint8_t byte2);

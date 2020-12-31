@@ -47,6 +47,10 @@ extern "C" {
     libRR_retromap.num_descriptors = num_descriptors;
   }
 
+  int get_current_bank_number_for_address(uint32_t addr) {
+    return 0;
+  }
+
   string libRR_contant_replace(int16_t da8) {
     return "$"+n2hexstr(da8);
   }

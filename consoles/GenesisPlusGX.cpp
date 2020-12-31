@@ -86,6 +86,24 @@ extern "C" {
   void write_rom_mapping() {
   }
 
+  int get_current_bank_number_for_address(uint32_t addr) {
+    if (addr <= 0x03ff) {
+      // Unpaged rom for game gear and SMS
+      return 0;
+    }
+    if (addr < libRR_slot_0_max_addr) {
+        return libRR_current_bank_slot_0;
+    }
+    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
+        return libRR_current_bank_slot_1;
+    } 
+    if (addr>= libRR_slot_1_max_addr && addr < libRR_slot_2_max_addr) {
+        // target is in slot 2
+        return libRR_current_bank_slot_2;
+    }
+    return -1;
+  }
+
   string get_slot_for_address(int32_t offset) {
     if (offset < 0x4000) {
       return "0";
@@ -207,7 +225,7 @@ extern "C" {
       }
       read_first_byte = true;
 
-      contents += "\tdb $";
+      contents += "\t.db $";
       contents += byteValue.value();
       contents += " ; ";
       contents += byteValue.key();
@@ -325,6 +343,12 @@ void get_all_unwritten_labels() {
       if (! (bool) label.value()["written"]) {
         contents += "\n\n; Unwritten relative jump:" + label.key() + "\n";
         int offset = hex_to_int(label.value()["offset"]);
+
+        if (offset <=0x0040) {
+          // TODO: fix later
+          continue;
+        }
+
         string section_name = "REL_JMP_";
         section_name += label.value()["bank"];
         section_name += "_";
@@ -356,13 +380,7 @@ void get_all_unwritten_labels() {
       contents += write_bank_header_comment(bank.key());
       
       for (auto& dataSection : bank.value().items()) {
-          contents += write_section_header(dataSection.key(), bank.key(), "JMP_"+ bank.key() + "_" + dataSection.key());
-          // contents += "\nSECTION \"JMP_" + bank.key() + "_" + dataSection.key();
-          // if (bank.key() == "0000") {
-          //   contents += "\",ROM0[$"+dataSection.key()+"]\n";
-          // } else {
-          //     contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
-          // }
+        contents += write_section_header(dataSection.key(), bank.key(), "JMP_"+ bank.key() + "_" + dataSection.key());
         contents += write_callers(dataSection.value());
         contents += write_asm_until_null(bank.key(), dataSection.key(), false);
       }
@@ -397,12 +415,13 @@ void get_all_unwritten_labels() {
           continue;
         }
 
-        contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
-        if (bank.key() == "0000") {
-            contents += "\",ROM0[$"+dataSection.key()+"]\n";
-        } else {
-            contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
-        }
+        contents += write_section_header(dataSection.key(), bank.key(), "DAT_"+ bank.key() + "_" + dataSection.key());
+        // contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
+        // if (bank.key() == "0000") {
+        //     contents += "\",ROM0[$"+dataSection.key()+"]\n";
+        // } else {
+        //     contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
+        // }
 
         contents += write_each_rom_byte(bank.key(), dataSection.value()["value"]);
       }
