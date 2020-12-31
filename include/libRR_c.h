@@ -14,6 +14,9 @@ extern bool libRR_finished_boot_rom;
 
 // Util
 const char* n2hexstr_c(int number, size_t hex_len);
+uint16_t two_bytes_to_16bit_value(uint8_t byte1, uint8_t byte2);
+uint32_t three_bytes_to_24bit_value(uint8_t byte1, uint8_t byte2, uint8_t byte3);
+
 
 // Trace logging
 extern bool libRR_full_trace_log;
