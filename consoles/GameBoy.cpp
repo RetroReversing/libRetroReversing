@@ -8,7 +8,6 @@ using namespace kainjow::mustache;
 
 extern "C" {
 
-  json unwrittenLabels = {};
   json allLabels = {};
 
   const char* libRR_console = "GameBoy";
@@ -41,9 +40,12 @@ extern "C" {
 
   // Bank switching
   uint32_t libRR_bank_size = 0x4000; // 16KB
-  uint16_t libRR_current_bank = 1; // one by default for games that don't have mbc
-  uint32_t libRR_bank_0_max_addr = libRR_bank_size;
-  uint32_t libRR_bank_1_max_addr = 0x7fff;
+  uint16_t libRR_current_bank_slot_0 = 0; // 
+  uint16_t libRR_current_bank_slot_1 = 1; // one by default for games that don't have mbc
+  uint16_t libRR_current_bank_slot_2 = 1; // we don't have slot 2 available for switching
+  uint32_t libRR_slot_0_max_addr = libRR_bank_size;
+  uint32_t libRR_slot_1_max_addr = 0x7fff;
+  uint32_t libRR_slot_2_max_addr = 0x7fff; // Gb doesn't have a slot 2 for banking
   bool libRR_bank_switching_available = true;
 
   bool should_stop_writing_asm(int offset, int i, string bank_number);
@@ -62,6 +64,31 @@ extern "C" {
   void libRR_setup_console_details(retro_environment_t environ_cb) {
     //printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
     // libRR_set_retro_memmap(environ_cb);
+  }
+
+  // 
+  // Gameboy Z80 Start
+  // 
+  string libRR_contant_replace(int16_t da8) {
+      // TODO: read these from JSON config instead
+      switch(da8) {
+          case 0x0091:
+              return "LY_VBLANK";
+          case 0xFF0F:
+              return "rIF";
+          case (int16_t)0xFF00:
+              return "rJOYP";
+      }
+      if (da8 == (int16_t)0xFF0F) { 
+          return "rIF";
+      }
+      if (da8 == (int16_t)0xFF40) { 
+          return "rLCDC";
+      }
+      if (da8 == (int16_t)0xffff) { 
+          return "rIE"; // Interrupt enable
+      }
+      return "$"+n2hexstr(da8);
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
@@ -154,7 +181,7 @@ extern "C" {
       return;
     }
     if (offset>= 0x00004000) {
-      bank = libRR_current_bank;
+      bank = libRR_current_bank_slot_1;
     }
 
     libRR_log_memory_read(bank, offset, type, byte_size, bytes);
@@ -213,11 +240,11 @@ extern "C" {
         return true;
       }
 
-      if (bank_number=="0000" && i>= libRR_bank_0_max_addr) {
+      if (bank_number=="0000" && i>= libRR_slot_0_max_addr) {
         cout << "Reached Max Bank 0 address \n";
         return true;
       }
-      if (i>= libRR_bank_1_max_addr) {
+      if (i>= libRR_slot_1_max_addr) {
         cout << "Reached Max Bank address \n";
         return true;
       }
@@ -304,8 +331,8 @@ void get_all_unwritten_labels() {
         section_name += "_";
         section_name += label.value()["offset"];
 
-        if (offset > libRR_bank_1_max_addr) {
-          cout << "offset > libRR_bank_1_max_addr" << section_name << "\n";
+        if (offset > libRR_slot_1_max_addr) {
+          cout << "offset > libRR_slot_1_max_addr" << section_name << "\n";
           continue;
         }
         contents += write_section_header(label.value()["offset"], label.value()["bank"], section_name);

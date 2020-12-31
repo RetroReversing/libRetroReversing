@@ -62,6 +62,7 @@ extern int32_t current_consecutive_rom_start; // start address of the current ch
 void add_console_specific_game_json();
 
 // CPU
+string libRR_contant_replace(int16_t da8);
 void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer=0);
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
 void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type);
@@ -82,10 +83,13 @@ extern void libRR_read_button_state_from_file(string filename  = "button_log.bin
 string libRR_load_save_state(int frame);
 
 // Bank Switching
-extern uint16_t libRR_current_bank;
+extern uint16_t libRR_current_bank_slot_0;
+extern uint16_t libRR_current_bank_slot_1;
+extern uint16_t libRR_current_bank_slot_2;
 extern uint32_t libRR_bank_size;
-extern uint32_t libRR_bank_0_max_addr; // if address is smaller than this then it will be in bank 0 by default
-extern uint32_t libRR_bank_1_max_addr; // if address is greater than this then its not ROM code
+extern uint32_t libRR_slot_0_max_addr; // if address is smaller than this then it will be in bank 0 by default
+extern uint32_t libRR_slot_1_max_addr; // if address is greater than this then its not ROM code
+extern uint32_t libRR_slot_2_max_addr; // if address is greater than this then its not ROM code
 extern bool libRR_bank_switching_available;
 
 // Scripting support

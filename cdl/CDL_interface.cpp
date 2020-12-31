@@ -626,6 +626,20 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // TODO: find out how long the function is
 }
 
+int get_current_bank_number_for_address(uint32_t addr) {
+    if (addr < libRR_slot_0_max_addr) {
+        return libRR_current_bank_slot_1;
+    }
+    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
+        return libRR_current_bank_slot_1;
+    } 
+    if (addr>= libRR_slot_1_max_addr) {
+        // target is in slot 2
+        return libRR_current_bank_slot_2;
+    }
+    return 0;
+}
+
 void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type) {
     // cout << "Long Jump from:" << n2hexstr(current_pc) << " to:" << n2hexstr(jump_target) << "\n";
     if (libRR_full_trace_log) {
@@ -634,26 +648,21 @@ void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* 
 
     string target_bank_number = "0000";
     string pc_bank_number = "0000";
-    if (jump_target >= libRR_bank_0_max_addr) {
-        target_bank_number = n2hexstr(libRR_current_bank, 4);
-    }
-    if (current_pc >= libRR_bank_0_max_addr) {
-        pc_bank_number = n2hexstr(libRR_current_bank, 4);
-    }
+    target_bank_number = n2hexstr(get_current_bank_number_for_address(jump_target), 4);
+
+    // now we need the bank number of the function we are calling
+    pc_bank_number = n2hexstr(get_current_bank_number_for_address(current_pc), 4);
     libRR_long_jumps[target_bank_number][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=type;
 }
 
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
     string pc_bank_number = "0000";
-    if (current_pc >= libRR_bank_0_max_addr) {
-        pc_bank_number = n2hexstr(libRR_current_bank, 4);
-    }
-
-    // 0x0040 is vblank 0x0050 is timer
+    pc_bank_number = n2hexstr(get_current_bank_number_for_address(current_pc), 4);
 
     // printf("Interrupt call at: %s::%s target:%s \n", pc_bank_number.c_str(), n2hexstr(current_pc).c_str(), n2hexstr(jump_target).c_str());
     libRR_long_jumps["0000"][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
 }
+
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
     // TODO: find out why uncommeting the following causes a segfault
     // if (!libRR_full_function_log || !libRR_finished_boot_rom) {
@@ -665,12 +674,15 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
         if (current_pc >= libRR_bank_size) {
             // current PC may either be in bank 1 or a higher bank
         }
+        int bank = get_current_bank_number_for_address(jump_target);
+        bank_number = n2hexstr(bank, 4);
+
+        // TODO: the following might be gameboy specific
         if (jump_target >= libRR_bank_size) {
-            bank_number = n2hexstr(libRR_current_bank, 4);
-            // jump target may be either in bank 1 or a higher bank
-            // printf("Current Bank is:  %s jump target: %s \n", n2hexstr(libRR_current_bank).c_str(), n2hexstr(jump_target).c_str());
-            calculated_jump_target = jump_target + ((libRR_current_bank-1) * libRR_bank_size);
+            
+            calculated_jump_target = jump_target + ((bank-1) * libRR_bank_size);
         }
+        // END TODO
     }
 
     string jump_target_str = n2hexstr(jump_target);
@@ -679,28 +691,6 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     
     // Start Stacktrace handling
     libRR_call_depth++;
-    // printf("libRR_log_function_call pc: %d target: %d full: %d libRR_call_depth:%d \n", current_pc, jump_target, calculated_jump_target, libRR_call_depth);
-    
-    // Make sure the backtract size doesn't go bigger than the size of backtrace_sps array
-    // otherwise just ignore it
-    // if (libRR_backtrace_size < sizeof(libRR_backtrace_stackpointers) / sizeof(libRR_backtrace_stackpointers[0])) {
-
-    //     // not actually sure purpose of this
-    //     while (libRR_backtrace_size) {
-    //         if (libRR_backtrace_stackpointers[libRR_backtrace_size - 1] < stack_pointer) {
-    //             libRR_backtrace_size--;
-    //         }
-    //         else {
-    //             break;
-    //         }
-    //     }
-
-    //     // Add the current stackpointer to our list
-    //     libRR_backtrace_stackpointers[libRR_backtrace_size] = stack_pointer;
-    //     // gb->backtrace_returns[gb->backtrace_size].bank = bank_for_addr(gb, jump_target);
-    //     // gb->backtrace_returns[gb->backtrace_size].addr = jump_target;
-    //     libRR_backtrace_size++;
-    // }
     // End Stacktrace handling
     
     last_return_address = current_pc;
@@ -722,15 +712,15 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     //     t.caller_offset = n2hexstr(previous_function_backup);
     // }
     t.func_name = function_name; // /*libRR_game_name+*/"_"+bank_number+"_func_"+jump_target_str;
-    t.func_stack = function_stack.size();
-    t.export_path = "";
-    t.bank_number = bank_number;
-    t.bank_offset = jump_target;
+    //t.func_stack = function_stack.size();
+    //t.export_path = "";
+    //t.bank_number = bank_number;
+    //t.bank_offset = jump_target;
     // t.stack_trace = print_function_stack_trace();
     t.doNotLog = false;
     t.many_memory_reads = false;
     t.many_memory_writes = false;
-    t.additional["callers"][print_function_stack_trace()] = RRCurrentFrame;
+    // t.additional["callers"][print_function_stack_trace()] = RRCurrentFrame;
     printf("Logged new function: %s target:%d number_of_functions:%d \n", t.func_name.c_str(), jump_target, number_of_functions);
     functions[jump_target] = t;
     number_of_functions++;
@@ -1434,31 +1424,6 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 
-// 
-// Gameboy Z80 Start
-// 
-string libRR_gameboy_da8_contant_replace(int16_t da8) {
-    // TODO: read these from JSON config instead
-    switch(da8) {
-        case 0x0091:
-            return "LY_VBLANK";
-        case 0xFF0F:
-            return "rIF";
-        case (int16_t)0xFF00:
-            return "rJOYP";
-    }
-    if (da8 == (int16_t)0xFF0F) { 
-        return "rIF";
-    }
-    if (da8 == (int16_t)0xFF40) { 
-        return "rLCDC";
-    }
-    if (da8 == (int16_t)0xffff) { 
-        return "rIE"; // Interrupt enable
-    }
-    return "$"+n2hexstr(da8);
-}
-
 extern "C" void libRR_log_dma(int32_t offset) {
     if (offset> 0x7fff) {
         return;
@@ -1473,12 +1438,10 @@ extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) 
     }
     
     string offset_str = n2hexstr(offset);
-    string current_bank_str = n2hexstr(libRR_current_bank, 4);
-    // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
-    if (offset <libRR_bank_0_max_addr) {
-        current_bank_str="0000";
-    } 
-    else if (offset >libRR_bank_1_max_addr) {
+    int bank = get_current_bank_number_for_address(offset);
+    string current_bank_str = n2hexstr(bank, 4);
+    
+    if (offset >libRR_slot_2_max_addr) {
         // if its greater than the max bank value then its probably in ram
         return "";
     }
@@ -1542,23 +1505,28 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 
-extern "C" void libRR_log_instruction_z80(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand) {
+extern "C" void libRR_log_instruction_2int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, uint16_t operand2) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     std::string name(c_name);
-    replace(name, "%da8%", libRR_gameboy_da8_contant_replace(operand));
+    replace(name, "%int%", libRR_contant_replace(operand));
+    replace(name, "%int2%", libRR_contant_replace(operand2));
     
     libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
 }
+// Takes a single int argument and replaces it in the string
+extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand) {
+    return libRR_log_instruction_2int(current_pc, c_name, instruction_bytes, number_of_bytes, operand, 0);
+}
 
-extern "C" void libRR_log_instruction_z80_register(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint8_t opcode, uint16_t operand, const char* register_name) {
+extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, const char* register_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     std::string name(c_name);
     replace(name, "%r%",register_name);
-    libRR_log_instruction_z80(current_pc, name.c_str(), instruction_bytes, number_of_bytes, opcode, operand);
+    libRR_log_instruction_1int(current_pc, name.c_str(), instruction_bytes, number_of_bytes, operand);
 }
 
 extern "C" void libRR_log_instruction_z80_s_d(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* source, const char* destination) {
@@ -1622,6 +1590,10 @@ extern "C" void libRR_log_instruction(uint32_t current_pc, const char* name, uin
     libRR_log_instruction(current_pc, str, instruction_bytes, number_of_bytes);
 }
 
+// C version of the c++ template
+extern "C" const char* n2hexstr_c(int number, size_t hex_len) {
+    return n2hexstr(number, hex_len).c_str();
+}
 
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
@@ -1648,12 +1620,13 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     }
     // TODO: Hex bytes should change based on number_of_bytes
     string hexBytes = n2hexstr((uint32_t)instruction_bytes, number_of_bytes*2);
-    string current_bank_str = n2hexstr(libRR_current_bank, 4);
+    int bank = get_current_bank_number_for_address(current_pc);
+    string current_bank_str = n2hexstr(bank, 4);
 
     // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
-    if (current_pc <libRR_bank_0_max_addr) {
-        current_bank_str="0000";
-    }
+    // if (current_pc <libRR_slot_0_max_addr) {
+    //     current_bank_str="0000";
+    // }
 
     // trace the current pc
     libRR_log_trace_str(current_bank_str+":"+current_pc_str);
