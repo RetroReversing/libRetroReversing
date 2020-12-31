@@ -31,6 +31,7 @@ void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* 
 
 // Call logging
 void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer);
+void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
 
 // ASM instruction logging
 const char* libRR_asm_format();

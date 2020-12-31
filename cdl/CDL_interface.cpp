@@ -628,7 +628,7 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
 
 int get_current_bank_number_for_address(uint32_t addr) {
     if (addr < libRR_slot_0_max_addr) {
-        return libRR_current_bank_slot_1;
+        return libRR_current_bank_slot_0;
     }
     if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
         return libRR_current_bank_slot_1;
