@@ -127,7 +127,7 @@ void libRR_setup_directories() {
 
   libRR_project_directory = retro_base_directory;
   libRR_project_directory += "/RE_projects/";
-  libRR_project_directory += current_state.libretro_system_info.library_name;
+  libRR_project_directory += libRR_console; //current_state.libretro_system_info.library_name;
   libRR_project_directory += "/" + libRR_game_name + "/";
   libRR_export_directory += libRR_project_directory + "src/";
   std::__fs::filesystem::create_directories( libRR_project_directory);

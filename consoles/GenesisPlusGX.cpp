@@ -44,10 +44,18 @@ extern "C" {
 
   uint32_t libRR_pc_lookahead = 0;
 
+  #define SYSTEM_GG 0x40
+  #define SYSTEM_SMS        0x20
+  #define SYSTEM_SMS2       0x21
   void libRR_setup_console_details(retro_environment_t environ_cb) {
     // printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
     // libRR_set_retro_memmap(environ_cb);
     printf("libRR_setup_console_details hardware:%d\n", libRR_emulated_hardware);
+    if (libRR_emulated_hardware == SYSTEM_GG) {
+      libRR_console = "GameGear";
+    } else if (libRR_emulated_hardware == SYSTEM_SMS || libRR_emulated_hardware == SYSTEM_SMS2) {
+      libRR_console = "MasterSystem";
+    }
     libRR_finished_boot_rom = true;
   }
 
@@ -119,7 +127,7 @@ extern "C" {
     int32_t offset = hex_to_int(offset_str);
     string contents = "";
     offset_str = "$"+ offset_str;
-    contents += ".BANK " + bank_number + " SLOT "+get_slot_for_address(offset)+"\n";
+    contents += "\n.BANK " + bank_number + " SLOT "+get_slot_for_address(offset)+"\n";
     contents += ".ORGA "+offset_str;
     return contents+"\n";
   }
@@ -497,7 +505,7 @@ void get_all_unwritten_labels() {
   void libRR_export_all_files() {
     printf("GameGear: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
     // Copy over common template files
-    libRR_export_template_files("gamegear");
+    libRR_export_template_files(libRR_console);
     get_all_assembly_labels();
     libRR_export_rom_data();
     libRR_export_jump_data();
