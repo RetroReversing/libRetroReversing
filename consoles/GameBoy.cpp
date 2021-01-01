@@ -35,7 +35,7 @@ extern "C" {
   uint32_t libRR_pc_lookahead = 0;
 
   // GameBoy does not have delay slots, but need to be defined anyway
-  uint32_t libRR_delay_slot_pc;
+  uint32_t libRR_delay_slot_pc = 0;
   bool libRR_isDelaySlot = false;
 
   // Bank switching

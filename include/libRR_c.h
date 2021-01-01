@@ -32,6 +32,7 @@ void libRR_log_dma(int32_t offset);
 void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type);
 
 // Call logging
+void libRR_log_rst(uint32_t current_pc, uint32_t jump_target);
 void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer);
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
 

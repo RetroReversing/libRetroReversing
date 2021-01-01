@@ -27,7 +27,7 @@ extern "C" {
   int libRR_mmap_descriptors = 0;
 
   // Delay slot variables
-  uint32_t libRR_delay_slot_pc;
+  uint32_t libRR_delay_slot_pc = 0;
   bool libRR_isDelaySlot = false;
 
   // Bank switching
@@ -142,6 +142,8 @@ extern "C" {
     contents+= "banksize $4000\n";
     contents+= "banks 2\n";
     contents+= ".endro;\n\n";
+    contents+= "; SDSC tag and GG rom header\n\n";
+    contents+= ".sdsctag 1.0, \"Hello libRR\", \"Version\", \"rr\"\n\n";
     return contents;
   }
 
@@ -344,10 +346,6 @@ void get_all_unwritten_labels() {
         contents += "\n\n; Unwritten relative jump:" + label.key() + "\n";
         int offset = hex_to_int(label.value()["offset"]);
 
-        if (offset <=0x0040) {
-          // TODO: fix later
-          continue;
-        }
 
         string section_name = "REL_JMP_";
         section_name += label.value()["bank"];

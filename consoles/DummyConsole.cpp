@@ -17,7 +17,7 @@ extern "C" {
   int libRR_emulated_hardware = 0; // only used for emulators that support multiple consoles e.g GameGear/MasterSystem
 
   // Delay slot variables
-  uint32_t libRR_delay_slot_pc;
+  uint32_t libRR_delay_slot_pc = 0;
   bool libRR_isDelaySlot = false;
 
   // Bank switching

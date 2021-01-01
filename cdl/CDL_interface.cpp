@@ -649,6 +649,12 @@ void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
     libRR_long_jumps["0000"][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=true;
 }
 
+// Restarts are very similar to calls but can only jump to specific targets and only take up 1 byte
+void libRR_log_rst(uint32_t current_pc, uint32_t jump_target) {
+    // for now just log it as a standard function call
+    libRR_log_function_call(current_pc, jump_target, 0x00);
+}
+
 void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
     // TODO: find out why uncommeting the following causes a segfault
     // if (!libRR_full_function_log || !libRR_finished_boot_rom) {
@@ -1418,6 +1424,28 @@ extern "C" void libRR_log_dma(int32_t offset) {
 
 }
 
+extern "C" const char* libRR_log_jump_label_with_name(int32_t offset, int32_t current_pc, const char* label_name) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return "";
+    }
+    
+    string offset_str = n2hexstr(offset);
+    int bank = get_current_bank_number_for_address(offset);
+    string current_bank_str = n2hexstr(bank, 4);
+    
+    if (offset >libRR_slot_2_max_addr) {
+        // if its greater than the max bank value then its probably in ram
+        return "";
+    }
+
+    // string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
+    if (!libRR_disassembly[current_bank_str][offset_str].contains("label_name")) {
+        libRR_disassembly[current_bank_str][offset_str]["label_name"] = label_name;
+    }
+    libRR_disassembly[current_bank_str][offset_str]["meta"]["label_callers"][current_bank_str + "_" + n2hexstr(current_pc)] = true;
+    return label_name;
+}
+
 extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return "";
@@ -1433,6 +1461,8 @@ extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) 
     }
 
     string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
+    // return libRR_log_jump_label_with_name(offset, current_pc, label_name.c_str());
+
     if (!libRR_disassembly[current_bank_str][offset_str].contains("label_name")) {
         libRR_disassembly[current_bank_str][offset_str]["label_name"] = label_name;
     }
@@ -1580,13 +1610,27 @@ extern "C" const char* n2hexstr_c(int number, size_t hex_len) {
     return n2hexstr(number, hex_len).c_str();
 }
 
+int32_t previous_pc = 0; // used for debugging
+bool has_read_first_ever_instruction = false;
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
 
-    // trace log each isntruction
-    // libRR_log_trace_str(name);
+    if (!has_read_first_ever_instruction) {
+        // special handling for the entry point, we wanr to force a label here to it gets written to output
+        libRR_log_jump_label_with_name(current_pc, current_pc, "entry");
+        has_read_first_ever_instruction = true;
+        libRR_isDelaySlot = false;
+    }
+
+    int bank = get_current_bank_number_for_address(current_pc);
+    string current_bank_str = n2hexstr(bank, 4);
+
+    // trace log each instruction
+    if (libRR_full_trace_log) {
+        libRR_log_trace_str(name + "; pc:"+current_bank_str+":"+n2hexstr(current_pc));
+    }
     
     if (strcmp(libRR_console,"Saturn")==0) {
         printf("isSaturn\n");
@@ -1603,20 +1647,18 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
         // printf("Delay Slot %s \n", current_pc_str.c_str());
         libRR_isDelaySlot = false;
     }
+
     // TODO: Hex bytes should change based on number_of_bytes
     string hexBytes = n2hexstr((uint32_t)instruction_bytes, number_of_bytes*2);
-    int bank = get_current_bank_number_for_address(current_pc);
-    string current_bank_str = n2hexstr(bank, 4);
+    
 
     // if we are below the max addr of bank 0 (e.g 0x4000 for GB) then we are always in bank 0
     // if (current_pc <libRR_slot_0_max_addr) {
     //     current_bank_str="0000";
     // }
 
-    // trace the current pc
-    libRR_log_trace_str(current_bank_str+":"+current_pc_str);
-
     // libRR_disassembly[current_bank_str][current_pc_str][name]["frame"]=RRCurrentFrame;
     libRR_disassembly[current_bank_str][current_pc_str][name]["bytes"]=hexBytes;
     libRR_disassembly[current_bank_str][current_pc_str][name]["bytes_length"]=number_of_bytes;
+    previous_pc = current_pc;
 }
