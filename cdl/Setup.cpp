@@ -4,6 +4,7 @@
 #include <filesystem>
 
 // Variables
+char libRR_save_directory[4096];
 libRR_frame_buffer libRR_current_frame_buffer = {};
 unsigned int libRR_current_frame_buffer_length = 0;
 bool libRR_should_playback_input = true;
@@ -32,7 +33,6 @@ std::vector<libRR_save_state> libRR_save_states = {};
 // 
 // External Libretro variables
 // 
-extern char retro_save_directory[4096];
 extern char retro_system_directory[4096];
 extern char retro_base_directory[4096];
 extern  char retro_cd_base_directory[4096];
@@ -115,12 +115,20 @@ void libRR_setup_retro_base_directory() {
   // Setup path
   const char *dir = NULL;
 
+  if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
+        snprintf(libRR_save_directory, sizeof(libRR_save_directory), "%s", dir);
+    }
+  else {
+      snprintf(libRR_save_directory, sizeof(libRR_save_directory), "%s", ".");
+  }
+  dir = NULL; 
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
       snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", dir);
    }
    else {
-     snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", retro_save_directory);
+     snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", libRR_save_directory);
    }
   // end setup path
 }
@@ -194,7 +202,7 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   printf("\n\nFPS: %f \n", current_state.libretro_video_info.timing.fps);
   libRR_get_list_of_memory_regions();
 
-  current_state.paths.retro_save_directory = retro_save_directory;
+  current_state.paths.retro_save_directory = libRR_save_directory;
   current_state.paths.retro_base_directory = retro_base_directory;
   current_state.paths.retro_cd_base_directory = retro_cd_base_directory;
   current_state.paths.retro_cd_path = retro_cd_path;

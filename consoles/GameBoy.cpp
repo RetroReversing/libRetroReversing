@@ -25,7 +25,6 @@ extern "C" {
   string retro_cd_path = "libRR_RemeberToSetCDPATH";
   string retro_cd_base_name = "libRR_RemeberToBaseName";
   // char retro_system_directory[4096];
-  // char retro_save_directory[4096];
   // char retro_game_path[4096];
   // end Sameboy libretro differences
 
