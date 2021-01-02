@@ -19,6 +19,7 @@ using namespace std;
 extern json fileConfig;
 extern json reConfig;
 extern json playthough_function_usage;
+extern json libRR_console_constants;
 
 json libultra_signatures;
 json linker_map_file;
@@ -1613,10 +1614,10 @@ extern "C" const char* n2hexstr_c(int number, size_t hex_len) {
 string libRR_constant_replace(int16_t da8) {
     string addr_str = n2hexstr(da8);
     if (libRR_console_constants["addresses"].contains(addr_str)) {
-      return libRR_console_constants["addresses"][addr_str];
+        return libRR_console_constants["addresses"][addr_str];
     }
     return "$"+n2hexstr(da8);
-  }
+}
 
 int32_t previous_pc = 0; // used for debugging
 bool has_read_first_ever_instruction = false;

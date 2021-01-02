@@ -13,6 +13,7 @@ extern "C" {
   // This is used for most SEGA 8bit and 16bit consoles, such as Master System, Game Gear and Mega Drive
   const char* libRR_console = "GenesisPlusGX";
   int libRR_emulated_hardware = 0;
+  int libRR_total_banks = 2;
 
   // GenesisPlusGX doesn't have this defined so:
   char retro_base_directory[4096];
@@ -142,10 +143,12 @@ extern "C" {
     contents+= ".endme\n\n";
 
     contents+= ".rombankmap\n";
-    contents+= "bankstotal 2\n";
-    contents+= "banksize $4000\n";
-    contents+= "banks 2\n";
-    contents+= ".endro;\n\n";
+    contents+= "bankstotal ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\nbanksize $4000\n";
+    contents+= "banks ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\n.endro;\n\n";
     contents+= "; SDSC tag and GG rom header\n\n";
     contents+= ".sdsctag 1.0, \"Hello libRR\", \"Version\", \"rr\"\n\n";
     return contents;
@@ -220,15 +223,26 @@ extern "C" {
     return contents;
   }
 
+  uint32_t last_written_byte_addr = 0;
   string write_each_rom_byte(string bank_number, json dataRange) {
     string contents = "";
     bool read_first_byte = false;
     for (auto& byteValue : dataRange.items()) {
 
-      // Check if this overlaps with the start of another block (only after first byte)
-      if (read_first_byte && libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
-        break;
+      uint32_t byte_address = hex_to_int(byteValue.key());
+
+      if (byte_address <= last_written_byte_addr) {
+        contents += "; Already written: " + n2hexstr(byte_address) +"\n";
+        last_written_byte_addr = byte_address;
+        continue;
       }
+
+      // Check if this overlaps with the start of another block (only after first byte)
+      // if (read_first_byte && libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
+        // so its possible for data to be read inside a previous consecutive read and not use the full lenfth
+        // so we should write a label for it
+        // break;
+      // }
       read_first_byte = true;
 
       contents += "\t.db $";
@@ -236,6 +250,7 @@ extern "C" {
       contents += " ; ";
       contents += byteValue.key();
       contents += "\n";
+      last_written_byte_addr = byte_address;
     }
     return contents;
   }
@@ -401,6 +416,8 @@ void get_all_unwritten_labels() {
     // Loop through each bank
     for (auto& bank : libRR_consecutive_rom_reads.items()) {
       // std::cout << "libRR_consecutive_rom_reads:" << bank.key() << " : " << bank.value() << "\n";
+      last_written_byte_addr = 0; // reset at the start of each bank
+
       contents += "\n\n;;;;;;;;;;;\n; Bank:";
       contents += bank.key();
       contents += "\n";
@@ -411,10 +428,9 @@ void get_all_unwritten_labels() {
           continue;
         }
 
-        if (bank.key() == "0000" && dataSection.key() == "000000B1") {
-          // Skip this as it always overlaps with code
-          // TODO: find out why
-          cout << "Skip 0xB1\n";
+        string contents_of_rom_section = write_each_rom_byte(bank.key(), dataSection.value()["value"]);
+
+        if (contents_of_rom_section == "") {
           continue;
         }
 
@@ -426,7 +442,7 @@ void get_all_unwritten_labels() {
         //     contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
         // }
 
-        contents += write_each_rom_byte(bank.key(), dataSection.value()["value"]);
+        contents += contents_of_rom_section;
       }
     }
 

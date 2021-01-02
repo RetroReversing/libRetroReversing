@@ -642,6 +642,7 @@ string libRR_parse_message_from_web(json message_json) //string message)
     libRR_settings = p2;
     libRR_full_function_log = p2.fullLogging;
     save_constant_metadata();
+    libRR_export_all_files();
     return "Paused";
     // printf("Returning game_json dump (sometimes segfaults?) \n");
     // return game_json.dump(4);
