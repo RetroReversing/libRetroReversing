@@ -68,10 +68,6 @@ extern "C" {
     libRR_retromap.num_descriptors = num_descriptors;
   }
 
-  string libRR_contant_replace(int16_t da8) {
-    return "$"+n2hexstr(da8);
-  }
-
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
     printf("%d\n",1);
   }
@@ -244,35 +240,36 @@ extern "C" {
     return contents;
   }
 
-  bool should_stop_writing_asm(int offset, int i, string bank_number) {
-    if (i == offset) {
+  bool should_stop_writing_asm(int start_offset, int i, string bank_number) {
+    if (i == start_offset) {
       return false;
     }
+    string current_address_str = n2hexstr(i);
     // Check if this address is the starting address of another jump definition
-      if (libRR_long_jumps[bank_number].contains(n2hexstr(i))) {
-        // cout << "Address has been defined as another jump:" << bank_number << "::" << n2hexstr(i) << "\n";
+      if (libRR_long_jumps[bank_number].contains(current_address_str)) {
+        cout << "Address has been defined as another jump:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
       // Check if this address is the starting address of data
-      if (libRR_consecutive_rom_reads[bank_number].contains(n2hexstr(i))) {
-        // cout << "Address has been defined as data:" << bank_number << "::" << n2hexstr(i) << "\n";
+      if (libRR_consecutive_rom_reads[bank_number].contains(current_address_str)) {
+        cout << "Address has been defined as data:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
       // Check if this address is the starting address of function
-      if (libRR_called_functions[bank_number].contains(n2hexstr(i))) {
-        // cout << "Address has been defined as a function:" << bank_number << "::" << n2hexstr(i) << "\n";
+      if (libRR_called_functions[bank_number].contains(current_address_str)) {
+        cout << "Address has been defined as a function:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
 
       if (bank_number=="0000" && i>= libRR_slot_0_max_addr) {
-        cout << "Reached Max Bank 0 address \n";
+        cout << current_address_str << " Reached Max Bank 0 address \n";
         return true;
       }
-      if (i>= libRR_slot_1_max_addr) {
-        cout << "Reached Max Bank address \n";
+      if (i>= libRR_slot_2_max_addr) {
+        cout << current_address_str << "Reached Max Bank address \n";
         return true;
       }
 
@@ -303,7 +300,7 @@ extern "C" {
       
 
       if (should_stop_writing_asm(offset, i, bank_number)) {
-        contents+=";stopped writing due to overlap with another section\n";
+        contents+=";stopped writing due to overlap with another section "+ n2hexstr(offset) +"\n";
         return contents;
       }
 

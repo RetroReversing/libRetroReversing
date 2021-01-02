@@ -1,0 +1,20 @@
+{
+  "addresses": {
+    "0008": "RST1",
+    "0010": "RST2", 
+    "0018": "RST3", 
+    "0020": "RST4", 
+    "0028": "RST5", 
+    "0030": "RST6", 
+    "0038": "RST7", 
+    "0006": "PSG",
+    "003e": "YM2413", 
+    "003f": "JOYSTICK_IO_CTRL", 
+    "007e": "V_COUNTER", 
+    "007f": "H_COUNTER", 
+    "00be": "VDP_DATA", 
+    "00bf": "VDP_CTRL", 
+    "00dc": "IO_PORT_A_B", 
+    "00dd": "IO_PORT_B_MISC"
+  }
+}

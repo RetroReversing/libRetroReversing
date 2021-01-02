@@ -51,10 +51,6 @@ extern "C" {
     return 0;
   }
 
-  string libRR_contant_replace(int16_t da8) {
-    return "$"+n2hexstr(da8);
-  }
-
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
     printf("%d\n",1);
   }

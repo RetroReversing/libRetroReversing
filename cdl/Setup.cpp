@@ -15,6 +15,7 @@ json override_code_json = {};
 json playthroughs_json = {};
 json libRR_current_playthrough = {};
 json playthough_function_usage = {};
+json libRR_console_constants = {};
 string libRR_project_directory = "";
 string libRR_export_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
@@ -61,6 +62,9 @@ void init_playthrough(string name) {
   readJsonToObject(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
   readJsonToObject(libRR_project_directory+"/called_functions.json", libRR_called_functions);
   readJsonToObject(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
+
+  // Read static config that varies by console
+  readJsonToObject("./constants/"+(string)libRR_console+".json", libRR_console_constants);
   cout << "About to set functions array" << std::endl;
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;

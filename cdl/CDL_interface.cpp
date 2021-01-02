@@ -1525,8 +1525,8 @@ extern "C" void libRR_log_instruction_2int(uint32_t current_pc, const char* c_na
         return;
     }
     std::string name(c_name);
-    replace(name, "%int%", libRR_contant_replace(operand));
-    replace(name, "%int2%", libRR_contant_replace(operand2));
+    replace(name, "%int%", libRR_constant_replace(operand));
+    replace(name, "%int2%", libRR_constant_replace(operand2));
     
     libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
 }
@@ -1610,6 +1610,14 @@ extern "C" const char* n2hexstr_c(int number, size_t hex_len) {
     return n2hexstr(number, hex_len).c_str();
 }
 
+string libRR_constant_replace(int16_t da8) {
+    string addr_str = n2hexstr(da8);
+    if (libRR_console_constants["addresses"].contains(addr_str)) {
+      return libRR_console_constants["addresses"][addr_str];
+    }
+    return "$"+n2hexstr(da8);
+  }
+
 int32_t previous_pc = 0; // used for debugging
 bool has_read_first_ever_instruction = false;
 void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instruction_bytes, int number_of_bytes) {
@@ -1631,6 +1639,11 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     if (libRR_full_trace_log) {
         libRR_log_trace_str(name + "; pc:"+current_bank_str+":"+n2hexstr(current_pc));
     }
+
+    // Code used for debugging why an address was reached
+    // if (current_pc == 0x698C) {
+    //     printf("Reached 0x698C: previous addr: %s \n ", n2hexstr(previous_pc).c_str());
+    // }
     
     if (strcmp(libRR_console,"Saturn")==0) {
         printf("isSaturn\n");
