@@ -231,8 +231,8 @@ typedef int bool;
 #define fseeko(x, y, z) fseek((x), (y), (z))
 #endif
 #if defined(_MSC_VER) && _MSC_VER <= 1200
-typedef unsigned long uintptr_t;
-typedef long intptr_t;
+// typedef unsigned long uintptr_t;
+// typedef long intptr_t;
 #endif
 typedef int socklen_t;
 #if _MSC_VER >= 1700
@@ -2627,7 +2627,7 @@ typedef unsigned int uint32_t;
 typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef __int64 int64_t;
-typedef unsigned long uintptr_t;
+// typedef unsigned long uintptr_t;
 #define STRX(x) #x
 #define STR(x) STRX(x)
 #define __func__ __FILE__ ":" STR(__LINE__)
@@ -4268,7 +4268,7 @@ typedef unsigned int uint32_t;
 typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef __int64 int64_t;
-typedef unsigned long uintptr_t;
+// typedef unsigned long uintptr_t;
 #define STRX(x) #x
 #define STR(x) STRX(x)
 #define __func__ __FILE__ ":" STR(__LINE__)

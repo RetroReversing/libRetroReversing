@@ -21,7 +21,7 @@ else
         CCFLAGS += -D LINUX -w
         CFLAGS += -D LINUX -w -lstdc++
         CXXFLAGS += -std=c++11 -lstdc++fs -w
-        LDFLAGS += -lc++ -std=c++11 -lstdc++fs -lstdc++ -pthread
+        LDFLAGS += -lc++ -std=c++11 -lstdc++fs -lstdc++ -pthread -ldl
     endif
     ifeq ($(UNAME_S),Darwin)
         CCFLAGS += -D OSX -w
