@@ -1,7 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+
+#ifdef _WIN32
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
 
 #include <stdio.h>
 #include <map>
