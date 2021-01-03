@@ -241,7 +241,7 @@ void corruptBytes(uint8_t* mem, uint32_t cartAddr, int times) {
     if (times>difference) {
         times=difference/4;
     }
-    srand(time(NULL)); 
+    // srand(time(NULL));  //doesn't work on windows
     printf("Corrupt Start: %d End: %d Difference: %d \n", corrupt_start, corrupt_end, difference);
     int randomNewValue = rand() % 0xFF;
     for (int i=0; i<=times; i++) {
@@ -437,7 +437,7 @@ string print_function_stack_trace() {
 
 
 void resetReversing() {
-    time_last_reversed = time(0);
+    // time_last_reversed = time(0); // doesn;t work on windows
     last_reversed_address="";
 }
 
@@ -468,15 +468,16 @@ uint32_t cdl_get_alternative_jump(uint32_t current_jump) {
 }
 
 int reverse_jump(int take_jump, uint32_t jump_target) {
-    time_t now = time(0);
-    string key = n2hexstr(jump_target);          
-    printf("Reversing jump %#08x %d \n", jump_target, jumps[jump_target]);
-    take_jump = !take_jump;
-    time_last_reversed = now;
-    frame_last_reversed=l_CurrentFrame;
-    last_reversed_address = key;
-    fileConfig["reversed_jumps"][key] = jumps[jump_target];
-    write_rom_mapping();
+    // this function doesn't work on windows
+    // time_t now = time(0);
+    // string key = n2hexstr(jump_target);          
+    // printf("Reversing jump %#08x %d \n", jump_target, jumps[jump_target]);
+    // take_jump = !take_jump;
+    // time_last_reversed = now;
+    // frame_last_reversed=l_CurrentFrame;
+    // last_reversed_address = key;
+    // fileConfig["reversed_jumps"][key] = jumps[jump_target];
+    // write_rom_mapping();
     return take_jump;
 }
 
@@ -980,21 +981,21 @@ int cdl_log_jump(int take_jump, uint32_t jump_target, uint8_t* jump_target_memor
     //     //previous_ra.push_back(ra);
     //     return take_jump;
     // }
-    if (should_reverse_jumps)
-    {
-        time_t now = time(0);
-        if (jumps[jump_target] < 3) {
-            // should_reverse_jumps=false;
-            if ( now-time_last_reversed > 2) { // l_CurrentFrame-frame_last_reversed >(10*5) ||
-                take_jump = reverse_jump(take_jump, jump_target);               
-            }
-        } else if (now-time_last_reversed > 15) {
-            printf("Stuck fixing %d\n", find_first_non_executed_jump());
-            take_jump=!take_jump;
-            main_state_load(NULL);
-            // we are stuck so lets load
-        }
-    }
+    // if (should_reverse_jumps)
+    // {
+    //     time_t now = time(0);
+    //     if (jumps[jump_target] < 3) {
+    //         // should_reverse_jumps=false;
+    //         if ( now-time_last_reversed > 2) { // l_CurrentFrame-frame_last_reversed >(10*5) ||
+    //             take_jump = reverse_jump(take_jump, jump_target);               
+    //         }
+    //     } else if (now-time_last_reversed > 15) {
+    //         printf("Stuck fixing %d\n", find_first_non_executed_jump());
+    //         take_jump=!take_jump;
+    //         main_state_load(NULL);
+    //         // we are stuck so lets load
+    //     }
+    // }
     if (take_jump) {
         jumps[jump_target] |= 1UL << 0;
     }
