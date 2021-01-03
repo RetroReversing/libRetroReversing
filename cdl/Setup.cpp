@@ -2,6 +2,7 @@
 #include <queue>
 #include "CDL.hpp"
 #include <experimental/filesystem>
+#include <cstdarg>
 
 // Variables
 char libRR_save_directory[4096];
