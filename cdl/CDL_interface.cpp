@@ -25,6 +25,15 @@ json libultra_signatures;
 json linker_map_file;
 #define USE_CDL 1;
 
+extern std::map<uint32_t,string> memory_to_log;
+extern std::map<uint32_t,char> jumps;
+extern std::map<uint32_t,string> audio_address;
+extern std::map<uint32_t,uint8_t> cached_jumps;
+std::map<uint32_t, uint8_t*> jump_data;
+extern std::map<uint32_t,uint32_t> rsp_reads;
+extern std::map<uint32_t,uint32_t> rdram_reads;
+std::map<uint32_t,bool> offsetHasAssembly;
+
 extern "C" {
     // TODO: move the following includes, they are for N64
 // #include "../main/rom.h"
@@ -40,14 +49,7 @@ string rom_name = "UNKNOWN_ROM"; // ROM_PARAMS.headername
 int corrupt_start =  0xb2b77c;
 int corrupt_end = 0xb2b77c;
 int difference = corrupt_end-corrupt_start;
-extern std::map<uint32_t,string> memory_to_log;
-extern std::map<uint32_t,char> jumps;
-extern std::map<uint32_t,string> audio_address;
-extern std::map<uint32_t,uint8_t> cached_jumps;
-std::map<uint32_t, uint8_t*> jump_data;
-extern std::map<uint32_t,uint32_t> rsp_reads;
-extern std::map<uint32_t,uint32_t> rdram_reads;
-std::map<uint32_t,bool> offsetHasAssembly;
+
 void find_most_similar_function(uint32_t function_offset, string bytes);
 
 bool libRR_finished_boot_rom = false;

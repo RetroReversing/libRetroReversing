@@ -197,7 +197,7 @@
 #include <process.h>
 
 #if defined(_MSC_VER) && (_MSC_VER < 1700)
-typedef int bool;
+// typedef int bool;
 #else
 #include <stdbool.h>
 #endif
@@ -2213,8 +2213,8 @@ extern "C" {
 #include <stdio.h>
 
 #if defined(_WIN32) && _MSC_VER < 1700
-typedef int bool;
-enum { false = 0, true = 1 };
+// typedef int bool;
+// enum { false = 0, true = 1 };
 #else
 #include <stdbool.h>
 #endif
