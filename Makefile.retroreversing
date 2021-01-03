@@ -15,7 +15,7 @@ else
     ifeq ($(UNAME_S),Linux)
         CCFLAGS += -D LINUX -w
         CFLAGS += -D LINUX -w
-        CXXFLAGS += -std=c++11 -stdlib=libc++ -lstdc++fs -w
+        CXXFLAGS += -std=c++11 -lstdc++fs -w
         LDFLAGS += -lc++
     endif
     ifeq ($(UNAME_S),Darwin)
