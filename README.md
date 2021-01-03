@@ -6,26 +6,27 @@ The way a reversing emulator works is:
 * Initially play the game - the emulator will record each button press
 * Every time you pause the game a save state will be created
 * It is recommended to name this save state so that you will know where to jump to, e.g "Level 1 start"
-* Press stop when you have played the game through the features you want to reverse.
+* Press stop when you have played the game through all the features you want to reverse.
 * You can now playback the same button presses but with additional logging
 * It will log the following by default:
   * New function calls each frame
   * New memory accesses (Reads & Writes)
-  * New Interactions with Audio or Video Hardware
+  * New Interactions with Audio or Video Hardware (only some core support this)
+* It will log the following on request:
+  * All Assembly instructions
+  * All memory reads to the ROM
+
 
 You can also:
 * Replace functions with Javascript
   - useful for understanding how the function works
   - if you write in a c-like style then can export to pseudo C code for decompilation
 * Create Data structures and use them to parse memory blocks
+* Automaticallty generate a disassembly project
 
 If you have a very powerful PC you can:
 * Log ALL memory accesses for each function
 * Log ALL function calls
-
-# TODO
-* Ability to name save states such as "Level 1 start"
-* Automatically create screenshot for save state
 
 ## Playthroughs
 In a RE a project can have multiple playthroughs, a playthrough is simply just a log of button presses plus any save states that the user created along the way.

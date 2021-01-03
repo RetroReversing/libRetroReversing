@@ -60,7 +60,7 @@ extern int32_t current_consecutive_rom_start; // start address of the current ch
 void add_console_specific_game_json();
 
 // CPU
-string libRR_contant_replace(int16_t da8);
+string libRR_constant_replace(int16_t da8);
 void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer=0);
 void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type);
 void libRR_log_branch(uint32_t current_pc, uint32_t target_pc);

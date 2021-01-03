@@ -25,7 +25,6 @@ extern "C" {
   string retro_cd_path = "libRR_RemeberToSetCDPATH";
   string retro_cd_base_name = "libRR_RemeberToBaseName";
   // char retro_system_directory[4096];
-  // char retro_save_directory[4096];
   // char retro_game_path[4096];
   // end Sameboy libretro differences
 
@@ -35,7 +34,7 @@ extern "C" {
   uint32_t libRR_pc_lookahead = 0;
 
   // GameBoy does not have delay slots, but need to be defined anyway
-  uint32_t libRR_delay_slot_pc;
+  uint32_t libRR_delay_slot_pc = 0;
   bool libRR_isDelaySlot = false;
 
   // Bank switching
@@ -66,29 +65,18 @@ extern "C" {
     // libRR_set_retro_memmap(environ_cb);
   }
 
-  // 
-  // Gameboy Z80 Start
-  // 
-  string libRR_contant_replace(int16_t da8) {
-      // TODO: read these from JSON config instead
-      switch(da8) {
-          case 0x0091:
-              return "LY_VBLANK";
-          case 0xFF0F:
-              return "rIF";
-          case (int16_t)0xFF00:
-              return "rJOYP";
-      }
-      if (da8 == (int16_t)0xFF0F) { 
-          return "rIF";
-      }
-      if (da8 == (int16_t)0xFF40) { 
-          return "rLCDC";
-      }
-      if (da8 == (int16_t)0xffff) { 
-          return "rIE"; // Interrupt enable
-      }
-      return "$"+n2hexstr(da8);
+  int get_current_bank_number_for_address(uint32_t addr) {
+    if (addr < libRR_slot_0_max_addr) {
+        return libRR_current_bank_slot_0;
+    }
+    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
+        return libRR_current_bank_slot_1;
+    } 
+    if (addr>= libRR_slot_1_max_addr && addr < libRR_slot_2_max_addr) {
+        // target is in slot 2
+        return libRR_current_bank_slot_2;
+    }
+    return 0; // TODO: replace with -1 when we can handle it
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {

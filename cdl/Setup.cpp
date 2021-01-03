@@ -4,6 +4,7 @@
 #include <filesystem>
 
 // Variables
+char libRR_save_directory[4096];
 libRR_frame_buffer libRR_current_frame_buffer = {};
 unsigned int libRR_current_frame_buffer_length = 0;
 bool libRR_should_playback_input = true;
@@ -15,6 +16,7 @@ json override_code_json = {};
 json playthroughs_json = {};
 json libRR_current_playthrough = {};
 json playthough_function_usage = {};
+json libRR_console_constants = {};
 string libRR_project_directory = "";
 string libRR_export_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
@@ -31,7 +33,6 @@ std::vector<libRR_save_state> libRR_save_states = {};
 // 
 // External Libretro variables
 // 
-extern char retro_save_directory[4096];
 extern char retro_system_directory[4096];
 extern char retro_base_directory[4096];
 extern  char retro_cd_base_directory[4096];
@@ -61,6 +62,9 @@ void init_playthrough(string name) {
   readJsonToObject(libRR_project_directory+"/consecutive_rom_reads.json", libRR_consecutive_rom_reads);
   readJsonToObject(libRR_project_directory+"/called_functions.json", libRR_called_functions);
   readJsonToObject(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
+
+  // Read static config that varies by console
+  readJsonToObject("./constants/"+(string)libRR_console+".json", libRR_console_constants);
   cout << "About to set functions array" << std::endl;
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
@@ -111,12 +115,20 @@ void libRR_setup_retro_base_directory() {
   // Setup path
   const char *dir = NULL;
 
+  if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
+        snprintf(libRR_save_directory, sizeof(libRR_save_directory), "%s", dir);
+    }
+  else {
+      snprintf(libRR_save_directory, sizeof(libRR_save_directory), "%s", ".");
+  }
+  dir = NULL; 
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
       snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", dir);
    }
    else {
-     snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", retro_save_directory);
+     snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", libRR_save_directory);
    }
   // end setup path
 }
@@ -127,7 +139,7 @@ void libRR_setup_directories() {
 
   libRR_project_directory = retro_base_directory;
   libRR_project_directory += "/RE_projects/";
-  libRR_project_directory += current_state.libretro_system_info.library_name;
+  libRR_project_directory += libRR_console; //current_state.libretro_system_info.library_name;
   libRR_project_directory += "/" + libRR_game_name + "/";
   libRR_export_directory += libRR_project_directory + "src/";
   std::__fs::filesystem::create_directories( libRR_project_directory);
@@ -190,7 +202,7 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   printf("\n\nFPS: %f \n", current_state.libretro_video_info.timing.fps);
   libRR_get_list_of_memory_regions();
 
-  current_state.paths.retro_save_directory = retro_save_directory;
+  current_state.paths.retro_save_directory = libRR_save_directory;
   current_state.paths.retro_base_directory = retro_base_directory;
   current_state.paths.retro_cd_base_directory = retro_cd_base_directory;
   current_state.paths.retro_cd_path = retro_cd_path;
@@ -638,6 +650,7 @@ string libRR_parse_message_from_web(json message_json) //string message)
     libRR_settings = p2;
     libRR_full_function_log = p2.fullLogging;
     save_constant_metadata();
+    libRR_export_all_files();
     return "Paused";
     // printf("Returning game_json dump (sometimes segfaults?) \n");
     // return game_json.dump(4);

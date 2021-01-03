@@ -6,14 +6,16 @@
 
 extern "C" {
 
-  json allLabels = {};
-
+  // SNES9x doesn't have this defined so:
+  char retro_base_directory[4096];
   // The following are only needed for consoles with CDs
   string retro_cd_base_directory = "libRR_RememberToSetCDBase";
   string retro_cd_path = "libRR_RememberToSetCDPATH";
   string retro_cd_base_name = "libRR_RememberToBaseName";
 
-  const char* libRR_console = "Dummy";
+  json allLabels = {};
+
+  const char* libRR_console = "SNES";
 
   struct retro_memory_map libRR_retromap = { 0 };
 

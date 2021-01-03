@@ -13,6 +13,7 @@ extern "C" {
   // This is used for most SEGA 8bit and 16bit consoles, such as Master System, Game Gear and Mega Drive
   const char* libRR_console = "GenesisPlusGX";
   int libRR_emulated_hardware = 0;
+  int libRR_total_banks = 2;
 
   // GenesisPlusGX doesn't have this defined so:
   char retro_base_directory[4096];
@@ -27,7 +28,7 @@ extern "C" {
   int libRR_mmap_descriptors = 0;
 
   // Delay slot variables
-  uint32_t libRR_delay_slot_pc;
+  uint32_t libRR_delay_slot_pc = 0;
   bool libRR_isDelaySlot = false;
 
   // Bank switching
@@ -44,10 +45,18 @@ extern "C" {
 
   uint32_t libRR_pc_lookahead = 0;
 
+  #define SYSTEM_GG 0x40
+  #define SYSTEM_SMS        0x20
+  #define SYSTEM_SMS2       0x21
   void libRR_setup_console_details(retro_environment_t environ_cb) {
     // printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n",0);
     // libRR_set_retro_memmap(environ_cb);
     printf("libRR_setup_console_details hardware:%d\n", libRR_emulated_hardware);
+    if (libRR_emulated_hardware == SYSTEM_GG) {
+      libRR_console = "GameGear";
+    } else if (libRR_emulated_hardware == SYSTEM_SMS || libRR_emulated_hardware == SYSTEM_SMS2) {
+      libRR_console = "MasterSystem";
+    }
     libRR_finished_boot_rom = true;
   }
 
@@ -58,10 +67,6 @@ extern "C" {
     }
     libRR_retromap.descriptors = libRR_mmap;
     libRR_retromap.num_descriptors = num_descriptors;
-  }
-
-  string libRR_contant_replace(int16_t da8) {
-    return "$"+n2hexstr(da8);
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
@@ -86,6 +91,24 @@ extern "C" {
   void write_rom_mapping() {
   }
 
+  int get_current_bank_number_for_address(uint32_t addr) {
+    if (addr <= 0x03ff) {
+      // Unpaged rom for game gear and SMS
+      return 0;
+    }
+    if (addr < libRR_slot_0_max_addr) {
+        return libRR_current_bank_slot_0;
+    }
+    if (addr >= libRR_slot_0_max_addr && addr< libRR_slot_1_max_addr) {
+        return libRR_current_bank_slot_1;
+    } 
+    if (addr>= libRR_slot_1_max_addr && addr < libRR_slot_2_max_addr) {
+        // target is in slot 2
+        return libRR_current_bank_slot_2;
+    }
+    return -1;
+  }
+
   string get_slot_for_address(int32_t offset) {
     if (offset < 0x4000) {
       return "0";
@@ -101,7 +124,7 @@ extern "C" {
     int32_t offset = hex_to_int(offset_str);
     string contents = "";
     offset_str = "$"+ offset_str;
-    contents += ".BANK " + bank_number + " SLOT "+get_slot_for_address(offset)+"\n";
+    contents += "\n.BANK " + bank_number + " SLOT "+get_slot_for_address(offset)+"\n";
     contents += ".ORGA "+offset_str;
     return contents+"\n";
   }
@@ -120,10 +143,14 @@ extern "C" {
     contents+= ".endme\n\n";
 
     contents+= ".rombankmap\n";
-    contents+= "bankstotal 2\n";
-    contents+= "banksize $4000\n";
-    contents+= "banks 2\n";
-    contents+= ".endro;\n\n";
+    contents+= "bankstotal ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\nbanksize $4000\n";
+    contents+= "banks ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\n.endro;\n\n";
+    contents+= "; SDSC tag and GG rom header\n\n";
+    contents+= ".sdsctag 1.0, \"Hello libRR\", \"Version\", \"rr\"\n\n";
     return contents;
   }
 
@@ -196,55 +223,68 @@ extern "C" {
     return contents;
   }
 
+  uint32_t last_written_byte_addr = 0;
   string write_each_rom_byte(string bank_number, json dataRange) {
     string contents = "";
     bool read_first_byte = false;
     for (auto& byteValue : dataRange.items()) {
 
-      // Check if this overlaps with the start of another block (only after first byte)
-      if (read_first_byte && libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
-        break;
+      uint32_t byte_address = hex_to_int(byteValue.key());
+
+      if (byte_address <= last_written_byte_addr) {
+        contents += "; Already written: " + n2hexstr(byte_address) +"\n";
+        last_written_byte_addr = byte_address;
+        continue;
       }
+
+      // Check if this overlaps with the start of another block (only after first byte)
+      // if (read_first_byte && libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
+        // so its possible for data to be read inside a previous consecutive read and not use the full lenfth
+        // so we should write a label for it
+        // break;
+      // }
       read_first_byte = true;
 
-      contents += "\tdb $";
+      contents += "\t.db $";
       contents += byteValue.value();
       contents += " ; ";
       contents += byteValue.key();
       contents += "\n";
+      last_written_byte_addr = byte_address;
     }
     return contents;
   }
 
-  bool should_stop_writing_asm(int offset, int i, string bank_number) {
-    if (i == offset) {
+  bool should_stop_writing_asm(int start_offset, int i, string bank_number) {
+    if (i == start_offset) {
       return false;
     }
+    string current_address_str = n2hexstr(i);
     // Check if this address is the starting address of another jump definition
-      if (libRR_long_jumps[bank_number].contains(n2hexstr(i))) {
-        // cout << "Address has been defined as another jump:" << bank_number << "::" << n2hexstr(i) << "\n";
+      if (libRR_long_jumps[bank_number].contains(current_address_str)) {
+        cout << "Address has been defined as another jump:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
       // Check if this address is the starting address of data
-      if (libRR_consecutive_rom_reads[bank_number].contains(n2hexstr(i))) {
-        // cout << "Address has been defined as data:" << bank_number << "::" << n2hexstr(i) << "\n";
+      if (libRR_consecutive_rom_reads[bank_number].contains(current_address_str)) {
+        cout << "Address has been defined as data:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
       // Check if this address is the starting address of function
-      if (libRR_called_functions[bank_number].contains(n2hexstr(i))) {
-        // cout << "Address has been defined as a function:" << bank_number << "::" << n2hexstr(i) << "\n";
+      if (libRR_called_functions[bank_number].contains(current_address_str)) {
+        cout << "Address has been defined as a function:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
 
       if (bank_number=="0000" && i>= libRR_slot_0_max_addr) {
-        cout << "Reached Max Bank 0 address \n";
+        cout << current_address_str << " Reached Max Bank 0 address \n";
         return true;
       }
-      if (i>= libRR_slot_1_max_addr) {
-        cout << "Reached Max Bank address \n";
+      if (i>= libRR_slot_2_max_addr) {
+        cout << current_address_str << "Reached Max Bank address \n";
         return true;
       }
 
@@ -275,7 +315,7 @@ extern "C" {
       
 
       if (should_stop_writing_asm(offset, i, bank_number)) {
-        contents+=";stopped writing due to overlap with another section\n";
+        contents+=";stopped writing due to overlap with another section "+ n2hexstr(offset) +"\n";
         return contents;
       }
 
@@ -325,6 +365,8 @@ void get_all_unwritten_labels() {
       if (! (bool) label.value()["written"]) {
         contents += "\n\n; Unwritten relative jump:" + label.key() + "\n";
         int offset = hex_to_int(label.value()["offset"]);
+
+
         string section_name = "REL_JMP_";
         section_name += label.value()["bank"];
         section_name += "_";
@@ -356,13 +398,7 @@ void get_all_unwritten_labels() {
       contents += write_bank_header_comment(bank.key());
       
       for (auto& dataSection : bank.value().items()) {
-          contents += write_section_header(dataSection.key(), bank.key(), "JMP_"+ bank.key() + "_" + dataSection.key());
-          // contents += "\nSECTION \"JMP_" + bank.key() + "_" + dataSection.key();
-          // if (bank.key() == "0000") {
-          //   contents += "\",ROM0[$"+dataSection.key()+"]\n";
-          // } else {
-          //     contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
-          // }
+        contents += write_section_header(dataSection.key(), bank.key(), "JMP_"+ bank.key() + "_" + dataSection.key());
         contents += write_callers(dataSection.value());
         contents += write_asm_until_null(bank.key(), dataSection.key(), false);
       }
@@ -380,6 +416,8 @@ void get_all_unwritten_labels() {
     // Loop through each bank
     for (auto& bank : libRR_consecutive_rom_reads.items()) {
       // std::cout << "libRR_consecutive_rom_reads:" << bank.key() << " : " << bank.value() << "\n";
+      last_written_byte_addr = 0; // reset at the start of each bank
+
       contents += "\n\n;;;;;;;;;;;\n; Bank:";
       contents += bank.key();
       contents += "\n";
@@ -390,21 +428,21 @@ void get_all_unwritten_labels() {
           continue;
         }
 
-        if (bank.key() == "0000" && dataSection.key() == "000000B1") {
-          // Skip this as it always overlaps with code
-          // TODO: find out why
-          cout << "Skip 0xB1\n";
+        string contents_of_rom_section = write_each_rom_byte(bank.key(), dataSection.value()["value"]);
+
+        if (contents_of_rom_section == "") {
           continue;
         }
 
-        contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
-        if (bank.key() == "0000") {
-            contents += "\",ROM0[$"+dataSection.key()+"]\n";
-        } else {
-            contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
-        }
+        contents += write_section_header(dataSection.key(), bank.key(), "DAT_"+ bank.key() + "_" + dataSection.key());
+        // contents += "\nSECTION \"DAT_" + bank.key() + "_" + dataSection.key();
+        // if (bank.key() == "0000") {
+        //     contents += "\",ROM0[$"+dataSection.key()+"]\n";
+        // } else {
+        //     contents += "\",ROMX[$"+dataSection.key()+"],BANK[$"+bank.key()+"]\n";
+        // }
 
-        contents += write_each_rom_byte(bank.key(), dataSection.value()["value"]);
+        contents += contents_of_rom_section;
       }
     }
 
@@ -480,7 +518,7 @@ void get_all_unwritten_labels() {
   void libRR_export_all_files() {
     printf("GameGear: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
     // Copy over common template files
-    libRR_export_template_files("gamegear");
+    libRR_export_template_files(libRR_console);
     get_all_assembly_labels();
     libRR_export_rom_data();
     libRR_export_jump_data();

@@ -1,0 +1,9 @@
+{
+  "addresses": {
+    "0091": "LY_VBLANK",
+    "FF0F": "rIF",
+    "FF00": "JOYPAD",
+    "FF40": "LCD_CONTROL",
+    "FFFF": "INTERRUPT_ENABLE"
+  }
+}
