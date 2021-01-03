@@ -16,7 +16,7 @@ else
         CCFLAGS += -D LINUX -w
         CFLAGS += -D LINUX -w
         CXXFLAGS += -std=c++11 -lstdc++fs -w
-        LDFLAGS += -lc++
+        LDFLAGS += -lc++ -std=c++11 -lstdc++fs
     endif
     ifeq ($(UNAME_S),Darwin)
         CCFLAGS += -D OSX -w
