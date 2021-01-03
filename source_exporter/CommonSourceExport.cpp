@@ -28,7 +28,7 @@ void libRR_export_template_files(string template_directory_name) {
     for (json::iterator it = dirs.begin(); it != dirs.end(); ++it) {
       string path_to_create = libRR_export_directory + (string)*it;
       cout << "Creating directory: " << path_to_create << "\n";
-      std::__fs::filesystem::create_directories(path_to_create);
+      fs::create_directories(path_to_create);
     }
 
     // Copy required files
@@ -41,7 +41,7 @@ void libRR_export_template_files(string template_directory_name) {
 
       string output_file_path = libRR_export_directory + current;
       // create any folder that needs to be created
-      std::__fs::filesystem::create_directories(codeDataLogger::dirnameOf(output_file_path));
+      fs::create_directories(codeDataLogger::dirnameOf(output_file_path));
 
       // Now save the file to the project directory
       codeDataLogger::writeStringToFile(output_file_path, 
