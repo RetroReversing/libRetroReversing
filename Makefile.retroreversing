@@ -1,13 +1,18 @@
 ifeq ($(OS),Windows_NT)
     CCFLAGS += -D WIN32
+    CXXFLAGS += -std=c++11 -lstdc++fs -w
+    LDFLAGS += -lc++ -std=c++11 -lstdc++fs
     ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
         CCFLAGS += -D AMD64
+        CFLAGS += -D AMD64
     else
         ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
             CCFLAGS += -D AMD64
+            CFLAGS += -D AMD64
         endif
         ifeq ($(PROCESSOR_ARCHITECTURE),x86)
             CCFLAGS += -D IA32
+            CFLAGS += -D IA32
         endif
     endif
 else

@@ -43,7 +43,7 @@
 #if !defined(_MSC_VER) || _MSC_VER >= 1700
 #include <stdint.h>
 #else
-typedef unsigned __int64 uint64_t;
+// typedef unsigned __int64 uint64_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 #endif
