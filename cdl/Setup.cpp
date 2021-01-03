@@ -47,7 +47,7 @@ void init_playthrough(string name) {
   // Create Playthough directory if it doesn't already exist
   // 
   current_playthrough_directory = libRR_project_directory+ "/playthroughs/"+name+"/";
-  std::__fs::filesystem::create_directories( current_playthrough_directory );
+  fs::create_directories( current_playthrough_directory );
 
   cout << "About to read JSON files to memory" << std::endl;
 
