@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <stdio.h>
 #include <map>
@@ -107,7 +108,6 @@ void cdl_keyevents(int keysym, int keymod) {
         tag_functions = !tag_functions;
         // should_change_jumps = true;
         //should_reverse_jumps = true;
-        //time_last_reversed = time(0);
         // show_interface();
     }
 }
