@@ -14,6 +14,7 @@ else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
         CCFLAGS += -D LINUX
+        CXXFLAGS += -lstdc++fs
     endif
     ifeq ($(UNAME_S),Darwin)
         CCFLAGS += -D OSX
