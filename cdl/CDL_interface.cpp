@@ -1095,8 +1095,8 @@ void find_asm_sections() {
 
 void find_audio_sections() {
     printf("finding audio sections \n");
-    for(map<u_int32_t, cdl_dma>::iterator it = dmas.begin(); it != dmas.end(); ++it) {
-        u_int32_t address = it->second.dram_start;
+    for(map<uint32_t, cdl_dma>::iterator it = dmas.begin(); it != dmas.end(); ++it) {
+        uint32_t address = it->second.dram_start;
         if (audio_address.find(address) == audio_address.end() ) 
             continue;
         dmas[address].guess_type = "audio";
@@ -1113,7 +1113,7 @@ void add_tag_to_function(string tag, uint32_t labelAddr) {
 
 void find_audio_functions() {
     printf("finding audio functions \n");
-    for(map<u_int32_t, cdl_labels>::iterator it = labels.begin(); it != labels.end(); ++it) {
+    for(map<uint32_t, cdl_labels>::iterator it = labels.begin(); it != labels.end(); ++it) {
         cdl_labels label = it->second;
         if (label.isRenamed) {
             continue; // only do it for new functions
@@ -1125,7 +1125,7 @@ void find_audio_functions() {
             add_tag_to_function("_manyMemoryWrites", it->first);
         }
         for(map<string, string>::iterator it2 = label.read_addresses.begin(); it2 != label.read_addresses.end(); ++it2) {
-            u_int32_t address = hex_to_int(it2->first);
+            uint32_t address = hex_to_int(it2->first);
             if (audio_address.find(address) != audio_address.end() ) 
             {
                 cout << "Function IS audio:"<< label.func_name << "\n";
@@ -1135,7 +1135,7 @@ void find_audio_functions() {
             }
         }
         for(map<string, string>::iterator it2 = label.write_addresses.begin(); it2 != label.write_addresses.end(); ++it2) {
-            u_int32_t address = hex_to_int(it2->first);
+            uint32_t address = hex_to_int(it2->first);
             if (audio_address.find(address) != audio_address.end() ) 
             {
                 cout << "Function IS audio:"<< label.func_name << "\n";
@@ -1146,7 +1146,7 @@ void find_audio_functions() {
         }
     }
 }
-bool isAddressCartROM(u_int32_t address) {
+bool isAddressCartROM(uint32_t address) {
     return (address>0x10000000 && address <= 0x107fffff);
 }
 
