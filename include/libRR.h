@@ -49,8 +49,6 @@ extern json game_json;
 // extern json function_playthough_info; //function_usage instead
 extern json libRR_disassembly;
 extern json libRR_memory_reads;
-extern json libRR_rom_reads;
-extern json libRR_consecutive_memory_reads;
 extern json libRR_consecutive_rom_reads;
 extern json libRR_called_functions;
 extern json libRR_long_jumps;

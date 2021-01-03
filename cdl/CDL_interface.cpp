@@ -1407,8 +1407,6 @@ void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
 
 json libRR_disassembly = {};
 json libRR_memory_reads = {};
-json libRR_rom_reads = {};
-json libRR_consecutive_memory_reads = {};
 json libRR_consecutive_rom_reads = {};
 json libRR_called_functions = {};
 json libRR_long_jumps = {};
@@ -1501,7 +1499,6 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     } else {
          value_str = n2hexstr(bytes[0]);
     }
-    // libRR_rom_reads[bank_str][offset_str]["value"] = value_str;
     // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 
