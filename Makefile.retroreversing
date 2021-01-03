@@ -21,6 +21,7 @@ else
         CCFLAGS += -D OSX -w
         CFLAGS += -D OSX -w
         CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.15 -w
+        LDFLAGS += -lc++ -mmacosx-version-min=10.15
         # LDFLAGS += -lbfd -L/usr/local/opt/binutils/lib -liberty -lintl -liconv -mmacosx-version-min=10.9 -lc++
     endif
     UNAME_P := $(shell uname -p)
