@@ -2,6 +2,7 @@
 #include <queue>
 #include "CDL.hpp"
 #include <experimental/filesystem>
+#include <cstdarg>
 
 // Variables
 char libRR_save_directory[4096];
@@ -22,7 +23,7 @@ string libRR_export_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
 int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
-player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .endAt = -1, .loopFrame = -1};
+player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .fullLogging = false, .endAt = -1, .loopFrame = -1};
 
 std::map<string, libRR_emulator_state> playthroughs = {};
 libRR_emulator_state current_state = {};
@@ -592,9 +593,6 @@ string libRR_parse_message_from_web(json message_json) //string message)
   if (category == "player_settings")
   {
     printf("OLD Player settings!\n");
-    // player_settings p2 = message_json["state"].get<player_settings>();
-    // std::cout << p2.paused << std::endl;
-    // libRR_settings = p2;
     return game_json.dump(4);
   }
   else if (category == "request_memory")
