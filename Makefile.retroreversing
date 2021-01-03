@@ -1,6 +1,6 @@
 ifeq ($(OS),Windows_NT)
-    CCFLAGS += -D WIN32 -w
-    CXXFLAGS += -std=c++11 -lstdc++fs -w -lstdc++
+    CCFLAGS += -D WIN32 -D _WIN32 -w
+    CXXFLAGS += -D WIN32 -D _WIN32 -std=c++11 -lstdc++fs -w -lstdc++
     LDFLAGS += -lc++ -std=c++11 -lstdc++fs -lstdc++ -pthread -ldl
     ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
         CCFLAGS += -D AMD64
