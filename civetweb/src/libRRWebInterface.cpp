@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <shellapi.h>
 #endif
+#include <unistd.h>
 
 /* Server context handle */
   struct mg_context *ctx;
@@ -111,12 +112,13 @@ struct mg_callbacks callbacks;
 void print_cwd() {
 	char cwd[PATH_MAX];
    if (getcwd(cwd, sizeof(cwd)) != NULL) {
-       printf("Current working dir: %s\n", cwd);
+       printf("INFO: Current working dir: %s\n\n", cwd);
    } else {
        perror("getcwd() error");
-       return 1;
    }
 }
+
+extern char retro_base_directory[4096];
 
 void setup_web_server() {
   printf("Setting up web server on Port 1234 \n");
@@ -128,10 +130,12 @@ void setup_web_server() {
 
 	if( access( "./libRetroReversing/websrc/dist/index.html", F_OK ) == 0 ) {
     // file exists
-		printf("Found libRetroReversing frontend folder\n");
+		printf("INFO: Found libRetroReversing frontend folder\n");
 	} else {
 			// file doesn't exist
-			printf("Can't find libRetroReversing frontend folder\n");
+			printf("ERROR Can't find libRetroReversing frontend folder\n");
+			printf("Will try to use retro arch /system folder \n");
+			frontend_folder = ((string)retro_base_directory + "/libRetroReversing/websrc/dist/").c_str();
 	}
 
 	/* Initialize the library */
