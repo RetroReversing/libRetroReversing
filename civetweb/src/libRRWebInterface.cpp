@@ -145,7 +145,7 @@ void setup_web_server() {
     /* Add some handler */
     // mg_set_request_handler(ctx, "/test", FileHandler, 0);
 		#ifdef _WIN32
-		ShellExecute(0, 0, L"http://www.localhost:1234", 0, 0 , SW_SHOW );
+		ShellExecute(0, 0, "http://www.localhost:1234", 0, 0 , SW_SHOW );
 		#else
 		system("open http://localhost:1234");
 		#endif
