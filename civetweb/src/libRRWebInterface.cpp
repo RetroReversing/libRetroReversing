@@ -150,7 +150,7 @@ void setup_web_server() {
 	"error_log_file",
 	"error.log",
 	"enable_directory_listing",
-	"no",
+	"yes",
 	// "allow_sendfile_call",
 	// "no",
 	"access_control_allow_methods",
