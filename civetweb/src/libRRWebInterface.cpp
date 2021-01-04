@@ -106,16 +106,39 @@ extern string libRR_project_directory;
 extern string libRR_export_directory;
 
 struct mg_callbacks callbacks;
+
+
+void print_cwd() {
+	char cwd[PATH_MAX];
+   if (getcwd(cwd, sizeof(cwd)) != NULL) {
+       printf("Current working dir: %s\n", cwd);
+   } else {
+       perror("getcwd() error");
+       return 1;
+   }
+}
+
 void setup_web_server() {
   printf("Setting up web server on Port 1234 \n");
+	print_cwd();
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.log_message = log_message;
 	string url_rewrite = "/game/="+libRR_project_directory;
+	const char* frontend_folder = "./libRetroReversing/websrc/dist";
+
+	if( access( "./libRetroReversing/websrc/dist/index.html", F_OK ) == 0 ) {
+    // file exists
+		printf("Found libRetroReversing frontend folder\n");
+	} else {
+			// file doesn't exist
+			printf("Can't find libRetroReversing frontend folder\n");
+	}
+
 	/* Initialize the library */
 	mg_init_library(0);
 	const char *options[] = {
 		"document_root",
-	"./libRetroReversing/websrc/dist",
+	frontend_folder,
 	"listening_ports",
 	"127.0.0.1:1234", //"1234",
 	"request_timeout_ms",
