@@ -68,7 +68,11 @@ extern "C" {
     if (!libRR_settings.paused) {
       RRCurrentFrame++;
     } else {
+      #ifdef _WIN32
+      Sleep(1);
+      #else
       sleep(1);
+      #endif
     }
     // printf("Current frame: %d\n", RRCurrentFrame);
     return !libRR_settings.paused;
