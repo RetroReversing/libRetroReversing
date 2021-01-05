@@ -11,6 +11,12 @@ extern int libRR_emulated_hardware; // used if the emulator core supports multip
 
 extern bool libRR_full_function_log;
 extern bool libRR_finished_boot_rom;
+extern enum retro_pixel_format libRR_core_pixel_format;
+
+// Bank Switching
+extern uint16_t libRR_current_bank_slot_0;
+extern uint16_t libRR_current_bank_slot_1;
+extern uint16_t libRR_current_bank_slot_2;
 
 int get_current_bank_number_for_address(uint32_t addr);
 

@@ -664,15 +664,12 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     string bank_number = "0000";
     uint32_t calculated_jump_target = jump_target;
     if (libRR_bank_switching_available) {
-        if (current_pc >= libRR_bank_size) {
-            // current PC may either be in bank 1 or a higher bank
-        }
         int bank = get_current_bank_number_for_address(jump_target);
         bank_number = n2hexstr(bank, 4);
 
         // TODO: the following might be gameboy specific
         if (jump_target >= libRR_bank_size) {
-            
+            printf("TODO: remove this in gameboy!\n");
             calculated_jump_target = jump_target + ((bank-1) * libRR_bank_size);
         }
         // END TODO

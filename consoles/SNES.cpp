@@ -29,13 +29,13 @@ extern "C" {
 
   // Bank switching
   uint32_t libRR_bank_size = 0;
-  uint16_t libRR_current_bank_slot_0 = 1;
-  uint16_t libRR_current_bank_slot_1 = 2;
-  uint16_t libRR_current_bank_slot_2 = 3;
-  uint32_t libRR_slot_0_max_addr = 0x4000;
-  uint32_t libRR_slot_1_max_addr = 0x7fff;
-  uint32_t libRR_slot_2_max_addr = 0x7fff;
-  bool libRR_bank_switching_available = false;
+  uint16_t libRR_current_bank_slot_0 = 0;
+  uint16_t libRR_current_bank_slot_1 = 0;
+  uint16_t libRR_current_bank_slot_2 = 0;
+  uint32_t libRR_slot_0_max_addr = 0xffffffff;
+  uint32_t libRR_slot_1_max_addr = libRR_slot_0_max_addr;
+  uint32_t libRR_slot_2_max_addr = libRR_slot_0_max_addr;
+  bool libRR_bank_switching_available = true;
 
   uint32_t libRR_pc_lookahead = 0;
 
@@ -55,7 +55,7 @@ extern "C" {
   }
 
   int get_current_bank_number_for_address(uint32_t addr) {
-    return 0;
+    return libRR_current_bank_slot_0;
   }
 
   void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
