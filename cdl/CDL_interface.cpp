@@ -2,6 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
+
 #include <stdio.h>
 #include <map>
 #include <fstream>
@@ -25,6 +34,15 @@ json libultra_signatures;
 json linker_map_file;
 #define USE_CDL 1;
 
+extern std::map<uint32_t,string> memory_to_log;
+extern std::map<uint32_t,char> jumps;
+extern std::map<uint32_t,string> audio_address;
+extern std::map<uint32_t,uint8_t> cached_jumps;
+std::map<uint32_t, uint8_t*> jump_data;
+extern std::map<uint32_t,uint32_t> rsp_reads;
+extern std::map<uint32_t,uint32_t> rdram_reads;
+std::map<uint32_t,bool> offsetHasAssembly;
+
 extern "C" {
     // TODO: move the following includes, they are for N64
 // #include "../main/rom.h"
@@ -40,14 +58,7 @@ string rom_name = "UNKNOWN_ROM"; // ROM_PARAMS.headername
 int corrupt_start =  0xb2b77c;
 int corrupt_end = 0xb2b77c;
 int difference = corrupt_end-corrupt_start;
-extern std::map<uint32_t,string> memory_to_log;
-extern std::map<uint32_t,char> jumps;
-extern std::map<uint32_t,string> audio_address;
-extern std::map<uint32_t,uint8_t> cached_jumps;
-std::map<uint32_t, uint8_t*> jump_data;
-extern std::map<uint32_t,uint32_t> rsp_reads;
-extern std::map<uint32_t,uint32_t> rdram_reads;
-std::map<uint32_t,bool> offsetHasAssembly;
+
 void find_most_similar_function(uint32_t function_offset, string bytes);
 
 bool libRR_finished_boot_rom = false;
@@ -105,7 +116,6 @@ void cdl_keyevents(int keysym, int keymod) {
         tag_functions = !tag_functions;
         // should_change_jumps = true;
         //should_reverse_jumps = true;
-        //time_last_reversed = time(0);
         // show_interface();
     }
 }
@@ -231,7 +241,7 @@ void corruptBytes(uint8_t* mem, uint32_t cartAddr, int times) {
     if (times>difference) {
         times=difference/4;
     }
-    srand(time(NULL)); 
+    // srand(time(NULL));  //doesn't work on windows
     printf("Corrupt Start: %d End: %d Difference: %d \n", corrupt_start, corrupt_end, difference);
     int randomNewValue = rand() % 0xFF;
     for (int i=0; i<=times; i++) {
@@ -427,7 +437,7 @@ string print_function_stack_trace() {
 
 
 void resetReversing() {
-    time_last_reversed = time(0);
+    // time_last_reversed = time(0); // doesn;t work on windows
     last_reversed_address="";
 }
 
@@ -458,15 +468,16 @@ uint32_t cdl_get_alternative_jump(uint32_t current_jump) {
 }
 
 int reverse_jump(int take_jump, uint32_t jump_target) {
-    time_t now = time(0);
-    string key = n2hexstr(jump_target);          
-    printf("Reversing jump %#08x %d \n", jump_target, jumps[jump_target]);
-    take_jump = !take_jump;
-    time_last_reversed = now;
-    frame_last_reversed=l_CurrentFrame;
-    last_reversed_address = key;
-    fileConfig["reversed_jumps"][key] = jumps[jump_target];
-    write_rom_mapping();
+    // this function doesn't work on windows
+    // time_t now = time(0);
+    // string key = n2hexstr(jump_target);          
+    // printf("Reversing jump %#08x %d \n", jump_target, jumps[jump_target]);
+    // take_jump = !take_jump;
+    // time_last_reversed = now;
+    // frame_last_reversed=l_CurrentFrame;
+    // last_reversed_address = key;
+    // fileConfig["reversed_jumps"][key] = jumps[jump_target];
+    // write_rom_mapping();
     return take_jump;
 }
 
@@ -967,21 +978,21 @@ int cdl_log_jump(int take_jump, uint32_t jump_target, uint8_t* jump_target_memor
     //     //previous_ra.push_back(ra);
     //     return take_jump;
     // }
-    if (should_reverse_jumps)
-    {
-        time_t now = time(0);
-        if (jumps[jump_target] < 3) {
-            // should_reverse_jumps=false;
-            if ( now-time_last_reversed > 2) { // l_CurrentFrame-frame_last_reversed >(10*5) ||
-                take_jump = reverse_jump(take_jump, jump_target);               
-            }
-        } else if (now-time_last_reversed > 15) {
-            printf("Stuck fixing %d\n", find_first_non_executed_jump());
-            take_jump=!take_jump;
-            main_state_load(NULL);
-            // we are stuck so lets load
-        }
-    }
+    // if (should_reverse_jumps)
+    // {
+    //     time_t now = time(0);
+    //     if (jumps[jump_target] < 3) {
+    //         // should_reverse_jumps=false;
+    //         if ( now-time_last_reversed > 2) { // l_CurrentFrame-frame_last_reversed >(10*5) ||
+    //             take_jump = reverse_jump(take_jump, jump_target);               
+    //         }
+    //     } else if (now-time_last_reversed > 15) {
+    //         printf("Stuck fixing %d\n", find_first_non_executed_jump());
+    //         take_jump=!take_jump;
+    //         main_state_load(NULL);
+    //         // we are stuck so lets load
+    //     }
+    // }
     if (take_jump) {
         jumps[jump_target] |= 1UL << 0;
     }
@@ -1090,8 +1101,8 @@ void find_asm_sections() {
 
 void find_audio_sections() {
     printf("finding audio sections \n");
-    for(map<u_int32_t, cdl_dma>::iterator it = dmas.begin(); it != dmas.end(); ++it) {
-        u_int32_t address = it->second.dram_start;
+    for(map<uint32_t, cdl_dma>::iterator it = dmas.begin(); it != dmas.end(); ++it) {
+        uint32_t address = it->second.dram_start;
         if (audio_address.find(address) == audio_address.end() ) 
             continue;
         dmas[address].guess_type = "audio";
@@ -1108,7 +1119,7 @@ void add_tag_to_function(string tag, uint32_t labelAddr) {
 
 void find_audio_functions() {
     printf("finding audio functions \n");
-    for(map<u_int32_t, cdl_labels>::iterator it = labels.begin(); it != labels.end(); ++it) {
+    for(map<uint32_t, cdl_labels>::iterator it = labels.begin(); it != labels.end(); ++it) {
         cdl_labels label = it->second;
         if (label.isRenamed) {
             continue; // only do it for new functions
@@ -1120,7 +1131,7 @@ void find_audio_functions() {
             add_tag_to_function("_manyMemoryWrites", it->first);
         }
         for(map<string, string>::iterator it2 = label.read_addresses.begin(); it2 != label.read_addresses.end(); ++it2) {
-            u_int32_t address = hex_to_int(it2->first);
+            uint32_t address = hex_to_int(it2->first);
             if (audio_address.find(address) != audio_address.end() ) 
             {
                 cout << "Function IS audio:"<< label.func_name << "\n";
@@ -1130,7 +1141,7 @@ void find_audio_functions() {
             }
         }
         for(map<string, string>::iterator it2 = label.write_addresses.begin(); it2 != label.write_addresses.end(); ++it2) {
-            u_int32_t address = hex_to_int(it2->first);
+            uint32_t address = hex_to_int(it2->first);
             if (audio_address.find(address) != audio_address.end() ) 
             {
                 cout << "Function IS audio:"<< label.func_name << "\n";
@@ -1141,7 +1152,7 @@ void find_audio_functions() {
         }
     }
 }
-bool isAddressCartROM(u_int32_t address) {
+bool isAddressCartROM(uint32_t address) {
     return (address>0x10000000 && address <= 0x107fffff);
 }
 
@@ -1397,8 +1408,6 @@ void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
 
 json libRR_disassembly = {};
 json libRR_memory_reads = {};
-json libRR_rom_reads = {};
-json libRR_consecutive_memory_reads = {};
 json libRR_consecutive_rom_reads = {};
 json libRR_called_functions = {};
 json libRR_long_jumps = {};

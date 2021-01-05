@@ -10,6 +10,21 @@
 
 #include "../include/libRR.h"
 
+#ifndef __has_include
+  static_assert(false, "__has_include not supported");
+#else
+#  if __has_include(<experimental/filesystem>)
+#    include <experimental/filesystem>
+     namespace fs = std::experimental::filesystem;
+#  elif __has_include(<filesystem>)
+#    include <filesystem>
+     namespace fs = std::fs::filesystem;
+#  elif __has_include(<boost/filesystem.hpp>)
+#    include <boost/filesystem.hpp>
+     namespace fs = boost::filesystem;
+#  endif
+#endif
+
 using namespace std;
 unsigned int hex_to_int(string str);
 extern "C" {
@@ -205,7 +220,7 @@ void cdl_log_pif_ram(uint32_t address, uint32_t* value);
 void find_asm_sections();
 void find_audio_sections();
 void find_audio_functions();
-bool isAddressCartROM(u_int32_t address);
+bool isAddressCartROM(uint32_t address);
 void add_tag_to_function(string tag, uint32_t labelAddr);
 uint32_t map_assembly_offset_to_rom_offset(uint32_t assembly_offset, uint32_t tlb_mapped_addr);
 string print_function_stack_trace();

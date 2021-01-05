@@ -2,6 +2,11 @@
 #include <queue>
 #include "../include/civetweb.h"
 #include "../../include/libRR.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+#include <unistd.h>
 
 /* Server context handle */
   struct mg_context *ctx;
@@ -102,16 +107,42 @@ extern string libRR_project_directory;
 extern string libRR_export_directory;
 
 struct mg_callbacks callbacks;
+
+
+void print_cwd() {
+	char cwd[PATH_MAX];
+   if (getcwd(cwd, sizeof(cwd)) != NULL) {
+       printf("INFO: Current working dir: %s\n\n", cwd);
+   } else {
+       perror("getcwd() error");
+   }
+}
+
+extern char retro_base_directory[4096];
+
 void setup_web_server() {
   printf("Setting up web server on Port 1234 \n");
+	print_cwd();
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.log_message = log_message;
 	string url_rewrite = "/game/="+libRR_project_directory;
+	const char* frontend_folder = "./libRetroReversing/websrc/dist";
+
+	if( access( "./libRetroReversing/websrc/dist/index.html", F_OK ) == 0 ) {
+    // file exists
+		printf("INFO: Found libRetroReversing frontend folder\n");
+	} else {
+			// file doesn't exist
+			printf("ERROR Can't find libRetroReversing frontend folder\n");
+			printf("Will try to use retro arch /system folder \n");
+			frontend_folder = ((string)retro_base_directory + "/libRetroReversing/websrc/dist/").c_str();
+	}
+
 	/* Initialize the library */
 	mg_init_library(0);
 	const char *options[] = {
 		"document_root",
-	"./libRetroReversing/websrc/dist",
+	frontend_folder,
 	"listening_ports",
 	"127.0.0.1:1234", //"1234",
 	"request_timeout_ms",
@@ -119,7 +150,7 @@ void setup_web_server() {
 	"error_log_file",
 	"error.log",
 	"enable_directory_listing",
-	"no",
+	"yes",
 	// "allow_sendfile_call",
 	// "no",
 	"access_control_allow_methods",
@@ -140,7 +171,11 @@ void setup_web_server() {
 
     /* Add some handler */
     // mg_set_request_handler(ctx, "/test", FileHandler, 0);
+		#ifdef _WIN32
+		ShellExecute(0, 0, "http://www.localhost:1234", 0, 0 , SW_SHOW );
+		#else
 		system("open http://localhost:1234");
+		#endif
 }
 
 void stop_web_server() {

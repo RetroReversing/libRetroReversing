@@ -197,7 +197,7 @@
 #include <process.h>
 
 #if defined(_MSC_VER) && (_MSC_VER < 1700)
-typedef int bool;
+// typedef int bool;
 #else
 #include <stdbool.h>
 #endif
@@ -231,8 +231,8 @@ typedef int bool;
 #define fseeko(x, y, z) fseek((x), (y), (z))
 #endif
 #if defined(_MSC_VER) && _MSC_VER <= 1200
-typedef unsigned long uintptr_t;
-typedef long intptr_t;
+// typedef unsigned long uintptr_t;
+// typedef long intptr_t;
 #endif
 typedef int socklen_t;
 #if _MSC_VER >= 1700
@@ -2213,8 +2213,8 @@ extern "C" {
 #include <stdio.h>
 
 #if defined(_WIN32) && _MSC_VER < 1700
-typedef int bool;
-enum { false = 0, true = 1 };
+// typedef int bool;
+// enum { false = 0, true = 1 };
 #else
 #include <stdbool.h>
 #endif
@@ -2627,7 +2627,7 @@ typedef unsigned int uint32_t;
 typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef __int64 int64_t;
-typedef unsigned long uintptr_t;
+// typedef unsigned long uintptr_t;
 #define STRX(x) #x
 #define STR(x) STRX(x)
 #define __func__ __FILE__ ":" STR(__LINE__)
@@ -4268,7 +4268,7 @@ typedef unsigned int uint32_t;
 typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef __int64 int64_t;
-typedef unsigned long uintptr_t;
+// typedef unsigned long uintptr_t;
 #define STRX(x) #x
 #define STR(x) STRX(x)
 #define __func__ __FILE__ ":" STR(__LINE__)
@@ -5088,19 +5088,20 @@ int mg_strncmp(const struct mg_str str1, const struct mg_str str2, size_t n) {
 }
 
 int mg_strcasecmp(const struct mg_str str1, const struct mg_str str2) WEAK;
-int mg_strcasecmp(const struct mg_str str1, const struct mg_str str2) {
-  size_t i = 0;
-  while (i < str1.len && i < str2.len) {
-    int c1 = tolower((int) str1.p[i]);
-    int c2 = tolower((int) str2.p[i]);
-    if (c1 < c2) return -1;
-    if (c1 > c2) return 1;
-    i++;
-  }
-  if (i < str1.len) return 1;
-  if (i < str2.len) return -1;
-  return 0;
-}
+// libRR_ removed due to conflict with civetweb function with same name
+// int mg_strcasecmp(const struct mg_str str1, const struct mg_str str2) {
+//   size_t i = 0;
+//   while (i < str1.len && i < str2.len) {
+//     int c1 = tolower((int) str1.p[i]);
+//     int c2 = tolower((int) str2.p[i]);
+//     if (c1 < c2) return -1;
+//     if (c1 > c2) return 1;
+//     i++;
+//   }
+//   if (i < str1.len) return 1;
+//   if (i < str2.len) return -1;
+//   return 0;
+// }
 
 void mg_strfree(struct mg_str *s) WEAK;
 void mg_strfree(struct mg_str *s) {
@@ -5693,8 +5694,8 @@ int cs_win_vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #if _MSC_VER >= 1700
 #include <stdint.h>
 #else
-typedef _int64 int64_t;
-typedef unsigned _int64 uint64_t;
+// typedef _int64 int64_t;
+// typedef unsigned _int64 uint64_t;
 #endif
 #define PRId64 "I64d"
 #define PRIu64 "I64u"

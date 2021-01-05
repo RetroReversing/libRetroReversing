@@ -1,7 +1,8 @@
 #include "../include/libRR.h"
 #include <queue>
 #include "CDL.hpp"
-#include <filesystem>
+#include <experimental/filesystem>
+#include <cstdarg>
 
 // Variables
 char libRR_save_directory[4096];
@@ -22,7 +23,7 @@ string libRR_export_directory = "";
 string libRR_current_playthrough_name = "Initial Playthrough";
 int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
-player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .endAt = -1, .loopFrame = -1};
+player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .fullLogging = false, .endAt = -1, .loopFrame = -1};
 
 std::map<string, libRR_emulator_state> playthroughs = {};
 libRR_emulator_state current_state = {};
@@ -47,7 +48,7 @@ void init_playthrough(string name) {
   // Create Playthough directory if it doesn't already exist
   // 
   current_playthrough_directory = libRR_project_directory+ "/playthroughs/"+name+"/";
-  std::__fs::filesystem::create_directories( current_playthrough_directory );
+  fs::create_directories( current_playthrough_directory );
 
   cout << "About to read JSON files to memory" << std::endl;
 
@@ -142,9 +143,9 @@ void libRR_setup_directories() {
   libRR_project_directory += libRR_console; //current_state.libretro_system_info.library_name;
   libRR_project_directory += "/" + libRR_game_name + "/";
   libRR_export_directory += libRR_project_directory + "src/";
-  std::__fs::filesystem::create_directories( libRR_project_directory);
-  std::__fs::filesystem::create_directories( libRR_project_directory + "/playthroughs/");
-  std::__fs::filesystem::create_directories( libRR_export_directory);
+  fs::create_directories( libRR_project_directory);
+  fs::create_directories( libRR_project_directory + "/playthroughs/");
+  fs::create_directories( libRR_export_directory);
   cout << "Created project directory: " << libRR_project_directory << std::endl;
 }
 
@@ -592,9 +593,6 @@ string libRR_parse_message_from_web(json message_json) //string message)
   if (category == "player_settings")
   {
     printf("OLD Player settings!\n");
-    // player_settings p2 = message_json["state"].get<player_settings>();
-    // std::cout << p2.paused << std::endl;
-    // libRR_settings = p2;
     return game_json.dump(4);
   }
   else if (category == "request_memory")
