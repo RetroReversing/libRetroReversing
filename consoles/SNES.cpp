@@ -3,6 +3,7 @@
 #include "../include/libRR.h"
 #include "../cdl/CDL.hpp"
 #include "../cdl/CDL_FileWriting.hpp"
+#include "../source_exporter/CommonSourceExport.h"
 
 extern "C" {
 
@@ -12,8 +13,7 @@ extern "C" {
   string retro_cd_base_directory = "libRR_RememberToSetCDBase";
   string retro_cd_path = "libRR_RememberToSetCDPATH";
   string retro_cd_base_name = "libRR_RememberToBaseName";
-
-  json allLabels = {};
+  int libRR_total_banks = 2;
 
   const char* libRR_console = "SNES";
 
@@ -32,9 +32,9 @@ extern "C" {
   uint16_t libRR_current_bank_slot_0 = 0;
   uint16_t libRR_current_bank_slot_1 = 0;
   uint16_t libRR_current_bank_slot_2 = 0;
-  uint32_t libRR_slot_0_max_addr = 0xffffffff;
-  uint32_t libRR_slot_1_max_addr = libRR_slot_0_max_addr;
-  uint32_t libRR_slot_2_max_addr = libRR_slot_0_max_addr;
+  uint32_t libRR_slot_0_max_addr = 0xfffffe;
+  uint32_t libRR_slot_1_max_addr = 0xfffffe;
+  uint32_t libRR_slot_2_max_addr = 0xfffffe;
   bool libRR_bank_switching_available = true;
 
   uint32_t libRR_pc_lookahead = 0;
@@ -42,6 +42,7 @@ extern "C" {
   void libRR_setup_console_details(retro_environment_t environ_cb) {
     printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n");
     // libRR_set_retro_memmap(environ_cb);
+    libRR_finished_boot_rom = true; // TODO put this in proper place
   }
 
 // libRR_set_retro_memmap should be called to setup memory ranges in a function such as retro_set_memory_maps
@@ -80,8 +81,42 @@ extern "C" {
   void write_rom_mapping() {
   }
 
+  string write_console_asm_header() {
+    string contents = "";
+    contents+= ";==============================================================\n";
+    contents+= "; WLA-DX banking setup\n";
+    contents+= ";==============================================================\n";
+    contents+= ".memorymap\n";
+    contents+= "slotsize $4000\n";
+    contents+= "slot 0 $0000\n";
+    contents+= "slot 1 $4000\n";
+    contents+= "slot 2 $8000\n";
+    contents+= "defaultslot 2\n";
+    contents+= ".endme\n\n";
+
+    contents+= ".rombankmap\n";
+    contents+= "bankstotal ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\nbanksize $4000\n";
+    contents+= "banks ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\n.endro;\n\n";
+    // contents+= "; SDSC tag and GG rom header\n\n";
+    // contents+= ".sdsctag 1.0, \"Hello libRR\", \"Version\", \"rr\"\n\n";
+    return contents;
+  }
+
   void libRR_export_all_files() {
-    printf("Dummy: Export All files to Reversing Project, depends on which core we are using");
+    printf("SNES: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
+    // Copy over common template files
+    libRR_export_template_files(libRR_console);  
+    get_all_assembly_labels();
+    // libRR_export_jump_data();
+    libRR_export_function_data();
+  }
+
+  string get_slot_for_address(int32_t offset) {
+    return "0";
   }
 
 }

@@ -3,6 +3,7 @@
 #include "../include/libRR.h"
 #include "../cdl/CDL.hpp"
 #include "../cdl/CDL_FileWriting.hpp"
+#include "../source_exporter/CommonSourceExport.h"
 
 extern "C" {
 

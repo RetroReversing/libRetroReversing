@@ -3,6 +3,7 @@
 #include <queue>
 #include "../civetweb/include/civetweb.h"
 #include "../include/libRR.h"
+#include "../source_exporter/CommonSourceExport.h"
 
 // useful functions when working with libretro:
 // * retro_get_memory_data

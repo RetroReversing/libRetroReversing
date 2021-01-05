@@ -1,4 +1,5 @@
 #include "../cdl/CDL.hpp"
+#include "../source_exporter/CommonSourceExport.h"
 
 const char *register_names[] = {
     "$r0",

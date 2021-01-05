@@ -4,11 +4,10 @@
 #include "../cdl/mustache.hpp"
 #include "../cdl/CDL.hpp"
 #include "../cdl/CDL_FileWriting.hpp"
+#include "../source_exporter/CommonSourceExport.h"
 using namespace kainjow::mustache;
 
 extern "C" {
-
-  json allLabels = {};
 
   const char* libRR_console = "GameBoy";
 
@@ -116,33 +115,6 @@ extern "C" {
     return contents;
   }
 
-// RGBDS crashes when a label is used but not defined
-// there are cases where data is between parts of a function
-// so we need a way to know labels that have not been generated
-  void get_all_assembly_labels() {
-
-    for (auto& bank : libRR_disassembly.items()) {
-      string current_bank = bank.key();
-        for (auto& instruction : libRR_disassembly[current_bank].items()) {
-          if (libRR_disassembly[current_bank][instruction.key()].contains("label_name")) {
-            string label_name = libRR_disassembly[current_bank][instruction.key()]["label_name"];
-            json data = {};
-            data["written"] = false;
-            data["bank"] = bank.key();
-            data["offset"] = instruction.key();
-            allLabels[label_name] = data;
-          }
-        }
-    }
-  }
-
-  string write_bank_header_comment(string bank) {
-    string contents = "\n\n;;;;;;;;;;;\n; Bank:";
-    contents += bank;
-    contents += "\n";
-    return contents;
-  }
-
   // get_builtin_function_name - If the address matches a built in function then return the name
   string get_builtin_function_name(const unsigned int offset, int bank) {
     if (bank == 0 && (uint8_t)offset == (uint8_t)0x40) {
@@ -173,16 +145,6 @@ extern "C" {
     }
 
     libRR_log_memory_read(bank, offset, type, byte_size, bytes);
-  }
-
-  string write_callers(json callers) {
-    string contents = "";
-    for (auto& byteValue : callers.items()) {
-      contents += "; Called by: ";
-      contents += byteValue.key();
-      contents += "\n";
-    }
-    return contents;
   }
 
   string write_each_rom_byte(string bank_number, json dataRange) {
@@ -399,22 +361,6 @@ void get_all_unwritten_labels() {
 
     codeDataLogger::writeStringToFile(output_file_path, contents);
     cout << "Written data.asm to: " << output_file_path << "\n";
-  }
-
-  string get_function_name(string bank, string offset) {
-    string function_name = "_"+bank+"_func_"+offset;
-    return function_name;
-  }
-
-  string get_function_export_path(string offset, json func, string bank) {
-    string export_path = "";
-    if (func.contains("export_path") && ((string)func["export_path"]).length()>0) {
-      export_path = func["export_path"];
-    } else {
-      // Use a default generated export path
-      export_path = "/functions/" + get_function_name(bank, offset) + libRR_export_assembly_extention;
-    }
-    return export_path;
   }
 
   void libRR_export_function_data() {
