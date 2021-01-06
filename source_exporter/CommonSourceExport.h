@@ -12,6 +12,11 @@ bool should_stop_writing_asm(int start_offset, uint32_t i, string bank_number);
 string write_bank_header_comment(string bank);
 string write_section_header(string offset_str, string bank_number, string section_name);
 void libRR_export_function_data();
+void libRR_export_rom_data();
+
+extern string libRR_org_directive;
+extern string libRR_bank_directive;
+extern string libRR_slot_directive;
 
 // console specific
 extern "C" {

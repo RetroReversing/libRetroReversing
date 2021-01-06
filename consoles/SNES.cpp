@@ -108,11 +108,14 @@ extern "C" {
 
   void libRR_export_all_files() {
     printf("SNES: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
+    libRR_slot_directive = ";no slots";
     // Copy over common template files
     libRR_export_template_files(libRR_console);  
     get_all_assembly_labels();
+    libRR_export_rom_data();
     // libRR_export_jump_data();
     libRR_export_function_data();
+    get_all_unwritten_labels();
   }
 
   string get_slot_for_address(int32_t offset) {

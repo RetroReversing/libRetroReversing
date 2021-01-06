@@ -312,3 +312,68 @@ void libRR_export_function_data() {
     // Generate main.asm file, which includes the other files
     codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
   }
+
+uint32_t last_written_byte_addr = 0;
+  string write_each_rom_byte(string bank_number, json dataRange) {
+    string contents = "";
+    bool read_first_byte = false;
+    for (auto& byteValue : dataRange.items()) {
+
+      uint32_t byte_address = hex_to_int(byteValue.key());
+
+      if (byte_address <= last_written_byte_addr) {
+        contents += "; Already written: " + n2hexstr(byte_address) +"\n";
+        last_written_byte_addr = byte_address;
+        continue;
+      }
+
+      // Check if this overlaps with the start of another block (only after first byte)
+      // if (read_first_byte && libRR_consecutive_rom_reads[bank_number].contains(byteValue.key())) {
+        // so its possible for data to be read inside a previous consecutive read and not use the full lenfth
+        // so we should write a label for it
+        // break;
+      // }
+      read_first_byte = true;
+
+      contents += "\t.db $";
+      contents += byteValue.value();
+      contents += " ; ";
+      contents += byteValue.key();
+      contents += "\n";
+      last_written_byte_addr = byte_address;
+    }
+    return contents;
+  }
+
+  void libRR_export_rom_data() {
+    string output_file_path = libRR_export_directory + "data.asm";
+    string contents = "; Contains ROM static data\n";
+    contents+=write_console_asm_header();
+
+    // Loop through each bank
+    for (auto& bank : libRR_consecutive_rom_reads.items()) {
+      last_written_byte_addr = 0; // reset at the start of each bank
+
+      contents += "\n\n;;;;;;;;;;;\n; Bank:";
+      contents += bank.key();
+      contents += "\n";
+      for (auto& dataSection : bank.value().items()) {
+        if (dataSection.value()["length"].is_null()) {
+          // TODO: Need to fix these null lengths
+          continue;
+        }
+
+        string contents_of_rom_section = write_each_rom_byte(bank.key(), dataSection.value()["value"]);
+
+        if (contents_of_rom_section == "") {
+          continue;
+        }
+
+        contents += write_section_header(dataSection.key(), bank.key(), "DAT_"+ bank.key() + "_" + dataSection.key());
+        contents += contents_of_rom_section;
+      }
+    }
+
+    codeDataLogger::writeStringToFile(output_file_path, contents);
+    cout << "Written data.asm to: " << output_file_path << "\n";
+  }

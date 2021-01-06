@@ -680,7 +680,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
 
         // TODO: the following might be gameboy specific
         if (jump_target >= libRR_bank_size) {
-            printf("TODO: remove this in gameboy!\n");
+            // printf("TODO: remove this in gameboy!\n");
             calculated_jump_target = jump_target + ((bank-1) * libRR_bank_size);
         }
         // END TODO
@@ -1415,7 +1415,7 @@ int32_t previous_consecutive_rom_read = 0; // previous read address to check if 
 int16_t previous_consecutive_rom_bank = 0; // previous read address to check if this read is part of the chain
 int32_t current_consecutive_rom_start = 0; // start address of the current chain
 
-bool replace(std::string& str, const std::string& from, const std::string& to) {
+bool replace(std::string& str, const std::string from, const std::string to) {
     size_t start_pos = str.find(from);
     if(start_pos == std::string::npos)
         return false;
@@ -1453,9 +1453,9 @@ extern "C" const char* libRR_log_jump_label_with_name(int32_t offset, int32_t cu
     return label_name;
 }
 
-extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) {
+extern "C" const char* libRR_log_jump_label(uint32_t offset, uint32_t current_pc) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
-        return "";
+        return "_not_logging";
     }
     
     string offset_str = n2hexstr(offset);
@@ -1464,7 +1464,7 @@ extern "C" const char* libRR_log_jump_label(int32_t offset, int32_t current_pc) 
     
     if (offset >libRR_slot_2_max_addr) {
         // if its greater than the max bank value then its probably in ram
-        return "";
+        return "max_bank_value";
     }
 
     string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
@@ -1542,11 +1542,12 @@ extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_na
     return libRR_log_instruction_2int(current_pc, c_name, instruction_bytes, number_of_bytes, operand, 0);
 }
 
-extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, const char* register_name) {
+extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, const char* c_register_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
     std::string name(c_name);
+    std::string register_name(c_register_name);
     replace(name, "%r%",register_name);
     libRR_log_instruction_1int(current_pc, name.c_str(), instruction_bytes, number_of_bytes, operand);
 }

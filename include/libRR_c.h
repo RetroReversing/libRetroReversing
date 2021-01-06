@@ -51,7 +51,7 @@ void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_
 void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand);
 void libRR_log_instruction_2int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, uint16_t operand2);
 void libRR_log_instruction_z80_s_d(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* source, const char* destination);
-const char* libRR_log_jump_label(int32_t offset, int32_t current_pc);
+const char* libRR_log_jump_label(uint32_t offset, uint32_t current_pc);
 void libRR_log_memory_read(int8_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes);
 void libRR_log_rom_read(int16_t bank, int32_t offset, const char* type, uint8_t byte_size, char* bytes);
 void libRR_gameboy_log_memory_read(int32_t offset, const char* type, uint8_t byte_size, char* bytes);

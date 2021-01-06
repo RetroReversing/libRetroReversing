@@ -19,7 +19,7 @@ SHA1 := sha1sum
 endif
 
 WLA ?=
-ASM  ?= $(WLA)wla-z80
+ASM  ?= $(WLA)wla-65816
 RGBFIX  ?= $(WLA)rgbfix
 RGBGFX  ?= $(WLA)rgbgfx
 LINKER ?= $(WLA)wlalink
