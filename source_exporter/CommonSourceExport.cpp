@@ -10,6 +10,7 @@ using namespace kainjow::mustache;
 string libRR_export_assembly_extention = ".s";
 json allLabels = {};
 string include_directive = ".INCLUDE";
+int libRR_total_banks = 2;
 
 bool libRR_replace_string(std::string& str, const std::string& from, const std::string& to) {
     size_t start_pos = str.find(from);
@@ -61,6 +62,10 @@ void get_all_assembly_labels() {
 
     for (auto& bank : libRR_disassembly.items()) {
       string current_bank = bank.key();
+      int bank_int = hex_to_int(current_bank);
+      if (bank_int>=libRR_total_banks) {
+        libRR_total_banks = bank_int+1;
+      }
         for (auto& instruction : libRR_disassembly[current_bank].items()) {
           if (libRR_disassembly[current_bank][instruction.key()].contains("label_name")) {
             string label_name = libRR_disassembly[current_bank][instruction.key()]["label_name"];
@@ -240,7 +245,7 @@ bool should_stop_writing_asm(int start_offset, uint32_t i, string bank_number) {
         cout << current_address_str << " Reached Max Bank 0 address \n";
         return true;
       }
-      if ((uint32_t)i > libRR_slot_2_max_addr) {
+      if ((uint32_t)i >= libRR_slot_2_max_addr) {
         cout << current_address_str << "Reached Max Bank address \n";
         return true;
       }
@@ -256,7 +261,7 @@ string write_bank_header_comment(string bank) {
   }
 
 string libRR_org_directive = ".ORGA";
-string libRR_bank_directive = ".BANK";
+string libRR_bank_directive = ".BANK $";
 string libRR_slot_directive = "SLOT";
 
 string write_section_header(string offset_str, string bank_number, string section_name) {
@@ -264,7 +269,7 @@ string write_section_header(string offset_str, string bank_number, string sectio
     int32_t offset = hex_to_int(offset_str);
     string contents = "\n";
     offset_str = "$"+ offset_str;
-    contents += libRR_bank_directive+" " + bank_number + " " + libRR_slot_directive+" "+get_slot_for_address(offset)+"\n";
+    contents += libRR_bank_directive + bank_number + " " + libRR_slot_directive+" "+get_slot_for_address(offset)+"\n";
     contents += libRR_org_directive+" "+offset_str;
     return contents+"\n";
 }

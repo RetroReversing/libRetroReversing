@@ -1,4 +1,4 @@
-roms := {{ GAME_NAME }}_rr.sms
+roms := {{ GAME_NAME }}_rr.sfc
 
 rom_obj := \
 data.o \
@@ -78,10 +78,8 @@ game_pad        = 0x00
 
 game_opt        = -jsv -n 0 -k 01 -l 0x33 -m 0x13 -r 03 -t "{{ GAME_NAME }}"
 
-%.sms: $$(game_obj)
-	#echo "[objects]\n$(filter %.o,$^)">{{ GAME_NAME }}.link
+%.sfc: $$(game_obj)
 	$(LINKER) -s -S layout.link $@ 
-	#$(RGBFIX) -p $(game_pad) $(game_opt) $@
 
 
 ### Misc file-specific graphics rules

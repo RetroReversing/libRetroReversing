@@ -13,7 +13,6 @@ extern "C" {
   string retro_cd_base_directory = "libRR_RememberToSetCDBase";
   string retro_cd_path = "libRR_RememberToSetCDPATH";
   string retro_cd_base_name = "libRR_RememberToBaseName";
-  int libRR_total_banks = 2;
 
   const char* libRR_console = "SNES";
 
@@ -28,13 +27,14 @@ extern "C" {
   bool libRR_isDelaySlot = false;
 
   // Bank switching
-  uint32_t libRR_bank_size = 0;
+  uint32_t libRR_bank_size = 0x8000;
+  uint32_t libRR_bank_start = 0x8000;
   uint16_t libRR_current_bank_slot_0 = 0;
   uint16_t libRR_current_bank_slot_1 = 0;
   uint16_t libRR_current_bank_slot_2 = 0;
-  uint32_t libRR_slot_0_max_addr = 0xfffffe;
-  uint32_t libRR_slot_1_max_addr = 0xfffffe;
-  uint32_t libRR_slot_2_max_addr = 0xfffffe;
+  uint32_t libRR_slot_0_max_addr = 0x8000*2;
+  uint32_t libRR_slot_1_max_addr = 0x8000*2;
+  uint32_t libRR_slot_2_max_addr = 0x8000*2;
   bool libRR_bank_switching_available = true;
 
   uint32_t libRR_pc_lookahead = 0;
@@ -56,6 +56,10 @@ extern "C" {
   }
 
   int get_current_bank_number_for_address(uint32_t addr) {
+    // if (addr > 0xffffff) {
+    //   cout << "get_current_bank_number_for_address: " << n2hexstr(addr) << "\n";
+    //   return addr & 0xffffff;
+    // }
     return libRR_current_bank_slot_0;
   }
 
@@ -86,18 +90,17 @@ extern "C" {
     contents+= ";==============================================================\n";
     contents+= "; WLA-DX banking setup\n";
     contents+= ";==============================================================\n";
+    // currently this is for LoRom
     contents+= ".memorymap\n";
-    contents+= "slotsize $4000\n";
-    contents+= "slot 0 $0000\n";
-    contents+= "slot 1 $4000\n";
-    contents+= "slot 2 $8000\n";
-    contents+= "defaultslot 2\n";
+    contents+= "slotsize $8000\n";
+    contents+= "SLOT 0 $8000 \n";
+    contents+= "DEFAULTSLOT 0 ; only 1 slot in SNES\n";
     contents+= ".endme\n\n";
 
     contents+= ".rombankmap\n";
     contents+= "bankstotal ";
     contents+= to_string(libRR_total_banks);
-    contents+= "\nbanksize $4000\n";
+    contents+= "\nbanksize $8000\n";
     contents+= "banks ";
     contents+= to_string(libRR_total_banks);
     contents+= "\n.endro;\n\n";
@@ -108,12 +111,12 @@ extern "C" {
 
   void libRR_export_all_files() {
     printf("SNES: Export All files to Reversing Project, %s \n", libRR_export_directory.c_str());
-    libRR_slot_directive = ";no slots";
+    // libRR_slot_directive = ";no slots";
     // Copy over common template files
     libRR_export_template_files(libRR_console);  
     get_all_assembly_labels();
     libRR_export_rom_data();
-    // libRR_export_jump_data();
+    libRR_export_jump_data();
     libRR_export_function_data();
     get_all_unwritten_labels();
   }

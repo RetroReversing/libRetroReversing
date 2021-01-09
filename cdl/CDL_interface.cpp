@@ -689,6 +689,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     string jump_target_str = n2hexstr(jump_target);
     string function_name = "_"+bank_number+"_func_"+jump_target_str;
     libRR_called_functions[bank_number][n2hexstr(jump_target)] = function_name;
+    libRR_log_trace_str("Function call: 0x"+jump_target_str);
     
     // Start Stacktrace handling
     libRR_call_depth++;
@@ -1527,7 +1528,7 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     // printf("Access data: %d::%s type: %s size: %d value: %s\n", bank, n2hexstr(offset).c_str(), type, byte_size, value_str.c_str());
 }
 
-extern "C" void libRR_log_instruction_2int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, uint16_t operand2) {
+extern "C" void libRR_log_instruction_2int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint32_t operand, uint32_t operand2) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
@@ -1538,11 +1539,11 @@ extern "C" void libRR_log_instruction_2int(uint32_t current_pc, const char* c_na
     libRR_log_instruction(current_pc, name, instruction_bytes, number_of_bytes);
 }
 // Takes a single int argument and replaces it in the string
-extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand) {
+extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint32_t operand) {
     return libRR_log_instruction_2int(current_pc, c_name, instruction_bytes, number_of_bytes, operand, 0);
 }
 
-extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint16_t operand, const char* c_register_name) {
+extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint32_t operand, const char* c_register_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;
     }
@@ -1618,7 +1619,7 @@ extern "C" const char* n2hexstr_c(int number, size_t hex_len) {
     return n2hexstr(number, hex_len).c_str();
 }
 
-string libRR_constant_replace(int16_t da8) {
+string libRR_constant_replace(uint32_t da8) {
     string addr_str = n2hexstr(da8);
     if (libRR_console_constants["addresses"].contains(addr_str)) {
         return libRR_console_constants["addresses"][addr_str];

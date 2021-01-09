@@ -32,7 +32,8 @@ extern "C" {
   bool libRR_isDelaySlot = false;
 
   // Bank switching
-  uint32_t libRR_bank_size = 0;
+  uint32_t libRR_bank_size = 0x4000;
+  uint32_t libRR_bank_start = 0x00;
   uint16_t libRR_current_bank_slot_0 = 0;
   uint16_t libRR_current_bank_slot_1 = 1;
   uint16_t libRR_current_bank_slot_2 = 2;

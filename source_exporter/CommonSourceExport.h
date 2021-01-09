@@ -13,10 +13,12 @@ string write_bank_header_comment(string bank);
 string write_section_header(string offset_str, string bank_number, string section_name);
 void libRR_export_function_data();
 void libRR_export_rom_data();
+void libRR_export_jump_data();
 
 extern string libRR_org_directive;
 extern string libRR_bank_directive;
 extern string libRR_slot_directive;
+extern int libRR_total_banks;
 
 // console specific
 extern "C" {

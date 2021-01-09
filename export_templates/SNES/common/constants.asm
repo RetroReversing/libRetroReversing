@@ -1,4 +1,4 @@
-; TODO: Add gamegear constants here
+; Add any SNES constants here
 
 .MACRO z_UNTAKEN_JUMP_2
     .REPT 2
