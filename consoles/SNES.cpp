@@ -38,11 +38,26 @@ extern "C" {
   bool libRR_bank_switching_available = true;
 
   uint32_t libRR_pc_lookahead = 0;
+  string libRR_rom_type = "LoROM";
+
+  // variable specific to SNES core
+    #include "../src/port.h"
+    #include "../src/memmap.h"
+  extern CMemory	Memory;
 
   void libRR_setup_console_details(retro_environment_t environ_cb) {
     printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n");
     // libRR_set_retro_memmap(environ_cb);
     libRR_finished_boot_rom = true; // TODO put this in proper place
+    if (Memory.LoROM) {
+      libRR_rom_type = "LOROM";
+    } else if (Memory.HiROM) {
+      libRR_rom_type = "HIROM";
+    }
+    else {
+      libRR_rom_type = "UNKNOWN";
+    }
+    cout << "SNES ROM TYPE:" << libRR_rom_type << "\n\n";
   }
 
 // libRR_set_retro_memmap should be called to setup memory ranges in a function such as retro_set_memory_maps
@@ -56,10 +71,12 @@ extern "C" {
   }
 
   int get_current_bank_number_for_address(uint32_t addr) {
-    // if (addr > 0xffffff) {
-    //   cout << "get_current_bank_number_for_address: " << n2hexstr(addr) << "\n";
+    if (addr > 0xffff) {
+      int bank = (addr & 0xff0000) >> 16;
+      // cout << "get_current_bank_number_for_address: " << n2hexstr(addr) << " bank" << n2hexstr(bank) <<  "\n";
+      return bank;
     //   return addr & 0xffffff;
-    // }
+    }
     return libRR_current_bank_slot_0;
   }
 
@@ -104,6 +121,49 @@ extern "C" {
     contents+= "banks ";
     contents+= to_string(libRR_total_banks);
     contents+= "\n.endro;\n\n";
+
+    contents+= ".SNESHEADER\n";
+    contents+= "  ID \"SNES\"                     ; 1-4 letter string\n";
+    contents+= " \n";
+    contents+= "  NAME \"SNES Program Name    \"  ; Program Title - can't be over 21 bytes,\n";
+    contents+= " \n";
+    contents+= "  SLOWROM\n";
+    contents+= libRR_rom_type+" \n";
+    contents+= " \n";
+    contents+= "  CARTRIDGETYPE $00             ; $00 = ROM only, see WLA documentation for others\n";
+    contents+= "  ROMSIZE $08                   ; $08 = 2 Mbits,  see WLA doc for more..\n";
+    contents+= "  SRAMSIZE $00                  ; No SRAM         see WLA doc for more..\n";
+    contents+= "  COUNTRY $01                   ; $01 = U.S.  $00 = Japan, that's all I know\n";
+    contents+= "  LICENSEECODE $00              ; Just use $00\n";
+    contents+= "  VERSION $00                   ; $00 = 1.00, $01 = 1.01, etc.\n";
+    contents+= ".ENDSNES\n";
+
+    contents+= ".SNESNATIVEVECTOR               ; Define Native Mode interrupt vector table\n";
+    contents+= "  COP $82C3 ; ROM location: 0x7FE4\n";
+    contents+= "  BRK $FFFF ;0x7FE6\n";
+    contents+= "  ABORT $82C3 ;0x7FE8\n";
+    contents+= "  NMI $816A ;0x7FEA\n";
+    contents+= "  UNUSED $0000 ;0x7FEA\n";
+    contents+= "  IRQ $8374 ;0x7FEE\n";
+    contents+= ".ENDNATIVEVECTOR\n";
+    contents+= " \n";
+    contents+= ".SNESEMUVECTOR                  ; Define Emulation Mode interrupt vector table\n";
+    contents+= "  COP $FFFF ; ROM location: $7FF4 \n";
+    contents+= "  ABORT $82C3 ; $7FF8\n";
+    contents+= "  NMI $82C3 ; $7FFA\n";
+    contents+= "  RESET $8000 ; $7FFC\n";
+    contents+= "  IRQBRK $82C3 ; $7FFE\n";
+    contents+= ".ENDEMUVECTOR\n";
+
+    contents+= "    .BANK 0 SLOT 0  \n";
+    contents+= ".ORG 0               \n";
+    contents+= ".SECTION \"EmptyVectors\" SEMIFREE \n";
+    contents+= "\n";
+    contents+= "EmptyHandler:\n";
+    contents+= "        rti\n";
+    contents+= "\n";
+    contents+= ".ENDS\n";
+
     // contents+= "; SDSC tag and GG rom header\n\n";
     // contents+= ".sdsctag 1.0, \"Hello libRR\", \"Version\", \"rr\"\n\n";
     return contents;

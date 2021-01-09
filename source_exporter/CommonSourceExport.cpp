@@ -313,6 +313,7 @@ void libRR_export_function_data() {
 
     main_asm_contents+=include_directive+" \"jumps.asm\"\n";
     main_asm_contents+=include_directive+" \"unwritten_relative_jumps.asm\"\n";
+    main_asm_contents+=include_directive+" \"data.asm\"\n";
 
     // Generate main.asm file, which includes the other files
     codeDataLogger::writeStringToFile(libRR_export_directory+"main.asm", main_asm_contents);
@@ -353,7 +354,7 @@ uint32_t last_written_byte_addr = 0;
   void libRR_export_rom_data() {
     string output_file_path = libRR_export_directory + "data.asm";
     string contents = "; Contains ROM static data\n";
-    contents+=write_console_asm_header();
+    // contents+=write_console_asm_header();
 
     // Loop through each bank
     for (auto& bank : libRR_consecutive_rom_reads.items()) {

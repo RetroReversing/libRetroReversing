@@ -1,10 +1,9 @@
 roms := {{ GAME_NAME }}_rr.sfc
 
 rom_obj := \
-data.o \
 main.o \
-# common.o \
-# jumps.o \
+# data.o \
+
 
 game_obj        := $(rom_obj:.o=_rr.o)
 
