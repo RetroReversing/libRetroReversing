@@ -1432,7 +1432,7 @@ extern "C" void libRR_log_dma(int32_t offset) {
 
 }
 
-extern "C" const char* libRR_log_jump_label_with_name(int32_t offset, int32_t current_pc, const char* label_name) {
+extern "C" const char* libRR_log_jump_label_with_name(uint32_t offset, uint32_t current_pc, const char* label_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return "";
     }
@@ -1487,6 +1487,9 @@ extern "C" void libRR_log_rom_read(int16_t bank, int32_t offset, const char* typ
     string previous_bank_str = n2hexstr(previous_consecutive_rom_bank, 4);
     string offset_str = n2hexstr(offset);
     string current_consecutive_rom_start_str = n2hexstr(current_consecutive_rom_start);
+    if (libRR_full_trace_log) {
+        libRR_log_trace_str("Rom Read bank:"+bank_str+":"+n2hexstr(offset)+" = "+n2hexstr(bytes[0], 2));
+    }
     // Check to see if the last read address is the same or 1 away
     // Check for the same is because sometimes data is checked by reading the first byte
     if (previous_consecutive_rom_bank == bank && previous_consecutive_rom_read == offset) {

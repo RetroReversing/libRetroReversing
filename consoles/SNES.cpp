@@ -130,9 +130,10 @@ extern "C" {
     contents+= "  SLOWROM\n";
     contents+= libRR_rom_type+" \n";
     contents+= " \n";
-    contents+= "  CARTRIDGETYPE $00             ; $00 = ROM only, see WLA documentation for others\n";
-    contents+= "  ROMSIZE $08                   ; $08 = 2 Mbits,  see WLA doc for more..\n";
-    contents+= "  SRAMSIZE $00                  ; No SRAM         see WLA doc for more..\n";
+    // TODO: the following are setup for Mario but need to be found dynamically
+    contents+= "  CARTRIDGETYPE $002            ; $00 = ROM only, see WLA documentation for others\n";
+    contents+= "  ROMSIZE $09                   ; 0x7FD7 $08 = 2 Mbits,  see WLA doc for more..\n";
+    contents+= "  SRAMSIZE $01                  ; No SRAM         see WLA doc for more..\n";
     contents+= "  COUNTRY $01                   ; $01 = U.S.  $00 = Japan, that's all I know\n";
     contents+= "  LICENSEECODE $00              ; Just use $00\n";
     contents+= "  VERSION $00                   ; $00 = 1.00, $01 = 1.01, etc.\n";
@@ -155,17 +156,6 @@ extern "C" {
     contents+= "  IRQBRK $82C3 ; $7FFE\n";
     contents+= ".ENDEMUVECTOR\n";
 
-    contents+= "    .BANK 0 SLOT 0  \n";
-    contents+= ".ORG 0               \n";
-    contents+= ".SECTION \"EmptyVectors\" SEMIFREE \n";
-    contents+= "\n";
-    contents+= "EmptyHandler:\n";
-    contents+= "        rti\n";
-    contents+= "\n";
-    contents+= ".ENDS\n";
-
-    // contents+= "; SDSC tag and GG rom header\n\n";
-    // contents+= ".sdsctag 1.0, \"Hello libRR\", \"Version\", \"rr\"\n\n";
     return contents;
   }
 

@@ -109,13 +109,11 @@ void get_all_unwritten_labels() {
           cout << "offset > libRR_slot_1_max_addr" << section_name << "\n";
           continue;
         }
-        contents += write_section_header(label.value()["offset"], label.value()["bank"], section_name);
         cout << "Unwritten Label:" << label.key() << " = " << label.value() << "\n";
 
         json callers = libRR_disassembly[(string)label.value()["bank"]][(string)label.value()["offset"]]["meta"]["label_callers"];
-        contents += write_callers(callers);
 
-        contents += write_asm_until_null(label.value()["bank"], label.value()["offset"], false);
+        contents += write_asm_until_null(label.value()["bank"], label.value()["offset"], false, section_name, callers);
       }
     }
 
@@ -131,9 +129,8 @@ void libRR_export_jump_data() {
       contents += write_bank_header_comment(bank.key());
       
       for (auto& dataSection : bank.value().items()) {
-        contents += write_section_header(dataSection.key(), bank.key(), "JMP_"+ bank.key() + "_" + dataSection.key());
-        contents += write_callers(dataSection.value());
-        contents += write_asm_until_null(bank.key(), dataSection.key(), false);
+        string section_name = "JMP_"+ bank.key() + "_" + dataSection.key();
+        contents += write_asm_until_null(bank.key(), dataSection.key(), false, section_name, dataSection.value());
       }
     }
 
@@ -157,8 +154,9 @@ string get_function_name(string bank, string offset) {
     return function_name;
   }
 
- string write_asm_until_null(string bank_number, string offset_str, bool is_function) {
+ string write_asm_until_null(string bank_number, string offset_str, bool is_function, string section_name, json callers) {
     string contents = "";
+    bool is_first_written_opcode = true;
     int offset = hex_to_int(offset_str);
     int return_offset_from_start = 1100; // this is just the max, will most likely stop before this
     
@@ -183,6 +181,12 @@ string get_function_name(string bank, string offset) {
         return contents;
       }
 
+      if (is_first_written_opcode) {
+        contents += write_section_header(offset_str, bank_number, section_name);
+        contents += write_callers(callers);
+        is_first_written_opcode = false;
+      }
+
       if (libRR_disassembly[bank_number][n2hexstr(i)].contains("label_name")) {
         string label_name = (string)libRR_disassembly[bank_number][n2hexstr(i)]["label_name"];
         if ((bool)allLabels[label_name]["written"]) {
@@ -192,11 +196,15 @@ string get_function_name(string bank, string offset) {
         contents +=  label_name + ":\n";
         allLabels[label_name]["written"] = true;
       }
+
       contents += "\t";
+      // This loops through to see if there are more than 1 defined instruction for a single offset
+      // this can happen due to bugs so its useful to print out all of them
       for (auto& el : libRR_disassembly[bank_number][n2hexstr(i)].items()) {
         if (el.key() == "label_name" || el.key() == "meta") {
           continue;
         } else {
+          
           contents += el.key() + " ;";
           instruction_length = el.value()["bytes_length"];
         }
@@ -304,8 +312,8 @@ void libRR_export_function_data() {
         string function_name = get_function_name(bank_str, func_offset_str);
 
         string contents = "";
-        contents += write_section_header(func_offset_str, bank_str, function_name);
-        contents += write_asm_until_null(bank_str, func_offset_str, true);
+        json callers = json::parse("{}"); // TODO: start logging callers to a function
+        contents += write_asm_until_null(bank_str, func_offset_str, true, function_name, callers);
         codeDataLogger::writeStringToFile(output_file_path, contents);
         cout << "Written file to: " << output_file_path << "\n";
       }
@@ -320,7 +328,7 @@ void libRR_export_function_data() {
   }
 
 uint32_t last_written_byte_addr = 0;
-  string write_each_rom_byte(string bank_number, json dataRange) {
+  string write_each_rom_byte(string bank_number, json dataRange, string offset, string section_name) {
     string contents = "";
     bool read_first_byte = false;
     for (auto& byteValue : dataRange.items()) {
@@ -331,6 +339,10 @@ uint32_t last_written_byte_addr = 0;
         contents += "; Already written: " + n2hexstr(byte_address) +"\n";
         last_written_byte_addr = byte_address;
         continue;
+      }
+
+      if (!read_first_byte) {
+          contents += write_section_header(byteValue.key(), bank_number, section_name);
       }
 
       // Check if this overlaps with the start of another block (only after first byte)
@@ -344,6 +356,7 @@ uint32_t last_written_byte_addr = 0;
       contents += "\t.db $";
       contents += byteValue.value();
       contents += " ; ";
+      contents += bank_number + "::";
       contents += byteValue.key();
       contents += "\n";
       last_written_byte_addr = byte_address;
@@ -369,13 +382,12 @@ uint32_t last_written_byte_addr = 0;
           continue;
         }
 
-        string contents_of_rom_section = write_each_rom_byte(bank.key(), dataSection.value()["value"]);
+        string contents_of_rom_section = write_each_rom_byte(bank.key(), dataSection.value()["value"], dataSection.key(), "DAT_"+ bank.key() + "_" + dataSection.key());
 
         if (contents_of_rom_section == "") {
           continue;
         }
 
-        contents += write_section_header(dataSection.key(), bank.key(), "DAT_"+ bank.key() + "_" + dataSection.key());
         contents += contents_of_rom_section;
       }
     }
