@@ -67,6 +67,8 @@ void get_all_assembly_labels() {
         libRR_total_banks = bank_int+1;
       }
         for (auto& instruction : libRR_disassembly[current_bank].items()) {
+          if (!libRR_disassembly[current_bank].contains(instruction.key())) { continue; }
+
           if (libRR_disassembly[current_bank][instruction.key()].contains("label_name")) {
             string label_name = libRR_disassembly[current_bank][instruction.key()]["label_name"];
             json data = {};
@@ -161,11 +163,11 @@ string get_function_name(string bank, string offset) {
     int return_offset_from_start = 1100; // this is just the max, will most likely stop before this
     
     // First Check if this address is the starting address of function
-    if (!is_function && libRR_called_functions[bank_number].contains(n2hexstr(offset))) {
-      cout << "Jump has already been defined as a function:" << bank_number << "::" << n2hexstr(offset) << "\n";
-      if (libRR_disassembly[bank_number][n2hexstr(offset)].contains("label_name")) {
-        contents += "; "+(string)libRR_disassembly[bank_number][n2hexstr(offset)]["label_name"] + " EQU $";
-        contents += n2hexstr(offset);
+    if (!is_function && libRR_called_functions[bank_number].contains(offset_str)) {
+      // cout << "Jump has already been defined as a function:" << bank_number << "::" << offset_str << "\n";
+      if (libRR_disassembly[bank_number][offset_str].contains("label_name")) {
+        contents += "; "+(string)libRR_disassembly[bank_number][offset_str]["label_name"] + " EQU $";
+        contents += offset_str;
       }
       contents += "; Address Also defined as function\n";
       return contents;
@@ -232,19 +234,19 @@ bool should_stop_writing_asm(int start_offset, uint32_t i, string bank_number) {
     string current_address_str = n2hexstr(i);
     // Check if this address is the starting address of another jump definition
       if (libRR_long_jumps[bank_number].contains(current_address_str)) {
-        cout << "Address has been defined as another jump:" << bank_number << "::" << current_address_str << "\n";
+        // cout << "Address has been defined as another jump:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
       // Check if this address is the starting address of data
       if (libRR_consecutive_rom_reads[bank_number].contains(current_address_str)) {
-        cout << "Address has been defined as data:" << bank_number << "::" << current_address_str << "\n";
+        // cout << "Address has been defined as data:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }
       // Check if this address is the starting address of function
       if (libRR_called_functions[bank_number].contains(current_address_str)) {
-        cout << "Address has been defined as a function:" << bank_number << "::" << current_address_str << "\n";
+        // cout << "Address has been defined as a function:" << bank_number << "::" << current_address_str << "\n";
         // contents += "; Address defined as another jump\n";
         return true;
       }

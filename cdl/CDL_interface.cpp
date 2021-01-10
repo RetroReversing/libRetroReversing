@@ -1407,6 +1407,9 @@ void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
 
 // C++
 
+uint32_t libRR_offset_to_look_for = 0x8149;
+bool libRR_enable_look = false;
+
 json libRR_disassembly = {};
 json libRR_memory_reads = {};
 json libRR_consecutive_rom_reads = {};
@@ -1446,6 +1449,12 @@ extern "C" const char* libRR_log_jump_label_with_name(uint32_t offset, uint32_t 
         return "";
     }
 
+    // debugging code start
+    if (libRR_enable_look && (offset == libRR_offset_to_look_for || current_pc == libRR_offset_to_look_for)) {
+        printf("Found long jump label with name offset: %d\n", libRR_offset_to_look_for);
+    }
+    // debugging code end
+
     // string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
     if (!libRR_disassembly[current_bank_str][offset_str].contains("label_name")) {
         libRR_disassembly[current_bank_str][offset_str]["label_name"] = label_name;
@@ -1467,6 +1476,12 @@ extern "C" const char* libRR_log_jump_label(uint32_t offset, uint32_t current_pc
         // if its greater than the max bank value then its probably in ram
         return "max_bank_value";
     }
+
+    // debugging code start
+    if (libRR_enable_look && (offset == libRR_offset_to_look_for || current_pc == libRR_offset_to_look_for)) {
+        printf("Found long jump label offset: %d\n", libRR_offset_to_look_for);
+    }
+    // debugging code end
 
     string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
     // return libRR_log_jump_label_with_name(offset, current_pc, label_name.c_str());
@@ -1653,9 +1668,10 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     }
 
     // Code used for debugging why an address was reached
-    // if (current_pc == 0x698C) {
-    //     printf("Reached 0x698C: previous addr: %s \n ", n2hexstr(previous_pc).c_str());
-    // }
+    if (libRR_enable_look && current_pc == libRR_offset_to_look_for) {
+        printf("Reached %s: previous addr: %s name:%s bank:%d \n ", n2hexstr(libRR_offset_to_look_for).c_str(), n2hexstr(previous_pc).c_str(), name.c_str(), bank);
+    }
+    // end debugging code
     
     if (strcmp(libRR_console,"Saturn")==0) {
         printf("isSaturn\n");
@@ -1667,10 +1683,12 @@ void libRR_log_instruction(uint32_t current_pc, string name, uint32_t instructio
     // string current_function = n2hexstr(function_stack.back());
     string current_pc_str = n2hexstr(current_pc);
     // printf("libRR_log_instruction %s \n", current_function.c_str());
-    if (libRR_isDelaySlot) {
-        current_pc_str = n2hexstr(libRR_delay_slot_pc - 2); //subtract 2 as pc is ahead
-        // printf("Delay Slot %s \n", current_pc_str.c_str());
-        libRR_isDelaySlot = false;
+    if (strcmp(libRR_console,"Saturn")==0) {
+        if (libRR_isDelaySlot) {
+            current_pc_str = n2hexstr(libRR_delay_slot_pc - 2); //subtract 2 as pc is ahead
+            // printf("Delay Slot %s \n", current_pc_str.c_str());
+            libRR_isDelaySlot = false;
+        }
     }
 
     // TODO: Hex bytes should change based on number_of_bytes
