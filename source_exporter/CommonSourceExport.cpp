@@ -11,6 +11,9 @@ string libRR_export_assembly_extention = ".s";
 json allLabels = {};
 string include_directive = ".INCLUDE";
 int libRR_total_banks = 2;
+string libRR_org_directive = ".ORGA";
+string libRR_bank_directive = ".BANK $";
+string libRR_slot_directive = "SLOT";
 
 bool libRR_replace_string(std::string& str, const std::string& from, const std::string& to) {
     size_t start_pos = str.find(from);
@@ -270,9 +273,6 @@ string write_bank_header_comment(string bank) {
     return contents;
   }
 
-string libRR_org_directive = ".ORGA";
-string libRR_bank_directive = ".BANK $";
-string libRR_slot_directive = "SLOT";
 
 string write_section_header(string offset_str, string bank_number, string section_name) {
     // first get the offset as int before appending "$"

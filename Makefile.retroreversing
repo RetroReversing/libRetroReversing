@@ -62,7 +62,7 @@ SOURCES_CXX_RR += \
     libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     libRetroReversing/png/lodepng.cpp \
     libRetroReversing/source_exporter/CommonSourceExport.cpp \
-    libRetroReversing/consoles/$(libRetroReversingConsole).cpp
+    libRetroReversing/consoles/${libRetroReversingConsole}.cpp \
 
 
 # TODO: use a local path instead of /usr/local/opt/nlohmann_json/include

@@ -1,0 +1,20 @@
+{
+  "name": "NES WLA-DX Source Exporter",
+  "dirs": [
+    "common"
+  ],
+  "files": [
+    "Makefile",
+    "README.md",
+    "INSTALL.md",
+    ".gitignore",
+    "common.asm",
+    "layout.link",
+    "common/header.asm",
+    "common/constants.asm",
+    "tools/scan_includes.c",
+    "tools/Makefile"
+  ],
+  "main": "main.asm",
+  "asm_extenstion": ".asm"
+}
