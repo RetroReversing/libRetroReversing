@@ -1,10 +1,20 @@
 #include <queue>
+#include <iostream>
 #include "../civetweb/include/civetweb.h"
 #include "../include/libRR.h"
 #include "../cdl/CDL.hpp"
 #include "../cdl/CDL_FileWriting.hpp"
 #include "../source_exporter/CommonSourceExport.h"
 
+  struct ines_header_t {
+    uint8_t signature [4];
+    uint8_t prg_count; // number of 16K PRG banks
+    uint8_t chr_count; // number of 8K CHR banks
+    uint8_t flags;     // MMMM FTBV Mapper low, Four-screen, Trainer, Battery, V mirror
+    uint8_t flags2;    // MMMM --XX Mapper high 4 bits
+    uint8_t zero [8];  // if zero [7] is non-zero, treat flags2 as zero
+  };
+  ines_header_t libRR_iNes = {};
 extern "C" {
 
   // GenesisPlusGX doesn't have this defined so:
@@ -66,12 +76,20 @@ extern "C" {
     return "0";
   }
 
+  void write_ines_header_file() {
+    ofstream myFile (libRR_export_directory + "iNES.bin", ios::out | ios::binary);
+    myFile.write ((char*)&libRR_iNes, 16);
+    myFile.close();
+
+  }
+
   string write_console_asm_header() {
     string contents = "";
     contents+= ";==============================================================\n";
     contents+= "; WLA-DX banking setup\n";
     contents+= ";==============================================================\n";
-    // currently this is for LoRom
+    // TODO: get the correct values from the iNES header
+    // e.g Mario has 2x8KB code banks and 1x8KB Graphics bank
     contents+= ".memorymap\n";
     contents+= "DEFAULTSLOT 0 \n";
     contents+= "slotsize $8000\n";
@@ -89,6 +107,9 @@ extern "C" {
     contents+= "\nbanksize $2000\n";
     contents+= "banks 1 ; CHR-ROM";
     contents+= "\n.endro;\n\n";
+
+    write_ines_header_file();
+
     return contents;
   }
 

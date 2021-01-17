@@ -1,6 +1,6 @@
 # Instructions
 
-These instructions explain how to set up the tools required to build **{{ GAME_NAME }}**, including [**rgbds**](https://github.com/gbdev/rgbds), which assembles the source files into a ROM.
+These instructions explain how to set up the tools required to build **{{ GAME_NAME }}**, including [**WLA-DX**](https://github.com/vhelin/wla-dx), which assembles the source files into a ROM.
 
 If you run into trouble, ask for help on IRC or Discord (see [README.md](README.md)).
 
@@ -42,9 +42,9 @@ Run setup and leave the default settings. At the "**Select Packages**" step, cho
 
 Double click on the text that says "**Skip**" next to each package to select the most recent version to install.
 
-Then follow the [**rgbds** install instructions](https://rgbds.gbdev.io/install/windows) for Windows with Cygwin to install **rgbds 0.4.2**.
+Then follow the [**WLA-DX** install instructions](hhttps://github.com/vhelin/wla-dx/blob/master/INSTALL.md) for Windows with Cygwin to install **WLA-DX**.
 
-**Note:** If you already have an older rgbds, you will need to update to 0.4.2. Ignore this if you have never installed rgbds before. If a version newer than 0.4.2 does not work, try downloading 0.4.2.
+**Note:** If you already have an older WLA-DX, you will need to update to. Ignore this if you have never installed WLA-DX before. If a version newer than does not work, try downloading.
 
 Now open the **Cygwin terminal** and enter the following commands.
 
@@ -67,7 +67,7 @@ Install [**Homebrew**](https://brew.sh/). Follow the official instructions.
 
 Open **Terminal** and prepare to enter commands.
 
-Then follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/macos) for macOS to install **rgbds 0.4.2**.
+Then follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) for macOS to install **WLA-DX**.
 
 Now you're ready to [build](#build).
 
@@ -84,7 +84,7 @@ To install the software required for **{{ GAME_NAME }}**:
 sudo apt-get install make gcc git
 ```
 
-Then follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/source) to build **rgbds 0.4.2** from source.
+Then follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) to build **WLA-DX** from source.
 
 ### OpenSUSE
 
@@ -94,7 +94,7 @@ To install the software required for **{{ GAME_NAME }}**:
 sudo zypper install make gcc git
 ```
 
-Then follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/source) to build **rgbds 0.4.2** from source.
+Then follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) to build **WLA-DX** from source.
 
 ### Arch Linux
 
@@ -104,9 +104,9 @@ To install the software required for **{{ GAME_NAME }}**:
 sudo pacman -S make gcc git
 ```
 
-Then follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/arch) for Arch Linux to install **rgbds 0.4.2**.
+Then follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) for Arch Linux to install **WLA-DX**.
 
-If you want to compile and install **rgbds** yourself instead, then follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/source) to build **rgbds 0.4.2** from source.
+If you want to compile and install **WLA-DX** yourself instead, then follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) to build **WLA-DX** from source.
 
 ### Termux
 
@@ -116,13 +116,13 @@ To install the software required for **{{ GAME_NAME }}**:
 sudo apt install make clang git sed
 ```
 
-To install **rgbds**:
+To install **WLA-DX**:
 
 ```bash
-sudo apt install rgbds
+sudo apt install WLA-DX
 ```
 
-If you want to compile and install **rgbds** yourself instead, then follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/source) to build **rgbds 0.4.2** from source.
+If you want to compile and install **WLA-DX** yourself instead, then follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) to build **WLA-DX** from source.
 
 ### Other distros
 
@@ -131,9 +131,9 @@ If your distro is not listed here, try to find the required software in its repo
 - `make`
 - `gcc` (or `clang`)
 - `git`
-- `rgbds`
+- `WLA-DX`
 
-If `rgbds` is not available, you'll need to follow the [**rgbds** instructions](https://rgbds.gbdev.io/install/source) to build **rgbds 0.4.2** from source.
+If `WLA-DX` is not available, you'll need to follow the [**WLA-DX** instructions](https://github.com/vhelin/wla-dx/blob/master/INSTALL.md) to build **WLA-DX** from source.
 
 Now you're ready to [build](#build).
 

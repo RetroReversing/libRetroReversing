@@ -1,3 +1,4 @@
 [objects]
 main_rr.o
-
+[header]
+iNES.bin

@@ -1,4 +1,4 @@
-roms := {{ GAME_NAME }}_rr.sfc
+roms := {{ GAME_NAME }}_rr.nes
 
 rom_obj := \
 main.o \
@@ -77,7 +77,7 @@ game_pad        = 0x00
 
 game_opt        = -jsv -n 0 -k 01 -l 0x33 -m 0x13 -r 03 -t "{{ GAME_NAME }}"
 
-%.sfc: $$(game_obj)
+%.nes: $$(game_obj)
 	$(LINKER) -s -S layout.link $@ 
 
 
