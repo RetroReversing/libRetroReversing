@@ -31,9 +31,9 @@ extern "C" {
   uint16_t libRR_current_bank_slot_0 = 1;
   uint16_t libRR_current_bank_slot_1 = 2;
   uint16_t libRR_current_bank_slot_2 = 3;
-  uint32_t libRR_slot_0_max_addr = 0x4000;
-  uint32_t libRR_slot_1_max_addr = 0x7fff;
-  uint32_t libRR_slot_2_max_addr = 0x7fff;
+  uint32_t libRR_slot_0_max_addr = 0x8000*2;
+  uint32_t libRR_slot_1_max_addr = 0x8000*2;
+  uint32_t libRR_slot_2_max_addr = 0x8000*2;
   bool libRR_bank_switching_available = false;
 
   uint32_t libRR_pc_lookahead = 0;
@@ -68,6 +68,27 @@ extern "C" {
 
   string write_console_asm_header() {
     string contents = "";
+    contents+= ";==============================================================\n";
+    contents+= "; WLA-DX banking setup\n";
+    contents+= ";==============================================================\n";
+    // currently this is for LoRom
+    contents+= ".memorymap\n";
+    contents+= "DEFAULTSLOT 0 \n";
+    contents+= "slotsize $8000\n";
+    contents+= "SLOT 0 $8000 ; NES Starts at 0x8000 \n";
+    contents+= ";slotsize $2000 ; CHR-ROM slot size\n";
+    contents+= ";SLOT 1 $0000 ; CHR-ROM slot 1 starts at 0x00\n";
+    contents+= ".endme\n\n";
+
+    contents+= ".rombankmap\n";
+    contents+= "bankstotal ";
+    contents+= to_string(libRR_total_banks+1); // add one for the CHR bank
+    contents+= "\nbanksize $8000\n";
+    contents+= "banks ";
+    contents+= to_string(libRR_total_banks);
+    contents+= "\nbanksize $2000\n";
+    contents+= "banks 1 ; CHR-ROM";
+    contents+= "\n.endro;\n\n";
     return contents;
   }
 

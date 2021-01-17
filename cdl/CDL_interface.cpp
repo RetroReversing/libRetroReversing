@@ -638,7 +638,7 @@ void libRR_log_full_function_call(uint32_t current_pc, uint32_t jump_target) {
     // TODO: find out how long the function is
 }
 
-void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type) {
+const char* libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type) {
     // cout << "Long Jump from:" << n2hexstr(current_pc) << " to:" << n2hexstr(jump_target) << "\n";
     if (libRR_full_trace_log) {
         libRR_log_trace_str("Long Jump:"+n2hexstr(current_pc)+"->"+n2hexstr(jump_target)+" type:"+type);
@@ -651,6 +651,7 @@ void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* 
     // now we need the bank number of the function we are calling
     pc_bank_number = n2hexstr(get_current_bank_number_for_address(current_pc), 4);
     libRR_long_jumps[target_bank_number][n2hexstr(jump_target)][pc_bank_number+"::"+n2hexstr(current_pc)]=type;
+    return libRR_log_jump_label(jump_target, current_pc);
 }
 
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t jump_target) {
@@ -667,7 +668,8 @@ void libRR_log_rst(uint32_t current_pc, uint32_t jump_target) {
     libRR_log_function_call(current_pc, jump_target, 0x00);
 }
 
-void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
+string function_name = ""; // last function name called
+const char* libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
     // TODO: find out why uncommeting the following causes a segfault
     // if (!libRR_full_function_log || !libRR_finished_boot_rom) {
     //     return;
@@ -687,7 +689,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     }
 
     string jump_target_str = n2hexstr(jump_target);
-    string function_name = "_"+bank_number+"_func_"+jump_target_str;
+    function_name = "_"+bank_number+"_func_"+jump_target_str;
     libRR_called_functions[bank_number][n2hexstr(jump_target)] = function_name;
     libRR_log_trace_str("Function call: 0x"+jump_target_str);
     
@@ -703,7 +705,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     }
     if (functions.find(jump_target) != functions.end() ) {
         // We have already logged this function, so ignore for now
-        return;
+        return function_name.c_str();
     }
     // We have never logged this function so lets create it
     auto t = cdl_labels();
@@ -726,6 +728,7 @@ void libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t
     printf("Logged new function: %s target:%d number_of_functions:%d \n", t.func_name.c_str(), jump_target, number_of_functions);
     functions[jump_target] = t;
     number_of_functions++;
+    return function_name.c_str();
 }
 
 // This will be replace be libRR_log_function_call
@@ -1435,6 +1438,7 @@ extern "C" void libRR_log_dma(int32_t offset) {
 
 }
 
+static string label_name = "";
 extern "C" const char* libRR_log_jump_label_with_name(uint32_t offset, uint32_t current_pc, const char* label_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return "";
@@ -1463,6 +1467,7 @@ extern "C" const char* libRR_log_jump_label_with_name(uint32_t offset, uint32_t 
     return label_name;
 }
 
+
 extern "C" const char* libRR_log_jump_label(uint32_t offset, uint32_t current_pc) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return "_not_logging";
@@ -1483,7 +1488,7 @@ extern "C" const char* libRR_log_jump_label(uint32_t offset, uint32_t current_pc
     }
     // debugging code end
 
-    string label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
+    label_name = "LAB_" + current_bank_str + "_" + n2hexstr(offset);
     // return libRR_log_jump_label_with_name(offset, current_pc, label_name.c_str());
 
     if (!libRR_disassembly[current_bank_str][offset_str].contains("label_name")) {
@@ -1561,6 +1566,15 @@ extern "C" void libRR_log_instruction_1int(uint32_t current_pc, const char* c_na
     return libRR_log_instruction_2int(current_pc, c_name, instruction_bytes, number_of_bytes, operand, 0);
 }
 
+extern "C" void libRR_log_instruction_1string(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, const char* c_register_name) {
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
+    std::string name(c_name);
+    std::string register_name(c_register_name);
+    replace(name, "%str%",register_name);
+    libRR_log_instruction_1int(current_pc, name.c_str(), instruction_bytes, number_of_bytes, 0x00);
+}
 extern "C" void libRR_log_instruction_1int_registername(uint32_t current_pc, const char* c_name, uint32_t instruction_bytes, int number_of_bytes, uint32_t operand, const char* c_register_name) {
     if (!libRR_full_function_log || !libRR_finished_boot_rom) {
         return;

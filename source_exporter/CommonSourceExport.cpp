@@ -182,7 +182,7 @@ string get_function_name(string bank, string offset) {
       bool has_written_line = false;
 
       if (should_stop_writing_asm(offset, i, bank_number)) {
-        contents+=";stopped writing due to overlap with another section "+ n2hexstr(offset) +"\n";
+        contents+=";stopped writing due to overlap with another section "+ n2hexstr(i) +"\n";
         return contents;
       }
 
@@ -280,7 +280,8 @@ string write_section_header(string offset_str, string bank_number, string sectio
     string contents = "\n";
     offset_str = "$"+ offset_str;
     contents += libRR_bank_directive + bank_number + " " + libRR_slot_directive+" "+get_slot_for_address(offset)+"\n";
-    contents += libRR_org_directive+" "+offset_str;
+    contents += libRR_org_directive+" "+offset_str+"\n";
+    contents += section_name+":";
     return contents+"\n";
 }
 

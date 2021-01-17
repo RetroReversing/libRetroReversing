@@ -61,8 +61,8 @@ void add_console_specific_game_json();
 
 // CPU
 string libRR_constant_replace(uint32_t da8);
-void libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer=0);
-void libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type);
+const char* libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uint32_t stack_pointer=0);
+const char* libRR_log_long_jump(uint32_t current_pc, uint32_t jump_target, const char* type);
 void libRR_log_branch(uint32_t current_pc, uint32_t target_pc);
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer=0);
 
