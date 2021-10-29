@@ -38,6 +38,7 @@ void readJsonToObject(string filename, json& json_object, string default_json) {
     printf("readJsonToObject %s \n", filename.c_str());
     std::ifstream i(filename);
     if (!i.good()) {
+        printf("WARNING: readJsonToObject Failed to load file: %s \n", filename.c_str());
         json_object = json::parse(default_json);
         return;
     } 

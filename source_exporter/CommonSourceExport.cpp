@@ -5,6 +5,11 @@
 #include "../cdl/CDL.hpp"
 #include "../cdl/CDL_FileWriting.hpp"
 #include "./CommonSourceExport.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+#include <unistd.h>
 using namespace kainjow::mustache;
 
 string libRR_export_assembly_extention = ".s";
@@ -17,8 +22,8 @@ string libRR_slot_directive = "SLOT";
 
 // Common Paths (vary between OS)
 #ifdef _WIN32
-char* libRR_path_seperator= "\\";
-char* libRR_path_to_export_templates = ".\\libRetroReversing\\export_templates\\";
+char* libRR_path_seperator= "/";
+char* libRR_path_to_export_templates = "libRetroReversing/export_templates/";
 #else
 char* libRR_path_seperator= "/";
 char* libRR_path_to_export_templates = "./libRetroReversing/export_templates/";
@@ -36,6 +41,14 @@ void libRR_export_template_files(string template_directory_name) {
     json files_json;
     // TODO: check for windows and change path
     string export_template_directory = libRR_path_to_export_templates+template_directory_name+libRR_path_seperator;
+    if( access( export_template_directory.c_str(), F_OK ) == 0 ) {
+      // file exists
+      printf("INFO: Found libRetroReversing export templates folder\n");
+    }
+    else {
+      printf("WARNING: NOT Found libRetroReversing export templates folder - will not try to export\n");
+      return;
+    }
     readJsonToObject(export_template_directory+"files.json", files_json);
     cout << "Exporter Name is: " << files_json["name"] << "\n";
     libRR_export_assembly_extention = (string)files_json["asm_extenstion"];
