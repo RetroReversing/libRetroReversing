@@ -6,14 +6,14 @@
 #include "../source_exporter/CommonSourceExport.h"
 
 
+extern json allLabels;
+extern  int libRR_total_banks;
 extern "C" {
 
-  json allLabels = {};
 
   // This is used for most SEGA 8bit and 16bit consoles, such as Master System, Game Gear and Mega Drive
   const char* libRR_console = "GenesisPlusGX";
   int libRR_emulated_hardware = 0;
-  int libRR_total_banks = 2;
 
   // GenesisPlusGX doesn't have this defined so:
   char retro_base_directory[4096];
