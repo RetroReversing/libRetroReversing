@@ -21,6 +21,15 @@ string libRR_get_data_for_function(int offset, int length, bool swapEndian, bool
 extern "C" {
 #endif
 
+// Common Paths (vary between OS)
+#ifdef _WIN32
+extern char* libRR_path_seperator= "\\";
+extern char* libRR_path_to_export_templates = ".\\libRetroReversing\\export_templates\\";
+#else
+extern char* libRR_path_seperator= "/";
+extern char* libRR_path_to_export_templates = "./libRetroReversing/export_templates/";
+#endif
+
 // Common Variables
 extern int RRCurrentFrame;
 extern bool libRR_should_playback_input;

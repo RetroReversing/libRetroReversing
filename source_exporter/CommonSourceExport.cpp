@@ -25,7 +25,8 @@ bool libRR_replace_string(std::string& str, const std::string& from, const std::
 
 void libRR_export_template_files(string template_directory_name) {
     json files_json;
-    string export_template_directory = "./libRetroReversing/export_templates/"+template_directory_name+"/";
+    // TODO: check for windows and change path
+    string export_template_directory = libRR_path_to_export_templates+template_directory_name+libRR_path_seperator;
     readJsonToObject(export_template_directory+"files.json", files_json);
     cout << "Exporter Name is: " << files_json["name"] << "\n";
     libRR_export_assembly_extention = (string)files_json["asm_extenstion"];
