@@ -311,7 +311,7 @@ void libRR_export_function_data() {
         // Now write the actual file
         string output_file_path = libRR_export_directory + export_path;
         // create any folder that needs to be created
-        std::__fs::filesystem::create_directories(codeDataLogger::dirnameOf(output_file_path));
+        fs::create_directories(codeDataLogger::dirnameOf(output_file_path));
         string function_name = get_function_name(bank_str, func_offset_str);
 
         string contents = "";
