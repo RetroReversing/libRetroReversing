@@ -15,6 +15,15 @@ string libRR_org_directive = ".ORGA";
 string libRR_bank_directive = ".BANK $";
 string libRR_slot_directive = "SLOT";
 
+// Common Paths (vary between OS)
+#ifdef _WIN32
+char* libRR_path_seperator= "\\";
+char* libRR_path_to_export_templates = ".\\libRetroReversing\\export_templates\\";
+#else
+char* libRR_path_seperator= "/";
+char* libRR_path_to_export_templates = "./libRetroReversing/export_templates/";
+#endif
+
 bool libRR_replace_string(std::string& str, const std::string& from, const std::string& to) {
     size_t start_pos = str.find(from);
     if(start_pos == std::string::npos)
