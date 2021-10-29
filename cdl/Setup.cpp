@@ -744,8 +744,8 @@ string libRR_parse_message_from_web(json message_json) //string message)
   printf("About to set console specific json\n");
   add_console_specific_game_json();
   printf("About to convert game_json dump to string\n");
-  string dump = game_json.dump();
-  printf("About to return dump to client\n");
+  string dump = game_json.dump(1, ' ', true, nlohmann::detail::error_handler_t::replace);
+  printf("About to return dump to client %s\n", dump);
   
   return dump;
 }
