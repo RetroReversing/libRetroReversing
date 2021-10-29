@@ -108,4 +108,13 @@ extern "C" {
     printf("Saturn: Export All files to Reversing Project, depends on which core we are using");
   }
 
+  string get_slot_for_address(int32_t offset) {
+    return "0";
+  }
+
+  string write_console_asm_header() {
+    string contents = "";
+    return contents;
+  }
+
 }
