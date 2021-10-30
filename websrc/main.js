@@ -139,7 +139,7 @@ function App() {
   const tabs = createTabs(loading, { setCurrentDialog, setCurrentDialogParameters }, gameInformation, fullState, cdData, allInformation)
   
   const dialogs = {
-    'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} />,
+    'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} fullState={fullState} />,
     'resume': <ResumeDialog setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} fullState={fullState} />,
     'edit_function': <EditFunctionDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />,
     'export_function': <ExportFunctionDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />,

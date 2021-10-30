@@ -135,7 +135,7 @@ void libRR_setup_retro_base_directory() {
 }
 
 void libRR_setup_directories() {
-
+  printf("libRR_setup_directories");
   libRR_setup_retro_base_directory();
 
   libRR_project_directory = retro_base_directory;
@@ -154,6 +154,7 @@ void libRR_setup_directories() {
 // This isn't used yet
 // 
 void read_json_config() {
+  cout << "Project directory:" << libRR_project_directory << std::endl;
   readJsonToObject(libRR_project_directory+"/game.json", game_json);
   cout << game_json.dump(4) << std::endl;
   readJsonToObject(libRR_project_directory+"/playthroughs.json", playthroughs_json);
@@ -745,7 +746,7 @@ string libRR_parse_message_from_web(json message_json) //string message)
   add_console_specific_game_json();
   printf("About to convert game_json dump to string\n");
   string dump = game_json.dump(1, ' ', true, nlohmann::detail::error_handler_t::replace);
-  printf("About to return dump to client %s\n", dump);
+  printf("About to return dump to client\n");
   
   return dump;
 }

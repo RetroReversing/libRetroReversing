@@ -24,6 +24,7 @@ bool libRR_alreadyWarnedAboutEndOfLog = false;
 // playback_fake_input_state_cb - plays back input
 // 
 int lastPlayedBackFrame = 0;
+bool savePowerMode = true;
 int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
       unsigned index, unsigned id) {
       // printf("playback_fake_input_state_cb\n");
@@ -36,6 +37,7 @@ int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
         if (!libRR_alreadyWarnedAboutEndOfLog) {
           printf("WARNING: button history was empty: probably at the end\n");
           libRR_alreadyWarnedAboutEndOfLog = true;
+            libRR_display_message("Ready to take new button input");
         }
         libRR_should_append_history = true;
         libRR_should_playback_input = false;
@@ -47,7 +49,9 @@ int16_t playback_fake_input_state_cb(unsigned port, unsigned device,
       if (RRCurrentFrame > lastPlayedBackFrame) {
         playback_button_history.pop();
         if (button_state>0) {
-          libRR_display_message("Playback Pressed: %d",button_state);
+          if (!savePowerMode) {
+            libRR_display_message("Playback Pressed: %d",button_state);
+          }
         }
         lastPlayedBackFrame = RRCurrentFrame;
       }
@@ -84,7 +88,7 @@ unsigned long long libRR_playback_next_input_state() {
 void libRR_log_input_state_bitmask(retro_input_state_t input_cb) {
   int16_t ret = input_cb( 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK );
   button_history.push(ret);
-  printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, ret);
+  // printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, ret);
 }
 
 retro_input_state_t libRR_handle_input(retro_input_state_t input_cb) {
@@ -108,7 +112,7 @@ void log_input_state(retro_input_state_t input_cb) {
     }
   }
   button_history.push(frameInputBitField);
-  printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
+  // printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, frameInputBitField);
 }
 
 // max_number is used if you want to only save up to a particular frame number
