@@ -12,6 +12,17 @@ export function sendActionToServer(payload) {
   });
 }
 
+export function loadState(frame) {
+  console.log("About to load state:", frame);
+  const payload = {
+    category: 'load_state',
+    state: {
+      frame
+    },
+  };
+  sendActionToServer(payload);
+};
+
 export function requestFileFromServer(filename) {
   return axios.get('/game/playthroughs/Initial%20Playthrough/'+filename, { responseType: 'arraybuffer' })
   .then(function (response) {

@@ -20,7 +20,7 @@ json playthough_function_usage = {};
 json libRR_console_constants = {};
 string libRR_project_directory = "";
 string libRR_export_directory = "";
-string libRR_current_playthrough_name = "Initial Playthrough";
+string libRR_current_playthrough_name = "Initial";
 int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
 player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .fullLogging = false, .endAt = -1, .loopFrame = -1};
@@ -213,7 +213,7 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   // 
   read_json_config();
   libRR_setup_directories();
-  init_playthrough("Initial Playthrough"); // todo get name from front end
+  init_playthrough(libRR_current_playthrough_name); // todo get name from front end
   game_json["current_state"] = current_state;
   setup_web_server();
 }
@@ -297,7 +297,7 @@ void save_constant_metadata() {
 void save_playthough_metadata() {
   printf("Save Playthough Meta Data");
   if (libRR_current_playthrough.count("name") < 1) {
-    libRR_current_playthrough["name"] = "Initial Playthrough";
+    libRR_current_playthrough["name"] = libRR_current_playthrough_name;
     libRR_current_playthrough["states"] =  json::parse("[]");
     libRR_current_playthrough["current_state"] =  json::parse("{}");
     libRR_current_playthrough["last_frame"] =  0;

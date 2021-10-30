@@ -8,18 +8,9 @@ import CardContent from '@material-ui/core/CardContent';
 import Grid from '@material-ui/core/Grid';
 
 import SaveStateList from '../main/SaveStateList';
-import { sendActionToServer } from '../server';
+import { sendActionToServer, loadState } from '../server';
 
-export function loadState(frame) {
-  console.log("About to load state:", frame);
-  const payload = {
-    category: 'load_state',
-    state: {
-      frame
-    },
-  };
-  sendActionToServer(payload);
-};
+
 
 export function deleteState(frame) {
   console.log("About to delete state:", frame);

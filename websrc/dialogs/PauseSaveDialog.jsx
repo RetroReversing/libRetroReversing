@@ -6,7 +6,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import { sendActionToServer } from '../server';
+import { sendActionToServer, loadState } from '../server';
 
 export default function PauseSaveDialog( { fullState, setCurrentDialog, open = true }) {
 
@@ -54,8 +54,9 @@ export default function PauseSaveDialog( { fullState, setCurrentDialog, open = t
           <Button onClick={()=> {
             // ideally would like to load previous state here
             // how to get previous_frame?
-            console.error('Would like to load frame:', fullState?.playthrough?.current_state?.frame);
-            // loadState(previous_frame)
+            const previous_frame = fullState?.playthrough?.current_state?.frame;
+            console.error('Would like to load frame:', previous_frame);
+            loadState(previous_frame);
             handleClose();
           }} color="error">
             Go back to previous State
