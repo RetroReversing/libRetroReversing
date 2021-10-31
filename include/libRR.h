@@ -172,9 +172,12 @@ void libRR_handle_emulator_close();
 void libRR_export_all_files();
 string get_builtin_function_name(const unsigned int offset, int bank);
 
-// extern "C" {
-  void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int total);
-// }
+// Input
+void libRR_setInputDescriptor(struct retro_input_descriptor* descriptor, int total);
+
+//Save states
+void libRR_direct_serialize(void *data, size_t size); //alternative to calling retro_serialize without an infinate loop
+bool libRR_direct_unserialize(const void *data, size_t size);
 
 #ifdef __cplusplus
 }

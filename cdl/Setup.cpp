@@ -319,7 +319,7 @@ string libRR_load_save_state(int frame) {
   uint8_t *data = (uint8_t *)malloc(length_of_save_buffer);
   string filename = "save_"+to_string(frame)+".sav";
   libRR_read_binary_data_from_file(data, length_of_save_buffer, current_playthrough_directory+filename);
-  retro_unserialize(data, length_of_save_buffer);
+  libRR_direct_unserialize(data, length_of_save_buffer);
   RRCurrentFrame = frame;
   libRR_should_playback_input = true;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", frame);
@@ -363,14 +363,14 @@ string libRR_delete_save_state(int frame) {
   return libRR_current_playthrough.dump(4);
 }
 
-string libRR_create_save_state(string name, int frame) {
+string libRR_create_save_state(string name, int frame, bool fast_save = false) {
 
   string filename = "save_"+to_string(frame)+".sav";
 
   // Create Save state
   size_t length_of_save_buffer = retro_serialize_size();
   uint8_t *data = (uint8_t *)malloc(length_of_save_buffer);
-  retro_serialize(data, length_of_save_buffer);
+  libRR_direct_serialize(data, length_of_save_buffer);
   cout << "Length of save buffer: " << length_of_save_buffer << " Name:" << name << std::endl;
   libRR_write_binary_data_to_file(data, length_of_save_buffer, current_playthrough_directory+filename);
   free(data);
@@ -398,6 +398,11 @@ string libRR_create_save_state(string name, int frame) {
 
   // json json_save_states = current_state.libRR_save_states;
   return libRR_current_playthrough.dump(4);
+}
+
+void libRR_create_save_state_c(const char* name, int frame, bool fast_save) {
+  printf("Called C version of libRR_create_save_state");
+  libRR_create_save_state(name, frame);
 }
 
 string libRR_get_data_for_file(int offset, int length, bool swapEndian);

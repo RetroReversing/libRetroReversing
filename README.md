@@ -179,3 +179,18 @@ for (auto& el : o.items()) {
 * `std::stoi()` (string to integer)
 * `to_string()` (integer to string)
 * `libRR_replace_string(thestring, toreplace, replacement)` (replace substring in thestring)
+
+
+# Creating a libRR enabled core
+
+## libretro.c(pp)
+In the main libretro file, find the `bool retro_unserialize(const void *data, size_t size)` function and duplicate it with the name `bool libRR_direct_unserialize(const void *data, size_t size)`.
+
+Then in the original one `` add the following line:
+```
+libRR_load_save_state(libRR_previous_fast_save);
+```
+
+Do the same for the serialize one too.
+
+The reason for this is retro_unserialize gets called by the libRetro FrontEnd and `libRR_direct_unserialize` gets called specifically by `libRR_load_save_state` when creating fast saves and if it called the original it would be stuck in an endless loop (it would call itself over and over).
