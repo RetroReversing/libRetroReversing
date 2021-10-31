@@ -23,8 +23,8 @@ export function loadState(frame) {
   sendActionToServer(payload);
 };
 
-export function requestFileFromServer(filename) {
-  return axios.get('/game/playthroughs/Initial%20Playthrough/'+filename, { responseType: 'arraybuffer' })
+export function requestFileFromServer(filename, playthrough_name = "Initial") {
+  return axios.get(`/game/playthroughs/${playthrough_name}/${filename}`, { responseType: 'arraybuffer' })
   .then(function (response) {
     console.info("Response from emulator:",response);
     return response.data;
