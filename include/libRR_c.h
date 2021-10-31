@@ -71,6 +71,8 @@ bool libRR_run_frame();
 
 // Save states
 void libRR_create_save_state_c(const char* name, int frame, bool fast_save); // C version creating the save state and saving screenshot and metadata
+void libRR_load_save_state_c(int frame); // C version for loading libRR metadata along with save
+
 
 #ifdef __cplusplus
 }
