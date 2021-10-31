@@ -456,6 +456,9 @@ mg_static_assert(sizeof(size_t) == 4 || sizeof(size_t) == 8,
 
 typedef const char *SOCK_OPT_TYPE;
 
+#define MAX_PATH          1000
+#define PATH_MAX          1000
+
 #if !defined(PATH_MAX)
 #define W_PATH_MAX (MAX_PATH)
 /* at most three UTF-8 chars per wchar_t */
@@ -7432,6 +7435,7 @@ interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
 
 	/* Step 7: URI rewriting */
 	rewrite = conn->dom_ctx->config[URL_REWRITE_PATTERN];
+	printf("\n\nCivetweb rewrite: %s \n", rewrite);
 	while ((rewrite = next_option(rewrite, &a, &b)) != NULL) {
 		if ((match_len = match_prefix(a.ptr, a.len, uri)) > 0) {
 			mg_snprintf(conn,
@@ -7453,6 +7457,7 @@ interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
 	/* Step 8: Check if the file exists at the server */
 	/* Local file path and name, corresponding to requested URI
 	 * is now stored in "filename" variable. */
+	printf("civetweb filename %s\n", filename);
 	if (mg_stat(conn, filename, filestat)) {
 		int uri_len = (int)strlen(uri);
 		int is_uri_end_slash = (uri_len > 0) && (uri[uri_len - 1] == '/');
