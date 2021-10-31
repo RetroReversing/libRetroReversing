@@ -24,7 +24,7 @@ export function deleteState(frame) {
   sendActionToServer(payload);
 };
 
-function _MainPage( { fullState }) {
+function _MainPage( { fullState, playthrough_name="Initial" }) {
 
   let current_state_card = null;
   
@@ -35,7 +35,7 @@ function _MainPage( { fullState }) {
             <Typography color="textSecondary" gutterBottom>
               Current State
             </Typography>
-            <img src={"/game/playthroughs/Initial%20Playthrough/save_"+fullState?.playthrough?.current_state?.frame+".sav.png"} alt={fullState?.playthrough?.current_state?.name} />
+            <img src={"/game/playthroughs/" + playthrough_name + "/save_"+fullState?.playthrough?.current_state?.frame+".sav.png"} alt={fullState?.playthrough?.current_state?.name} />
             <Typography variant="h5" component="h2">
             {fullState?.playthrough?.current_state?.name}
             </Typography>

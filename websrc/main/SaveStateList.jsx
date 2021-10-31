@@ -22,10 +22,10 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { Grid } from '@material-ui/core';
 
 
-export function createSaveStateTile(tile,load_state, prefix="", delete_state=noop) {
+export function createSaveStateTile(tile, load_state, prefix="", delete_state=noop, playthrough_name="Initial") {
 
   return (<GridListTile key={tile.frame}>
-    <img src={"/game/playthroughs/Initial%20Playthrough/save_"+tile.frame+".sav.png"} alt={tile.name} />
+    <img src={"/game/playthroughs/"+playthrough_name+"/save_"+tile.frame+".sav.png"} alt={tile.name} />
     <GridListTileBar
       title={prefix+tile.name}
       subtitle={<span>frame: {tile.frame}</span>}
