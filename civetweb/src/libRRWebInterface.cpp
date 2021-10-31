@@ -121,11 +121,12 @@ void print_cwd() {
 extern char retro_base_directory[4096];
 
 void setup_web_server() {
-  printf("Setting up web server on Port 1234 \n");
+	printf("Setting up web server on Port 1234 \n");
 	print_cwd();
-  memset(&callbacks, 0, sizeof(callbacks));
-  callbacks.log_message = log_message;
-	string url_rewrite = "/game/="+libRR_project_directory;
+	memset(&callbacks, 0, sizeof(callbacks));
+	callbacks.log_message = log_message;
+	string url_rewrite = "/game/="+libRR_project_directory+"";
+	printf("\n\n\nINFO: Setting up project directory rewrite: %s\n", url_rewrite.c_str());
 	const char* frontend_folder = "./libRetroReversing/websrc/dist";
 
 	if( access( "./libRetroReversing/websrc/dist/index.html", F_OK ) == 0 ) {
@@ -140,13 +141,16 @@ void setup_web_server() {
 
 	/* Initialize the library */
 	mg_init_library(0);
-	const char *options[] = {
+	// const char* options[] = new const char*[];
+	char *options[] = {
 		"document_root",
-	frontend_folder,
+	(char*) frontend_folder,
 	"listening_ports",
 	"127.0.0.1:1234", //"1234",
 	"request_timeout_ms",
 	"10000",
+	"url_rewrite_patterns",
+	(char*) url_rewrite.c_str(),
 	"error_log_file",
 	"error.log",
 	"enable_directory_listing",
@@ -159,13 +163,12 @@ void setup_web_server() {
 	"",
 	"access_control_allow_origin",
 	"localhost",
-	"url_rewrite_patterns",
-	url_rewrite.c_str(),
 	0
 };
+printf("server options: %s\n\n", options[17]);
 
     /* Start the server */
-    ctx = mg_start(&callbacks, 0, options);
+    ctx = mg_start(&callbacks, 0, (const char**) options);
 
     mg_set_request_handler(ctx, "/postresponse", PostResponser, 0);
 
