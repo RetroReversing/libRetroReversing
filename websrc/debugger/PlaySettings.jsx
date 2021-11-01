@@ -64,7 +64,6 @@ export function PlaySettings( { setCurrentDialog, playerState, setPlayerState })
     setPlayerState(newPlayerState);
   }
 
-
   return <Fragment> 
   <Grid container justify="flex-end" spacing={2}>
     <Grid item>

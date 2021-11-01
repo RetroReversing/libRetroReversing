@@ -12,7 +12,7 @@ import { sendActionToServer, loadState } from '../server';
 
 
 
-export function deleteState(frame) {
+export function deleteState({ setFullState, fullState }, frame) {
   console.log("About to delete state:", frame);
   // TODO: should probably warn if its the latest state (as would need to remove button presses and could invalidate functions)
   const payload = {
@@ -21,10 +21,13 @@ export function deleteState(frame) {
       frame
     },
   };
-  sendActionToServer(payload);
+  sendActionToServer(payload).then((response) => {
+    console.info("Delete successful response:", response, "fullstate:", fullState);
+    setFullState({ ...fullState, playthrough: response })
+  });
 };
 
-function _MainPage( { fullState, playthrough_name="Initial" }) {
+function _MainPage( { fullState, setFullState, playthrough_name="Initial" }) {
 
   let current_state_card = null;
   
@@ -57,7 +60,7 @@ function _MainPage( { fullState, playthrough_name="Initial" }) {
           <Card>
             <CardContent>
               <Typography variant="h6">History</Typography>
-              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} load_state={loadState} delete_state={deleteState} />
+              <SaveStateList save_states={fullState?.playthrough?.states} last_frame={fullState?.playthrough?.last_frame} load_state={loadState} delete_state={deleteState.bind(null, { setFullState, fullState})} />
             </CardContent>
           </Card>
         </Grid>

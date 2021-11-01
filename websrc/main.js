@@ -82,13 +82,13 @@ function setupAdditionalTabs(allInfo, tabs) {
   return tabs;
 }
 
-function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters }, gameInformation, fullState, cdData, allInformation) {
+function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation) {
   const tabs =  {
     input: <InputHistory mainState={gameInformation} fullState={fullState} />,
     functions: <FunctionList loading={loading} setCurrentDialog={setCurrentDialog} setCurrentDialogParameters={setCurrentDialogParameters} />,
     data_structures: <DataStructures />,
     game_info: <GameInformation />,
-    main: <MainPage mainState={gameInformation} fullState={fullState} />,
+    main: <MainPage mainState={gameInformation} fullState={fullState} setFullState={setFullState} />,
     resources: <ResourceList cdData={cdData} />,
     // additional tabs are setup using: setupAdditionalTabs
   };
@@ -136,7 +136,7 @@ function App() {
   });
 
   const cdData = allInformation?.cd_data?.root_files;
-  const tabs = createTabs(loading, { setCurrentDialog, setCurrentDialogParameters }, gameInformation, fullState, cdData, allInformation)
+  const tabs = createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation)
   
   const dialogs = {
     'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} fullState={fullState} />,
@@ -175,6 +175,9 @@ function App() {
       setAllInformation(info);
       setupAdditionalTabs(info, tabs)
       setFullState(info);
+      if (info.playerState) {
+        setPlayerState({ ...info.playerState, playerState});
+      }
       setLoading(false);
     });
     // history.push("/"+currentTab);
