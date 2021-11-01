@@ -1,5 +1,6 @@
 ifeq ($(OS),Windows_NT)
     CCFLAGS += -D WIN32 -D _WIN32 -w
+    # TODO: figure out why -fsanitize=address doesn't work on window (https://stackoverflow.com/questions/55018627/cannot-find-lasan-using-address-sanitizer-in-qt-creator-in-windows-mingw)
     CXXFLAGS += -D WIN32 -D _WIN32 -std=c++11 -lstdc++fs -w -lstdc++
     LDFLAGS += -std=c++11 -lstdc++fs -lstdc++ -pthread -lws2_32
     ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)

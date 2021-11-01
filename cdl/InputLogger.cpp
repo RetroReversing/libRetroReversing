@@ -119,9 +119,9 @@ void log_input_state(retro_input_state_t input_cb) {
 void libRR_resave_button_state_to_file(string filename, int max_number, json changes) {
   std::fstream output_file;
   // read the state before we open it as an output file
+  printf("libRR_resave_button_state_to_file max_number: %d\n", max_number);
   libRR_read_button_state_from_file(filename, 0);
   output_file = std::fstream(filename, std::ios::out | std::ios::binary);
-  printf("libRR_resave_button_state_to_file max_number: %d\n", max_number);
   int frame_number = 0;
   while (!playback_button_history.empty()) { 
     unsigned long long button_state = playback_button_history.front();
@@ -144,6 +144,7 @@ void libRR_resave_button_state_to_file(string filename, int max_number, json cha
   } 
   output_file.close();
   libRR_read_button_state_from_file(filename, RRCurrentFrame);
+  printf("End of libRR_resave_button_state_to_file\n");
 }
 
 
@@ -159,9 +160,10 @@ string libRR_change_input_buttons(json changes) {
 void libRR_save_button_state_to_file(string filename) {
   std::fstream output_file;
   // read the state before we open it as an output file
+  printf("libRR_save_button_state_to_file\n");
+  // first read the whole file right from the start (frame 0)
   libRR_read_button_state_from_file(filename, 0);
   output_file = std::fstream(filename, std::ios::out | std::ios::binary);
-  printf("libRR_save_button_state_to_file\n");
 
   if (libRR_should_append_history) {
     // Use was playing back a history and now added additional logging
@@ -188,6 +190,7 @@ void libRR_save_button_state_to_file(string filename) {
 // # libRR_read_button_state_from_file - loads the buffer of input key presses to be run each frame
 //
 void libRR_read_button_state_from_file(string filename, int start_frame) {
+  printf("libRR_read_button_state_from_file start frame: %d\n", start_frame);
   std::ifstream myfile(filename, std::ios_base::in | std::ios::binary);
   unsigned long long frameInputBitField = 255;
   lastPlayedBackFrame = 0;

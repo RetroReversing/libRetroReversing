@@ -309,6 +309,7 @@ void save_playthough_metadata() {
 }
 
 void libRR_reset(unsigned int reset_frame) {
+  printf("libRR_reset\n");
   RRCurrentFrame = reset_frame;
   libRR_should_playback_input = true;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", reset_frame);
@@ -323,11 +324,17 @@ string libRR_load_save_state(int frame) {
   RRCurrentFrame = frame;
   libRR_should_playback_input = true;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", frame);
-
+  printf("End of libRR_load_save_state at frame: %d\n", frame);
   return libRR_current_playthrough.dump(4);
 } 
 
+void libRR_load_save_state_c(int frame) {
+  printf("Called C version of libRR_load_save_state");
+  libRR_load_save_state(frame);
+}
+
 string libRR_delete_save_state(int frame) {
+  printf("libRR_delete_save_state frame: %d\n", frame);
   string filename = current_playthrough_directory+"save_"+to_string(frame)+".sav";
   string png_filename = filename+".png";
   libRR_delete_file(filename);
@@ -335,28 +342,46 @@ string libRR_delete_save_state(int frame) {
 
   json j = libRR_current_playthrough["states"];
   int i=0;
-  json next_latest_state;
+
+// Loop over frames and delete the one we don't want
   for (json::iterator it = j.begin(); it != j.end(); ++it) {
     json current = *it;
     if (current["frame"] == frame) {
-      // Delete this frame
-      current["frame"] = -1;
-      libRR_current_playthrough["states"].erase(i);
-    } else if (next_latest_state.is_null() || current["frame"]>next_latest_state["frame"]) {
-      // if the one we are deleting is latest then we need to find the next latest
-      next_latest_state = current;
+      printf("Found the frame: %d\n", frame);
+      // We found the frame in the list so now Delete this frame
+      current["frame"] = -1; // set it to -1 just incase
+      libRR_current_playthrough["states"].erase(i); // now remove it from the list
+      break;
     }
     i++;
   }
 
-  int latest_state_number = libRR_current_playthrough["current_state"]["frame"];
-  if (frame == latest_state_number && !next_latest_state.is_null()) {
+
+  json next_latest_state; // store the next highest state after this one
+  int highest_frame = 0;
+  for (json::iterator it = j.begin(); it != j.end(); ++it) {
+    json current = *it;
+    printf("Loop over all frames current: %d\n", current["frame"]);
+    if (current["frame"] >= highest_frame) {
+      highest_frame = current["frame"];
+    }
+    if (next_latest_state.is_null() || current["frame"]>next_latest_state["frame"]) {
+      // if the one we are deleting is latest then we need to find the next latest
+      next_latest_state = current;
+    }
+  }
+
+  // int latest_state_number = libRR_current_playthrough["current_state"]["frame"];
+  if (frame >= highest_frame && !next_latest_state.is_null()) {
+      printf("Deleting most recent state (state with highest frame number)\n");
       // User is deleting the last known state so we need special handling
       libRR_current_playthrough["current_state"] = next_latest_state;
       libRR_current_playthrough["last_frame"] = next_latest_state["frame"];
       printf("Since we are deleting the latest state, we will go back to: %d \n", (int)next_latest_state["frame"]);
       // next we want to remove some entries from the button log
       libRR_resave_button_state_to_file(current_playthrough_directory+"button_log.bin", (int)next_latest_state["frame"]);
+  } else {
+    printf("We are not deleting the latest state so we will not modify the button state\n");
   }
 
   save_playthough_metadata();
