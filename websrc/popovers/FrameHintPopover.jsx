@@ -4,8 +4,9 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import { each, noop } from 'lodash';
 import { createSaveStateTile } from '../main/SaveStateList';
-import { loadState } from '../pages/MainPage';
 import { Grid, GridList, Paper, Popper } from '@material-ui/core';
+import { loadState } from '../server';
+
 
 function findClosestStates(frame, states, load_state) {
   let closest_before = { frame: -1 };

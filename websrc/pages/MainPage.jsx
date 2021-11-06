@@ -10,8 +10,6 @@ import Grid from '@material-ui/core/Grid';
 import SaveStateList from '../main/SaveStateList';
 import { sendActionToServer, loadState } from '../server';
 
-
-
 export function deleteState({ setFullState, fullState }, frame) {
   console.log("About to delete state:", frame);
   // TODO: should probably warn if its the latest state (as would need to remove button presses and could invalidate functions)

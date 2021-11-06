@@ -12,12 +12,14 @@
   "dependencies": {
     "@material-ui/core": "^4.9.14",
     "@material-ui/icons": "^4.9.1",
+    "assert": "^2.0.0",
     "axios": "^0.21.2",
     "buffer": "^5.6.0",
     "create-react-class": "^15.6.3",
-    "material-ui-chip-input": "^1.1.0",
     "lodash": "^4.17.21",
+    "material-ui-chip-input": "^1.1.0",
     "monaco-editor": "^0.20.0",
+    "process": "^0.11.10",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-monaco-editor": "^0.36.0",
@@ -26,20 +28,26 @@
     "react-use": "^14.2.0",
     "react-virtualized": "^9.21.2",
     "react-window": "^1.8.5",
-    "rich-markdown-editor": "^10.0.2-1"
+    "rich-markdown-editor": "^10.0.2-1",
+    "vm-browserify": "^1.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
     "@babel/preset-env": "^7.8.4",
     "@babel/preset-react": "^7.8.3",
-    "babel-loader": "^8.0.6",
+    "autoprefixer": "^10.4.0",
+    "babel-loader": "^8.2.3",
     "css-loader": "^3.5.3",
     "file-loader": "^5.0.2",
-    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-plugin": "^5.5.0",
     "monaco-editor-webpack-plugin": "^1.9.0",
+    "postcss": "^8.3.11",
+    "source-map-loader": "^3.0.0",
     "style-loader": "^1.2.1",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.11.0"
+    "tailwindcss": "^2.2.19",
+    "ts-loader": "^9.2.6",
+    "webpack": "^5.62.1",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.4.0"
   }
 }

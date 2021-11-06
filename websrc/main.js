@@ -1,27 +1,18 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import clsx from 'clsx';
-import CssBaseline from '@material-ui/core/CssBaseline';
 
-import Button from "@material-ui/core/Button";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 // Icons
-import MailIcon from '@material-ui/icons/Mail';
 import MenuIcon from '@material-ui/icons/Menu';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import MemoryIcon from '@material-ui/icons/Memory';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+
 
 import { PlaySettings } from "./debugger/PlaySettings";
 import { RRDrawer } from './main/Drawer';
@@ -41,7 +32,6 @@ import {
   HashRouter as Router,
   Route,
   Switch,
-  Redirect,
   useLocation,
   useHistory,
   useParams
@@ -51,6 +41,7 @@ import Link from '@material-ui/core/Link';
 import EditFunctionDialog from './dialogs/EditFunctionDialog';
 import ExportFunctionDialog from './dialogs/ExportFunctionDialog';
 import LoadLinkerMapFileDialog from './dialogs/LoadLinkerMapFileDialog';
+import TripeDotDropDownMenu from "./pages/util/TripeDotDropDownMenu";
 
 function createBreadcrumbs(params) {
   return (<Breadcrumbs aria-label="breadcrumb">
@@ -94,7 +85,22 @@ function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, set
   };
   return setupAdditionalTabs(allInformation, tabs);
 }
-// let tabs = 
+
+function PlaythroughSelector( props ) {
+  return (<div style={{ display: 'flex', float: 'right' }}><FormControl style={{ minWidth: 200
+    , marginBottom: 20
+   , float: 'right'}}>
+    <InputLabel id="playthrough-selector-label">Playthrough</InputLabel><Select
+    labelId="playthrough-selector-label"
+    id="playthrough-selector"
+    value={"Initial"}
+    onChange={(v)=> console.log("Value changed:", v)}
+  >
+    <MenuItem value="Initial">Initial </MenuItem>
+    <MenuItem value="Full">Full Playthrough</MenuItem>
+    <MenuItem value="Speedrun">Speed run</MenuItem>
+  </Select></FormControl> <TripeDotDropDownMenu options={["Create New Playthrough", "Import button.log", "Import Bizhawk TAS"]} /></div>);
+}
 
 function App() {
   const classes = useStyles();
@@ -221,6 +227,7 @@ function App() {
       
         <div className={classes.drawerHeader} />
         {dialogs[currentDialog]}
+        <PlaythroughSelector />
         {createBreadcrumbs(params)}
           <Switch>
               {tabs[currentTab]}
