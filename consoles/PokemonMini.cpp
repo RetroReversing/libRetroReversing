@@ -15,7 +15,6 @@ int RRCurrentFrame=0;
 int libRR_write_ascii_frame = 0;
 
 void write_rom_mapping() {
-    // save_cdl_files();
     printf("ROM_PARAMS.headername: %s \n", rom_name.c_str());
     string filename = "./configs/";
     filename+=rom_name;
