@@ -43,6 +43,15 @@ const char* libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uin
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer);
 
+// N64 Memory logging
+void cdl_log_mem_write(const uint32_t lsaddr, uint32_t pc);
+void cdl_log_opcode_error();
+void cdl_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, struct r4300_core* r4300);
+uint32_t cdl_get_alternative_jump(uint32_t current_jump);
+int cdl_log_jump(int take_jump, uint32_t jump_target, uint8_t* jump_target_memory, uint32_t pc, uint32_t ra);
+void cdl_log_opcode(uint32_t program_counter, uint8_t* op_address);
+void cdl_log_jump_always(int take_jump, uint32_t jump_target, uint8_t* jump_target_memory, uint32_t ra, uint32_t pc);
+
 
 // ASM instruction logging
 const char* libRR_asm_format();
