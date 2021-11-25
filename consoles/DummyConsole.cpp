@@ -7,6 +7,16 @@
 
 extern "C" {
 
+  void libRR_direct_serialize(void *data, size_t size) {
+    // TODO: implement this as a save function that is called internally just to save
+    retro_serialize(data, size);
+  }
+
+  bool libRR_direct_unserialize(const void *data, size_t size) {
+    // TODO: implement this properly
+    retro_unserialize(data, size);
+  }
+
   // The following are only needed for consoles with CDs
   string retro_cd_base_directory = "libRR_RememberToSetCDBase";
   string retro_cd_path = "libRR_RememberToSetCDPATH";

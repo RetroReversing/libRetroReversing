@@ -15,7 +15,19 @@
     uint8_t zero [8];  // if zero [7] is non-zero, treat flags2 as zero
   };
   ines_header_t libRR_iNes = {};
+
+
 extern "C" {
+
+  void libRR_direct_serialize(void *data, size_t size) {
+    // TODO: implement this as a save function that is called internally just to save
+    retro_serialize(data, size);
+  }
+
+  bool libRR_direct_unserialize(const void *data, size_t size) {
+    // TODO: implement this properly
+    retro_unserialize(data, size);
+  }
 
   // GenesisPlusGX doesn't have this defined so:
   char retro_base_directory[4096];

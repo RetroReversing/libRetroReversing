@@ -153,6 +153,17 @@ void cdl_log_memory_mappings(mem_mapping* mappings, uint32_t number_of_mappings)
 }
 
 extern "C" {
+
+ void libRR_direct_serialize(void *data, size_t size) {
+    // TODO: implement this as a save function that is called internally just to save
+    retro_serialize(data, size);
+  }
+
+  bool libRR_direct_unserialize(const void *data, size_t size) {
+    // TODO: implement this properly
+    retro_unserialize(data, size);
+  }
+
   void libRR_export_all_files() {
     printf("N64: Export All files to Reversing Project, depends on which core we are using");
   }

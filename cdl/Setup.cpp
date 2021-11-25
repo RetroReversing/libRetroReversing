@@ -12,7 +12,7 @@ bool libRR_should_playback_input = true;
 bool libRR_should_log_input = false;
 int libRR_last_logged_frame = 0;
 string current_playthrough_directory = "";
-json game_json = {};
+json game_json = json::object();
 json override_code_json = {};
 json playthroughs_json = {};
 json libRR_current_playthrough = {};
@@ -69,7 +69,7 @@ void init_playthrough(string name) {
   cout << "About to set functions array" << std::endl;
   if (game_json.contains("functions") && game_json["functions"].dump() != "{}") {
     // cout << "FUNCTION JSON:" << game_json["functions"].dump() << std::endl;
-    functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>>();
+    functions = game_json["functions"].get<std::map<uint32_t, cdl_labels>  >();
   }
 
   cout << "About to save playthough metadata" << std::endl;
@@ -361,7 +361,7 @@ string libRR_delete_save_state(int frame) {
   int highest_frame = 0;
   for (json::iterator it = j.begin(); it != j.end(); ++it) {
     json current = *it;
-    printf("Loop over all frames current: %d\n", current["frame"]);
+    printf("Loop over all frames current: %d\n", (int) current["frame"]);
     if (current["frame"] >= highest_frame) {
       highest_frame = current["frame"];
     }

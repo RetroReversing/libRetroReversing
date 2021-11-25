@@ -27,6 +27,17 @@ namespace VDP2
 }
 
 extern "C" {
+
+  void libRR_direct_serialize(void *data, size_t size) {
+    // TODO: implement this as a save function that is called internally just to save
+    retro_serialize(data, size);
+  }
+
+  bool libRR_direct_unserialize(const void *data, size_t size) {
+    // TODO: implement this properly
+    retro_unserialize(data, size);
+  }
+
   void libRR_log_branch(uint32_t current_pc, uint32_t target_pc) {
 
   }

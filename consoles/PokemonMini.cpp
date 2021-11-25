@@ -59,19 +59,29 @@ void write_rom_mapping() {
 
 
 extern "C" {
-void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
-  printf("%d\n",1);
-}
+  void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, void* r4300) {
+    printf("%d\n",1);
+  }
 
-void main_state_load(const char *filename)
-{
-  // TODO: actually load the state here
-}
+  void main_state_load(const char *filename)
+  {
+    // TODO: actually load the state here
+  }
 
-void main_state_save(int format, const char *filename)
-{
-  // TODO: actually load the state here
-}
+  void main_state_save(int format, const char *filename)
+  {
+    // TODO: actually load the state here
+  }
+
+  void libRR_direct_serialize(void *data, size_t size) {
+    // TODO: implement this as a save function that is called internally just to save
+    retro_serialize(data, size);
+  }
+
+  bool libRR_direct_unserialize(const void *data, size_t size) {
+    // TODO: implement this properly
+    retro_unserialize(data, size);
+  }
 
 // struct retro_input_descriptor desc[9];
 // int total_input_buttons=0;

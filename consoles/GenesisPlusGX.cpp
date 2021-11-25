@@ -10,6 +10,15 @@ extern json allLabels;
 extern  int libRR_total_banks;
 extern "C" {
 
+  void libRR_direct_serialize(void *data, size_t size) {
+    // TODO: implement this as a save function that is called internally just to save
+    retro_serialize(data, size);
+  }
+
+  bool libRR_direct_unserialize(const void *data, size_t size) {
+    // TODO: implement this properly
+    retro_unserialize(data, size);
+  }
 
   // This is used for most SEGA 8bit and 16bit consoles, such as Master System, Game Gear and Mega Drive
   const char* libRR_console = "GenesisPlusGX";
