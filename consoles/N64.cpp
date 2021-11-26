@@ -16,7 +16,28 @@ std::map<uint32_t,bool> offsetHasAssembly;
 std::vector<uint32_t> function_stack = std::vector<uint32_t>();
 std::vector<uint32_t> previous_ra; // previous return address
 string ucode_crc = "";
+uint32_t current_function = 0;
+uint32_t rspboot = 0;
 
+
+#define NUMBER_OF_MANY_READS 40
+#define NUMBER_OF_MANY_WRITES 40
+
+
+// C++ start
+void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, struct r4300_core* r4300) {
+//   if (support_n64_prints) {
+//     if (strcmp(labels[previous_function_backup].func_name.c_str(),"osSyncPrintf") ==0) {
+//         uint32_t* memory = fast_mem_access(r4300, registers[REGISTER_A2]);
+//         string swapped = string_endian_swap((const char*)memory);
+//         labels[function_stack.back()].printfs[swapped] = "";
+//         printf("\n%s > %s",labels[function_stack.back()].func_name.c_str(), swapped.c_str());
+//     }
+//   }
+}
+// C++ end
+
+extern "C" {
 
  // 
 // # Toggles
@@ -32,6 +53,10 @@ bool should_reverse_jumps = false;
 
 // Functions declared in this file
 void readLibUltraSignatures();
+void find_most_similar_function(uint32_t function_offset, string bytes);
+void add_note(uint32_t pc, uint32_t target, string problem);
+void cdl_common_log_tag(const char* tag);
+
 
 // start from mupen
 typedef struct
@@ -131,6 +156,7 @@ uint32_t *fast_mem_access(struct r4300_core* r4300, uint32_t address);
 
 json libultra_signatures;
 string last_reversed_address = "";
+
 
 void setTogglesBasedOnConfig() {
     cdl_log_memory = reConfig["shouldLogMemory"];
@@ -346,16 +372,7 @@ void write_rom_mapping() {
 
 }
 
-void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, struct r4300_core* r4300) {
-//   if (support_n64_prints) {
-//     if (strcmp(labels[previous_function_backup].func_name.c_str(),"osSyncPrintf") ==0) {
-//         uint32_t* memory = fast_mem_access(r4300, registers[REGISTER_A2]);
-//         string swapped = string_endian_swap((const char*)memory);
-//         labels[function_stack.back()].printfs[swapped] = "";
-//         printf("\n%s > %s",labels[function_stack.back()].func_name.c_str(), swapped.c_str());
-//     }
-//   }
-}
+
 
 // TLB entry
 struct tlb_entry
@@ -448,7 +465,716 @@ void log_tlb_entry(const struct tlb_entry* e, size_t entry) {
 //     }
 // }
 
-extern "C" {
+#define CDL_ALIST 0
+#define CDL_UCODE_CRC 2
+void cdl_log_rsp(uint32_t log_type, uint32_t address, const char * extra_data) {
+    if (!log_rsp) return;
+    if (log_type == CDL_ALIST) {
+        if (audio_address.find(address) != audio_address.end() ) 
+            return;
+        audio_address[address] = n2hexstr(address)+extra_data;
+        // cout << "Alist address:" << std::hex << address << " " << extra_data << "\n";
+        return;
+    }
+    if (log_type == CDL_UCODE_CRC) {
+        ucode_crc = n2hexstr(address);
+        return;
+    }
+    cout << "Log rsp\n";
+}
+
+void cdl_log_dpc_reg_write(uint32_t address, uint32_t value, uint32_t mask) {
+    cdl_common_log_tag("writeDPCRegs");
+}
+
+#define OSTASK_GFX 1
+#define OSTASK_AUDIO 2
+
+void cdl_log_ostask(uint32_t type, uint32_t flags, uint32_t bootcode, uint32_t bootSize, uint32_t ucode, uint32_t ucodeSize, uint32_t ucodeData, uint32_t ucodeDataSize) {
+    if (!log_ostasks) return;
+    if (rspboot == 0) {
+        rspboot = map_assembly_offset_to_rom_offset(bootcode,0);
+        auto bootDma = cdl_dma();
+        bootDma.dram_start=rspboot;
+        bootDma.dram_end = rspboot+bootSize;
+        bootDma.rom_start = rspboot;
+        bootDma.rom_end = rspboot+bootSize;
+        bootDma.length = bootSize;
+        bootDma.frame = l_CurrentFrame;
+        bootDma.func_addr = print_function_stack_trace(); 
+        bootDma.known_name = "rsp.boot";
+        dmas[rspboot] = bootDma;
+    }
+    uint32_t ucodeRom = map_assembly_offset_to_rom_offset(ucode,0);
+
+    if (dmas.find(ucodeRom) != dmas.end() ) 
+        return;
+    printf("OSTask type:%#08x flags:%#08x bootcode:%#08x ucode:%#08x ucodeSize:%#08x ucodeData:%#08x ucodeDataSize:%#08x \n", type, flags, bootcode, ucode, ucodeSize, ucodeData, ucodeDataSize);
+    uint32_t ucodeDataRom = map_assembly_offset_to_rom_offset(ucodeData,0);
+
+    auto data = cdl_dma();
+    data.dram_start=ucodeData;
+    data.dram_end = ucodeData+ucodeDataSize;
+    data.rom_start = ucodeDataRom;
+    data.rom_end = ucodeDataRom+ucodeDataSize;
+    data.length = ucodeDataSize;
+    data.frame = l_CurrentFrame;
+    data.func_addr = print_function_stack_trace(); 
+    data.is_assembly = false;
+
+    auto t = cdl_dma();
+    t.dram_start=ucode;
+    t.dram_end = ucode+ucodeSize;
+    t.rom_start = ucodeRom;
+    t.rom_end = ucodeRom+ucodeSize;
+    t.length = ucodeSize;
+    t.frame = l_CurrentFrame;
+    t.func_addr = print_function_stack_trace(); 
+    t.is_assembly = false;
+
+
+    if (type == OSTASK_AUDIO) {
+        t.guess_type = "rsp.audio";
+        t.ascii_header = "rsp.audio";
+        t.known_name = "rsp.audio";
+        data.ascii_header = "rsp.audio.data";
+        data.known_name = "rsp.audio.data";
+    } else if (type == OSTASK_GFX) {
+        t.guess_type = "rsp.graphics";
+        t.ascii_header = "rsp.graphics";
+        t.known_name = "rsp.graphics";
+        data.ascii_header = "rsp.graphics.data";
+        data.known_name = "rsp.graphics.data";
+    } else {
+        printf("other type:%#08x  ucode:%#08x \n",type, ucodeRom);
+    }
+    dmas[ucodeRom] = t;
+    dmas[ucodeDataRom] = data;
+}
+
+void add_tag_to_function(string tag, uint32_t labelAddr) {
+    if (!tag_functions || labels[labelAddr].isRenamed) return;
+    if (labels[labelAddr].func_name.find(tag) != std::string::npos) return;
+    labels[labelAddr].func_name += tag;
+}
+
+
+void find_audio_functions() {
+    printf("finding audio functions \n");
+    for(map<uint32_t, cdl_labels>::iterator it = labels.begin(); it != labels.end(); ++it) {
+        cdl_labels label = it->second;
+        if (label.isRenamed) {
+            continue; // only do it for new functions
+        }
+        if (label.many_memory_reads) {
+            add_tag_to_function("_manyMemoryReads", it->first);
+        }
+        if (label.many_memory_writes) {
+            add_tag_to_function("_manyMemoryWrites", it->first);
+        }
+        for(map<string, string>::iterator it2 = label.read_addresses.begin(); it2 != label.read_addresses.end(); ++it2) {
+            uint32_t address = hex_to_int(it2->first);
+            if (audio_address.find(address) != audio_address.end() ) 
+            {
+                cout << "Function IS audio:"<< label.func_name << "\n";
+            }
+            if (address>0x10000000 && address <= 0x107fffff) {
+                cout << "Function accesses cart rom:"<< label.func_name << "\n";
+            }
+        }
+        for(map<string, string>::iterator it2 = label.write_addresses.begin(); it2 != label.write_addresses.end(); ++it2) {
+            uint32_t address = hex_to_int(it2->first);
+            if (audio_address.find(address) != audio_address.end() ) 
+            {
+                cout << "Function IS audio:"<< label.func_name << "\n";
+            }
+            if (address>0x10000000 && address <= 0x107fffff) {
+                cout << "Function IS cart rom:"<< label.func_name << "\n";
+            }
+        }
+    }
+}
+bool isAddressCartROM(uint32_t address) {
+    return (address>0x10000000 && address <= 0x107fffff);
+}
+
+void cdl_log_audio_sample(uint32_t saved_ai_dram, uint32_t saved_ai_length) {
+    if (audio_samples.find(saved_ai_dram) != audio_samples.end() ) 
+        return;
+    auto t = cdl_dram_cart_map();
+    t.dram_offset = n2hexstr(saved_ai_dram);
+    t.rom_offset = n2hexstr(saved_ai_length);
+    audio_samples[saved_ai_dram] = t;
+    // printf("audio_plugin_push_samples AI_DRAM_ADDR_REG:%#08x length:%#08x\n", saved_ai_dram, saved_ai_length);
+}
+
+void cdl_log_cart_rom_dma_write(uint32_t dram_addr, uint32_t cart_addr, uint32_t length) {
+    if (cart_rom_dma_writes.find(cart_addr) != cart_rom_dma_writes.end() ) 
+        return;
+    auto t = cdl_dram_cart_map();
+    t.dram_offset = n2hexstr(dram_addr);
+    t.rom_offset = n2hexstr(cart_addr);
+    cart_rom_dma_writes[cart_addr] = t;
+    printf("cart_rom_dma_write: dram_addr:%#008x cart_addr:%#008x length:%#008x\n", dram_addr, cart_addr, length);
+}
+
+void cdl_log_dma_sp_write(uint32_t spmemaddr, uint32_t dramaddr, uint32_t length, unsigned char *dram) {
+    if (dma_sp_writes.find(dramaddr) != dma_sp_writes.end() ) 
+        return;
+    auto t = cdl_dram_cart_map();
+    t.dram_offset = n2hexstr(dramaddr);
+    t.rom_offset = n2hexstr(spmemaddr);
+    dma_sp_writes[dramaddr] = t;
+    // FrameBuffer RSP info
+    printWords(dram, dramaddr, length);
+    printf("FB: dma_sp_write SPMemAddr:%#08x Dramaddr:%#08x length:%#08x  \n", spmemaddr, dramaddr, length);
+}
+
+inline void cdl_log_memory_common(const uint32_t lsaddr, uint32_t pc) {
+    
+
+    // if (addresses.find(lsaddr) != addresses.end() ) 
+    //     return;
+    // addresses[lsaddr] = currentMap;
+}
+
+// This will be replace be libRR_log_function_call
+void log_function_call(uint32_t function_that_is_being_called) {
+    if (!log_function_calls) return;
+    uint32_t function_that_is_calling = function_stack.back();
+    if (labels.find(function_that_is_calling) == labels.end()) return;
+    if (labels[function_that_is_calling].isRenamed || labels[function_that_is_calling].doNotLog) return;
+    labels[function_that_is_calling].function_calls[function_that_is_being_called] = labels[function_that_is_being_called].func_name;
+}
+
+void cdl_log_jump_always(int take_jump, uint32_t jump_target, uint8_t* jump_target_memory, uint32_t ra, uint32_t pc) {
+    add_note(ra-8, pc, "Call (jal)");
+    previous_ra.push_back(ra);
+    uint32_t previous_function_backup = function_stack.back();
+    function_stack.push_back(jump_target);
+    current_function = jump_target;
+
+    if (jumps[jump_target] >3) return;
+    jumps[jump_target] = 0x04;
+
+    if (labels.find(jump_target) != labels.end() ) 
+        return;
+    log_function_call(jump_target);
+    auto t = cdl_labels();
+    string jump_target_str = n2hexstr(jump_target);
+    t.func_offset = jump_target_str;
+    if (labels.find(previous_function_backup) != labels.end()) {
+        t.caller_offset = labels[previous_function_backup].func_name+" (ra:"+n2hexstr(ra)+")";
+    } else {
+        t.caller_offset = n2hexstr(previous_function_backup);
+    }
+    t.func_name = libRR_game_name+"_func_"+jump_target_str;
+    t.func_stack = function_stack.size();
+    t.stack_trace = print_function_stack_trace();
+    t.doNotLog = false;
+    t.many_memory_reads = false;
+    t.many_memory_writes = false;
+    labels[jump_target] = t;
+    jump_data[jump_target] = jump_target_memory;
+}
+void cdl_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint32_t ra, int64_t* registers, struct r4300_core* r4300) {
+    uint32_t previous_function_backup = -1;
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return;
+    }
+
+    // if (previous_function_backup > ra) {
+    //     // cout << std::hex << " Odd the prev function start should never be before return address ra:" << ra << " previous_function_backup:" << previous_function_backup << "\n";
+    //     return;
+    // }
+
+    if (function_stack.size()>0) {
+        previous_function_backup = function_stack.back();
+        
+    }
+    else {
+        add_note(pc, jump_target, "function_stack <0");
+        // probably jumping from exception?
+        // cout << "Missed push back?" << std::hex << jump_target << " ra" << ra << " pc:"<< pc<< "\n";
+        // return;
+    }
+
+    if (jump_target == previous_ra.back()) {
+        add_note(pc, jump_target, "successful return");
+        
+    } else {
+        string problem = "Expected $ra to be 0x";
+        problem += n2hexstr(previous_ra.back());
+        problem += " but was:";
+        problem += n2hexstr(jump_target);
+        add_note(pc, jump_target, problem);
+        // return;
+    }
+    function_stack.pop_back();
+    current_function = function_stack.back();
+    previous_ra.pop_back();
+
+    console_log_jump_return(take_jump, jump_target, pc, ra, registers, r4300);
+
+    if (jumps[jump_target] >3) return;
+    jumps[jump_target] = 0x04;
+
+    if (jump_returns.find(previous_function_backup) != jump_returns.end()) 
+        {
+            return;
+        }
+    auto t = cdl_jump_return();
+    string jump_target_str = n2hexstr(jump_target);
+    t.return_offset = pc;
+    t.func_offset = previous_function_backup;
+    t.caller_offset = jump_target;
+    jump_returns[previous_function_backup] = t;
+
+    uint64_t length = pc-previous_function_backup;
+    // labels[previous_function_backup].return_offset_from_start = length;
+    if (length<2) {
+        return;
+    }
+
+    if (jump_data.find(previous_function_backup) != jump_data.end()) {
+        uint64_t byte_len = length;
+        if (byte_len > 0xFFFF) {
+            byte_len = 0xFFFF;
+        }
+        // string bytes = printBytesToStr(jump_data[previous_function_backup], byte_len)+"_"+n2hexstr(length);
+        string bytes_with_branch_delay = printBytesToStr(jump_data[previous_function_backup], byte_len+4)+"_"+n2hexstr(length+4);
+        string word_pattern = printWordsToStr(jump_data[previous_function_backup], byte_len+4)+" L"+n2hexstr(length+4,4);
+        labels[previous_function_backup].function_bytes = bytes_with_branch_delay;
+        labels[previous_function_backup].doNotLog = true;
+        labels[previous_function_backup].generatedSignature = true;
+        // labels[previous_function_backup].function_bytes_endian = Swap4Bytes(bytes);
+        
+        // now check to see if its in the mario map
+        // if (/*strcmp(game_name.c_str(),"SUPERMARIO") == 0 &&*/ linker_map_file.find( n2hexstr(previous_function_backup) ) != linker_map_file.end()) {
+        //     string offset = n2hexstr(previous_function_backup);
+        //     string func_name = linker_map_file[offset];
+        //     cout << game_name << "It is in the map file!" << n2hexstr(previous_function_backup) << " as:" << linker_map_file[n2hexstr(previous_function_backup)] << "\n";
+        //     function_signatures[bytes] = func_name;
+        //     if (strcmp(func_name.c_str(),"gcc2_compiled.")==0) return; // we don't want gcc2_compiled labels
+        //     libultra_signatures["function_signatures"][bytes_with_branch_delay] = func_name;
+        //     labels[previous_function_backup].func_name = libultra_signatures["function_signatures"][bytes_with_branch_delay];
+        //     return;
+        // }
+        
+
+        // if it is a libultra function then lets name it
+        if (libultra_signatures["library_signatures"].find(word_pattern) != libultra_signatures["library_signatures"].end()) {
+            std::cout << "In library_signatures:" <<  word_pattern << " name:"<< libultra_signatures["library_signatures"][word_pattern] << "\n";
+            labels[previous_function_backup].func_name = libultra_signatures["library_signatures"][word_pattern];
+            labels[previous_function_backup].isRenamed = true;
+            // return since we have already named this functions, don't need its signature to be saved
+            return;
+        }
+        if (libultra_signatures["game_signatures"].find(word_pattern) != libultra_signatures["game_signatures"].end()) {
+            // std::cout << "In game_signatures:" <<  word_pattern << " name:"<< libultra_signatures["game_signatures"][word_pattern] << "\n";
+            labels[previous_function_backup].func_name = libultra_signatures["game_signatures"][word_pattern];
+            // return since we have already named this functions, don't need its signature to be saved
+            return;
+        }
+        // if it is a libultra function then lets name it
+        if (libultra_signatures["function_signatures"].find(bytes_with_branch_delay) != libultra_signatures["function_signatures"].end()) {
+            std::cout << "In old libultra:" <<  bytes_with_branch_delay << " name:"<< libultra_signatures["function_signatures"][bytes_with_branch_delay] << "\n";
+            labels[previous_function_backup].func_name = libultra_signatures["function_signatures"][bytes_with_branch_delay];
+            if (labels[previous_function_backup].func_name.find("_func_") != std::string::npos) {
+                // this is a non renamed function as it was auto generated
+                find_most_similar_function(previous_function_backup, word_pattern);
+                libultra_signatures["game_signatures"][word_pattern] = labels[previous_function_backup].func_name;
+            }
+            else {
+                libultra_signatures["library_signatures"][word_pattern] = labels[previous_function_backup].func_name;
+                labels[previous_function_backup].isRenamed = true;
+            }
+            libultra_signatures["function_signatures"].erase(bytes_with_branch_delay);
+            // return since we have already named this functions, don't need its signature to be saved
+            return;
+        }
+
+        // if it is an OLD libultra function then lets name it (without branch delay)
+        // if (libultra_signatures["function_signatures"].find(bytes) != libultra_signatures["function_signatures"].end()) {
+        //     std::cout << "In OLDEST libultra:" <<  bytes << " name:"<< libultra_signatures["function_signatures"][bytes] << "\n";
+        //     labels[previous_function_backup].func_name = libultra_signatures["function_signatures"][bytes];
+        //     labels[previous_function_backup].isRenamed = true;
+        //     libultra_signatures["function_signatures"][bytes_with_branch_delay] = labels[previous_function_backup].func_name;
+        //     // delete the old non-branch delay version
+        //     libultra_signatures["function_signatures"].erase(bytes);
+        //     // return since we have already named this functions, don't need its signature to be saved
+        //     return;
+        // }
+
+        find_most_similar_function(previous_function_backup, word_pattern);
+        // cout << "word_pattern:" << word_pattern << "\n";
+
+        if (function_signatures.find(word_pattern) == function_signatures.end()) {
+            // save this new function to both libultra and trace json
+            function_signatures[word_pattern] = labels[previous_function_backup].func_name;
+            libultra_signatures["game_signatures"][word_pattern] = labels[previous_function_backup].func_name;
+        } else {
+            //function_signatures.erase(bytes);
+            // function_signatures[word_pattern] = "Multiple functions";
+            std::cout << "Multiple Functions for :" << *jump_data[previous_function_backup] << " len:" << length << " pc:0x"<< pc << " - 0x" << previous_function_backup << "\n";
+        }
+    }
+}
+
+int note_count = 0;
+void add_note(uint32_t pc, uint32_t target, string problem) {
+    if (!log_notes) return;
+    if (labels[function_stack.back()].doNotLog) return;
+    std::stringstream sstream;
+    sstream << std::hex << "pc:0x" << pc << "-> 0x" << target;
+    sstream << problem << " noteNumber:"<<note_count;
+    // cout << sstream.str();
+    labels[function_stack.back()].notes[pc] = sstream.str();
+    note_count++;
+}
+
+int cdl_log_jump(int take_jump, uint32_t jump_target, uint8_t* jump_target_memory, uint32_t pc, uint32_t ra) {
+    add_note(pc, jump_target, "jump");
+    // if (previous_ra.size() > 0 && ra != previous_ra.back()) {
+    //     cdl_log_jump_always(take_jump, jump_target, jump_target_memory, ra, pc);
+    //     //previous_ra.push_back(ra);
+    //     return take_jump;
+    // }
+    // if (should_reverse_jumps)
+    // {
+    //     time_t now = time(0);
+    //     if (jumps[jump_target] < 3) {
+    //         // should_reverse_jumps=false;
+    //         if ( now-time_last_reversed > 2) { // l_CurrentFrame-frame_last_reversed >(10*5) ||
+    //             take_jump = reverse_jump(take_jump, jump_target);               
+    //         }
+    //     } else if (now-time_last_reversed > 15) {
+    //         printf("Stuck fixing %d\n", find_first_non_executed_jump());
+    //         take_jump=!take_jump;
+    //         main_state_load(NULL);
+    //         // we are stuck so lets load
+    //     }
+    // }
+    if (take_jump) {
+        jumps[jump_target] |= 1UL << 0;
+    }
+    else {
+        jumps[jump_target] |= 1UL << 1;
+    }
+    return take_jump;
+}
+
+void find_most_similar_function(uint32_t function_offset, string bytes) {
+    string named_function_with_highest_distance = "";
+    // string auto_generated_function_with_highest_distance = "";
+    double highest_distance = 0;
+    // double highest_auto_distance = 0;
+    for(auto it = libultra_signatures["library_signatures"].begin(); it != libultra_signatures["library_signatures"].end(); ++it) {
+        double distance = jaro_winkler_distance(bytes.c_str(), it.key().c_str());
+        if (distance >= highest_distance) {
+            string function_name = it.value();
+            // if (!is_auto_generated_function_name(function_name)) {
+                if (distance == highest_distance) {
+                    named_function_with_highest_distance += "_or_";
+                    named_function_with_highest_distance += function_name;
+                } else {
+                    highest_distance = distance;
+                    named_function_with_highest_distance = function_name;
+                }
+            // } else {
+            //     highest_auto_distance = distance;
+            //     auto_generated_function_with_highest_distance=function_name;
+            // }
+        }
+        // cout << "IT:" << it.value() << " distance:" << jaro_winkler_distance(bytes_with_branch_delay.c_str(), it.key().c_str()) << "\n";
+    }
+    uint32_t highest_distance_percent = highest_distance*100;
+    // cout << "generated function_with_highest_distance to "<< std::hex << function_offset << " is:"<<auto_generated_function_with_highest_distance<<" with "<< std::dec << highest_auto_distance <<"%\n";
+    if (highest_distance_percent>=95) {
+        cout << "function will be renamed "<< std::hex << function_offset << " is:"<<named_function_with_highest_distance<<" with "<< std::dec << highest_distance_percent <<"%\n";
+        labels[function_offset].func_name = named_function_with_highest_distance;
+        labels[function_offset].isRenamed = true;
+    } else if (highest_distance_percent>=90) {
+        cout << "function_with_highest_distance to "<< std::hex << function_offset << " is:"<<named_function_with_highest_distance<<" with "<< std::dec << highest_distance_percent <<"%\n";
+        labels[function_offset].func_name += "_predict_"+named_function_with_highest_distance+"_";
+        labels[function_offset].func_name += (to_string(highest_distance_percent));
+        labels[function_offset].func_name += "percent";
+    }
+}
+void log_dma_write(uint8_t* mem, uint32_t proper_cart_address, uint32_t cart_addr, uint32_t length, uint32_t dram_addr) {
+    if (dmas.find(proper_cart_address) != dmas.end() ) 
+        return;
+
+    auto t = cdl_dma();
+    t.dram_start=dram_addr;
+    t.dram_end = dram_addr+length;
+    t.rom_start = proper_cart_address;
+    t.rom_end = proper_cart_address+length;
+    t.length = length;
+    t.ascii_header = get_header_ascii(mem, proper_cart_address);
+    t.header = mem[proper_cart_address+3];
+    t.frame = l_CurrentFrame;
+
+    // if (function_stack.size() > 0 && labels.find(current_function) != labels.end()) {
+    t.func_addr = print_function_stack_trace(); // labels[current_function].func_name;
+    // }
+
+    dmas[proper_cart_address] = t;
+
+    // std::cout << "DMA: Dram:0x" << std::hex << t.dram_start << "->0x" << t.dram_end << " Length:0x" << t.length << " " << t.ascii_header << " Stack:" << function_stack.size() << " " << t.func_addr << " last:"<< function_stack.back() << "\n";
+    
+}
+
+void cdl_finish_pi_dma(uint32_t a) {
+    // cout <<std::hex<< "Finish PI DMA:" << a << "\n";
+}
+void cdl_finish_si_dma(uint32_t a) {
+    cout <<std::hex<< "Finish SI DMA:" << a << "\n";
+}
+void cdl_finish_ai_dma(uint32_t a) {
+    // cout <<std::hex<< "Finish AI DMA:" << (a & 0xffffff) << "\n";
+}
+
+void cdl_clear_dma_log() {
+    // next_dma_type = "cleared";
+}
+void cdl_clear_dma_log2() {
+    // next_dma_type = "interesting";
+}
+
+void cdl_log_cart_reg_access() {
+    // next_dma_type = "bin";
+    add_tag_to_function("_cartRegAccess", function_stack.back());
+}
+
+void cdl_log_dma_si_read() {
+    add_tag_to_function("_dmaSiRead", function_stack.back());
+}
+
+void cdl_log_copy_pif_rdram() {
+    add_tag_to_function("_copyPifRdram", function_stack.back());
+}
+
+void cdl_log_si_reg_access() {
+    // COntrollers, rumble paks etc
+    add_tag_to_function("_serialInterfaceRegAccess", function_stack.back());
+}
+
+void cdl_log_mi_reg_access() {
+    // The MI performs the read, modify, and write operations for the individual pixels at either one pixel per clock or one pixel for every two clocks. The MI also has special modes for loading the TMEM, filling rectangles (fast clears), and copying multiple pixels from the TMEM into the framebuffer (sprites).
+    add_tag_to_function("_miRegRead", function_stack.back());
+}
+void cdl_log_mi_reg_write() {
+    // The MI performs the read, modify, and write operations for the individual pixels at either one pixel per clock or one pixel for every two clocks. The MI also has special modes for loading the TMEM, filling rectangles (fast clears), and copying multiple pixels from the TMEM into the framebuffer (sprites).
+    add_tag_to_function("_miRegWrite", function_stack.back());
+}
+
+void cdl_log_pi_reg_read() {
+    if (function_stack.size() > 0)
+    add_tag_to_function("_piRegRead", function_stack.back());
+}
+void cdl_log_pi_reg_write() {
+    if (function_stack.size() > 0)
+    add_tag_to_function("_piRegWrite", function_stack.back());
+}
+
+void cdl_log_read_rsp_regs2() {
+    add_tag_to_function("_rspReg2Read", function_stack.back());
+}
+void cdl_log_write_rsp_regs2() {
+    add_tag_to_function("_rspReg2Write", function_stack.back());
+}
+
+void cdl_log_read_rsp_regs() {
+    if (function_stack.size() > 0)
+    add_tag_to_function("_rspRegRead", function_stack.back());
+}
+void cdl_log_write_rsp_regs() {
+    if (function_stack.size() > 0)
+    add_tag_to_function("_rspRegWrite", function_stack.back());
+}
+
+void cdl_log_update_sp_status() {
+    if (function_stack.size() > 0)
+    add_tag_to_function("_updatesSPStatus", function_stack.back());
+}
+
+void cdl_common_log_tag(const char* tag) {
+    if (function_stack.size() > 0)
+    add_tag_to_function(tag, function_stack.back());
+}
+
+void cdl_log_audio_reg_access() {
+    // TODO speed this up with a check first
+    add_tag_to_function("_audioRegAccess", function_stack.back());
+}
+
+void cdl_log_mem_write(const uint32_t lsaddr, uint32_t pc) {
+    if (!cdl_log_memory) return;
+    
+    if (memory_to_log.find(lsaddr) != memory_to_log.end() ) 
+    {
+        cout << "Logging Mem Write to 0x"<< std::hex << lsaddr << " At PC:" << pc <<"\n";
+    }
+
+    if (labels[current_function].isRenamed || labels[current_function].doNotLog) {
+        // only do it for new functions
+        return;
+    }
+
+    if (labels[current_function].write_addresses.size() > NUMBER_OF_MANY_WRITES) {
+        labels[current_function].many_memory_writes = true;
+        return;
+    }
+    // auto currentMap = addresses[lsaddr];
+    // currentMap[n2hexstr(lsaddr)]=labels[current_function].func_name+"("+n2hexstr(current_function)+"+"+n2hexstr(pc-current_function)+")";
+
+    auto offset = pc-current_function;
+    labels[current_function].write_addresses[n2hexstr(lsaddr)] = "+0x"+n2hexstr(offset)+" pc=0x"+n2hexstr(pc);
+
+    
+}
+
+void cdl_hit_memory_log_point(uint32_t address) {
+    if (address>0x10000000 && address <= 0x107fffff) {
+        cout << "Cart Memory access!" << std::hex << address << " in:" << labels[current_function].func_name << "\n";
+    }
+}
+
+void cdl_log_masked_write(uint32_t* address, uint32_t dst2) {
+    if (!cdl_log_memory) return;
+    // cout << "masked write:"<<std::hex<<dst<<" : "<<dst2<<"\n";
+    // if (memory_to_log.find(address) != memory_to_log.end() ) 
+    // {
+    //     cout << "Logging Mem Write to 0x"<< std::hex << address << " At PC:" <<"\n";
+    // }
+}
+
+void cdl_log_get_mem_handler(uint32_t address) {
+    if (!cdl_log_memory) return;
+    cdl_hit_memory_log_point(address);
+    if (memory_to_log.find(address) != memory_to_log.end() ) 
+    {
+        cout << "Logging Mem cdl_log_get_mem_handler access 0x"<< std::hex << address <<"\n";
+        cdl_hit_memory_log_point(address);
+    }
+}
+void cdl_log_mem_read32(uint32_t address) {
+    if (!cdl_log_memory) return;
+    cdl_hit_memory_log_point(address);
+    if (memory_to_log.find(address) != memory_to_log.end() ) 
+    {
+        cout << "Logging Mem cdl_log_mem_read32 access 0x"<< std::hex << address <<"\n";
+        cdl_hit_memory_log_point(address);
+    }
+}
+void cdl_log_mem_write32(uint32_t address) {
+    if (!cdl_log_memory) return;
+    cdl_hit_memory_log_point(address);
+    if (memory_to_log.find(address) != memory_to_log.end() ) 
+    {
+        cout << "Logging Mem cdl_log_mem_write32 access 0x"<< std::hex << address <<"\n";
+        cdl_hit_memory_log_point(address);
+    }
+}
+
+unsigned int find_first_non_executed_jump() {
+    for(map<unsigned int, char>::iterator it = jumps.begin(); it != jumps.end(); ++it) {
+        if ((it->second+0) <3) {
+            return it->first;
+        }
+    }
+    return -1;
+}
+
+void cdl_log_dram_read(uint32_t address) {
+    
+}
+void cdl_log_dram_write(uint32_t address, uint32_t value, uint32_t mask) {
+    
+}
+
+void cdl_log_rsp_mem(uint32_t address, uint32_t* mem,int isBootRom) {
+    if (isBootRom) return;
+    rsp_reads[address] = (uint32_t)*mem;
+}
+void cdl_log_rdram(uint32_t address, uint32_t* mem,int isBootRom) {
+    //printf("RDRAM %#08x \n", address);
+    if (isBootRom) return;
+    rdram_reads[address] = (uint32_t)*mem;
+}
+void cdl_log_mm_cart_rom(uint32_t address,int isBootRom) {
+    printf("Cart ROM %#08x \n", address);
+}
+void cdl_log_mm_cart_rom_pif(uint32_t address,int isBootRom) {
+    printf("PIF? %#08x \n", address);
+}
+
+void find_asm_sections() {
+    printf("finding asm in sections \n");
+    for(map<unsigned int, char>::iterator it = jumps.begin(); it != jumps.end(); ++it) {
+        string jump_target_str = n2hexstr(it->first);
+        fileConfig["jumps_rom"][jump_target_str] =  n2hexstr(map_assembly_offset_to_rom_offset(it->first,0));
+    }
+}
+
+void find_audio_sections() {
+    printf("finding audio sections \n");
+    for(map<uint32_t, cdl_dma>::iterator it = dmas.begin(); it != dmas.end(); ++it) {
+        uint32_t address = it->second.dram_start;
+        if (audio_address.find(address) == audio_address.end() ) 
+            continue;
+        dmas[address].guess_type = "audio";
+        it->second.guess_type="audio";
+    }
+}
+
+void cdl_log_mem_read(const uint32_t lsaddr, uint32_t pc) {
+    if (!cdl_log_memory) return;
+    if (memory_to_log.find(lsaddr) != memory_to_log.end() ) 
+    {
+        cout << "Logging Mem Read for 0x"<< std::hex << lsaddr << " At PC:" << pc <<"\n";
+    }
+
+    if (labels[current_function].isRenamed || labels[current_function].doNotLog) {
+        // only do it for new functions
+        return;
+    }
+
+    if (labels[current_function].read_addresses.size() > NUMBER_OF_MANY_READS) {
+        labels[current_function].many_memory_reads = true;
+        return;
+    }
+
+    // auto currentMap = addresses[lsaddr];
+    // currentMap[n2hexstr(lsaddr)]=labels[current_function].func_name+"("+n2hexstr(current_function)+"+"+n2hexstr(pc-current_function)+")";
+
+    auto offset = pc-current_function;
+    labels[current_function].read_addresses[n2hexstr(lsaddr)] = "func+0x"+n2hexstr(offset)+" pc=0x"+n2hexstr(pc);
+}
+
+string print_function_stack_trace() {
+    if (function_stack.size() ==0 || functions.size() ==0 /*|| labels.size() ==0*/ || function_stack.size() > 0xF) {
+        return "";
+    }
+    std::stringstream sstream;
+    int current_stack_number = 0;
+    for (auto& it : function_stack) {
+        if (strcmp(functions[it].func_name.c_str(),"") == 0) {
+            sstream << "0x" << std::hex << it<< "->";
+            continue;
+        }
+        if (current_stack_number>0) {
+            sstream << "->";
+        }
+        sstream << functions[it].func_name;
+        current_stack_number++;
+    }
+    // cout << "Stack:"<< sstream.str() << "\n";
+    return sstream.str();
+}
+
+
 
  void libRR_direct_serialize(void *data, size_t size) {
     // TODO: implement this as a save function that is called internally just to save
