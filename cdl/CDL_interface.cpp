@@ -36,7 +36,6 @@ json linker_map_file;
 
 extern bool cdl_log_memory;
 
-std::vector<uint32_t> function_stack;
 extern std::map<uint32_t,string> memory_to_log;
 extern std::map<uint32_t,char> jumps;
 extern std::map<uint32_t,string> audio_address;
@@ -73,7 +72,7 @@ string libRR_game_name = "";
 
 // string next_dma_type = "";
 // uint32_t previous_function = 0;
-//  std::vector<uint32_t> function_stack = std::vector<uint32_t>();
+ std::vector<uint32_t> function_stack = std::vector<uint32_t>();
 std::vector<uint32_t> previous_ra; // previous return address
 
 std::map<uint32_t, std::map<string, string> > addresses;
