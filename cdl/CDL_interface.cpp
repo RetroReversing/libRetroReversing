@@ -31,12 +31,12 @@ extern json playthough_function_usage;
 extern json libRR_console_constants;
 
 // json libultra_signatures;
-extern json linker_map_file;
+json linker_map_file;
 #define USE_CDL 1;
 
 extern bool cdl_log_memory;
 
-extern std::vector<uint32_t> function_stack;
+std::vector<uint32_t> function_stack;
 extern std::map<uint32_t,string> memory_to_log;
 extern std::map<uint32_t,char> jumps;
 extern std::map<uint32_t,string> audio_address;
@@ -66,7 +66,7 @@ int difference = corrupt_end-corrupt_start;
 bool libRR_finished_boot_rom = false;
 // string last_reversed_address = "";
 // bool should_reverse_jumps = false;
-bool should_change_jumps = false;
+// bool should_change_jumps = false;
 int frame_last_reversed = 0;
 int time_last_reversed = 0;
 string libRR_game_name = "";
@@ -74,7 +74,7 @@ string libRR_game_name = "";
 // string next_dma_type = "";
 // uint32_t previous_function = 0;
 //  std::vector<uint32_t> function_stack = std::vector<uint32_t>();
-extern std::vector<uint32_t> previous_ra; // previous return address
+std::vector<uint32_t> previous_ra; // previous return address
 
 std::map<uint32_t, std::map<string, string> > addresses;
 
@@ -168,22 +168,6 @@ uint32_t map_assembly_offset_to_rom_offset(uint32_t assembly_offset, uint32_t tl
     return assembly_offset;
 }
 
-uint32_t cdl_get_alternative_jump(uint32_t current_jump) {
-    if (!should_change_jumps) {
-        return current_jump;
-    }
-
-    for (auto& it : linker_map_file.items()) {
-        uint32_t new_jump = hex_to_int(it.key());
-        cout << "it:" << it.value() << " = " << it.key() << " old:" << current_jump << " new:"<< new_jump << "\n";
-        linker_map_file.erase(it.key());
-        should_change_jumps = false;
-        return new_jump;
-    }
-
-    return current_jump;
-}
-
 int reverse_jump(int take_jump, uint32_t jump_target) {
     // this function doesn't work on windows
     // time_t now = time(0);
@@ -253,6 +237,7 @@ void libRR_log_trace_flush() {
 
 // libRR_log_return_statement
 // stack_pointer is used to make sure our function stack doesn't exceed the actual stack pointer
+// used in cores: Gameboy
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer) {
     if (libRR_full_trace_log) {
         libRR_log_trace_str("Return:"+n2hexstr(current_pc)+"->"+n2hexstr(return_target));

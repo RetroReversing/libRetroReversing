@@ -2,7 +2,7 @@
 #include "../source_exporter/CommonSourceExport.h"
 #include "../cdl/nlohmann/json.hpp"
 using json = nlohmann::json;
-json linker_map_file;
+extern json linker_map_file;
 extern json fileConfig;
 extern json reConfig;
 extern std::map<uint32_t,string> memory_to_log;
@@ -13,11 +13,12 @@ std::map<uint32_t, uint8_t*> jump_data;
 extern std::map<uint32_t,uint32_t> rsp_reads;
 extern std::map<uint32_t,uint32_t> rdram_reads;
 std::map<uint32_t,bool> offsetHasAssembly;
-std::vector<uint32_t> function_stack = std::vector<uint32_t>();
-std::vector<uint32_t> previous_ra; // previous return address
+extern std::vector<uint32_t> function_stack;
+extern std::vector<uint32_t> previous_ra; // previous return address
 string ucode_crc = "";
 uint32_t current_function = 0;
 uint32_t rspboot = 0;
+bool should_change_jumps = false;
 
 
 #define NUMBER_OF_MANY_READS 40
@@ -1174,7 +1175,21 @@ string print_function_stack_trace() {
     return sstream.str();
 }
 
+uint32_t cdl_get_alternative_jump(uint32_t current_jump) {
+    if (!should_change_jumps) {
+        return current_jump;
+    }
 
+    for (auto& it : linker_map_file.items()) {
+        uint32_t new_jump = hex_to_int(it.key());
+        cout << "it:" << it.value() << " = " << it.key() << " old:" << current_jump << " new:"<< new_jump << "\n";
+        linker_map_file.erase(it.key());
+        should_change_jumps = false;
+        return new_jump;
+    }
+
+    return current_jump;
+}
 
  void libRR_direct_serialize(void *data, size_t size) {
     // TODO: implement this as a save function that is called internally just to save
