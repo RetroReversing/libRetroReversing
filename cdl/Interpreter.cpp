@@ -2,9 +2,25 @@
 #include <queue>
 #include "CDL.hpp"
 #include <experimental/filesystem>
+
+#ifdef EMSCRIPTEN
+// Emscripten doesn't need a javascript parser
+#else
 #include "../interpreter/duktape/duktape.h"
 #include "../interpreter/mjs/mjs.h"
+#endif
 
+#ifdef EMSCRIPTEN
+
+void run_in_duktape(string code) {
+  // Emscripten version, call out to JS
+}
+
+void run_in_mjs(string code) {
+  // Emscripten version, call out to JS
+}
+
+#else
 static duk_ret_t native_print(duk_context *ctx) {
   printf("%s\n", duk_to_string(ctx, 0));
   return 0;  /* no return value (= undefined) */
@@ -40,6 +56,7 @@ void run_in_mjs(string code) {
   mjs_set_ffi_resolver(mjs, my_dlsym);
   mjs_exec(mjs, code.c_str(), NULL);
 }
+#endif
 
 #define ENGINE_DUKTAPE 0
 #define ENGINE_MJS 1

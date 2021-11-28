@@ -45,9 +45,6 @@ endif
 
 SOURCES_C_RR += \
     ./libRetroReversing/cdl/jarowinkler.c \
-    ./libRetroReversing/civetweb/src/civetweb.c \
-    ./libRetroReversing/interpreter/duktape/duktape.c \
-    ./libRetroReversing/interpreter/mjs/mjs.c \
 
 SOURCES_CXX_RR += \
     libRetroReversing/cdl/CDL_interface.cpp \
@@ -60,11 +57,24 @@ SOURCES_CXX_RR += \
     libRetroReversing/cdl/Main.cpp \
     libRetroReversing/cdl/Image.cpp \
     libRetroReversing/cdl/CD.cpp \
-    libRetroReversing/civetweb/src/libRRWebInterface.cpp \
     libRetroReversing/png/lodepng.cpp \
     libRetroReversing/source_exporter/CommonSourceExport.cpp \
     libRetroReversing/consoles/${libRetroReversingConsole}.cpp \
 
+# Only include civet web if not using emscripten for web
+ifeq ($(platform),emscripten)
+SOURCES_CXX_RR += \
+    ./libRetroReversing/civetweb/src/libRREmscriptenInterface.cpp
+
+else
+SOURCES_C_RR += \
+    ./libRetroReversing/civetweb/src/civetweb.c \
+    ./libRetroReversing/interpreter/duktape/duktape.c \
+    ./libRetroReversing/interpreter/mjs/mjs.c
+
+SOURCES_CXX_RR += \
+    libRetroReversing/civetweb/src/libRRWebInterface.cpp
+endif
 
 # TODO: use a local path instead of /usr/local/opt/nlohmann_json/include
 # CFLAGS += -I/usr/local/opt/nlohmann_json/include
