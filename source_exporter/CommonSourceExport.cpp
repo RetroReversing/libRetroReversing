@@ -54,12 +54,14 @@ void libRR_export_template_files(string template_directory_name) {
     libRR_export_assembly_extention = (string)files_json["asm_extenstion"];
 
     // Create required directories
+  #ifndef EMSCRIPTEN
     json dirs = files_json["dirs"];
     for (json::iterator it = dirs.begin(); it != dirs.end(); ++it) {
       string path_to_create = libRR_export_directory + (string)*it;
       cout << "Creating directory: " << path_to_create << "\n";
       fs::create_directories(path_to_create);
     }
+  #endif
 
     // Copy required files
     json j = files_json["files"];
@@ -71,7 +73,9 @@ void libRR_export_template_files(string template_directory_name) {
 
       string output_file_path = libRR_export_directory + current;
       // create any folder that needs to be created
+      #ifndef EMSCRIPTEN
       fs::create_directories(codeDataLogger::dirnameOf(output_file_path));
+      #endif
 
       // Now save the file to the project directory
       codeDataLogger::writeStringToFile(output_file_path, 
@@ -334,7 +338,9 @@ void libRR_export_function_data() {
         // Now write the actual file
         string output_file_path = libRR_export_directory + export_path;
         // create any folder that needs to be created
+        #ifndef EMSCRIPTEN
         fs::create_directories(codeDataLogger::dirnameOf(output_file_path));
+        #endif
         string function_name = get_function_name(bank_str, func_offset_str);
 
         string contents = "";
