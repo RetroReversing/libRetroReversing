@@ -1,14 +1,20 @@
 import axios from "axios";
 
+export let emulatorType = "desktop"; // either "desktop" or "browser" depending on where the user is emulating from
+export let gameLoaded = false;
 
 export function sendActionToServer(payload) {
   return axios.post('/postresponse', payload)
   .then(function (response) {
     console.info("Response from emulator:",response);
+    gameLoaded = true; // TODO: use the response to set this to the correct value
     return response.data;
   })
-  .catch(function (error) {
+  .catch(function errorCallingEmulator(error) {
     console.error("Error calling emulator:",error);
+    console.info("External emulator not found, using internal wasm emulator instead");
+    emulatorType = "browser";
+    gameLoaded = false;
   });
 }
 

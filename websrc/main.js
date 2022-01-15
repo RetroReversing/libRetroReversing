@@ -2,20 +2,10 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import clsx from 'clsx';
 
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
 // Icons
-import MenuIcon from '@material-ui/icons/Menu';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
 
 
-import { PlaySettings } from "./debugger/PlaySettings";
-import { RRDrawer } from './main/Drawer';
 import { useStyles, useRRTheme } from './styles';
 import { MainPage } from './pages/MainPage';
 import { sendActionToServer } from './server';
@@ -41,7 +31,8 @@ import Link from '@material-ui/core/Link';
 import EditFunctionDialog from './dialogs/EditFunctionDialog';
 import ExportFunctionDialog from './dialogs/ExportFunctionDialog';
 import LoadLinkerMapFileDialog from './dialogs/LoadLinkerMapFileDialog';
-import TripeDotDropDownMenu from "./pages/util/TripeDotDropDownMenu";
+import { RRTitleBar } from "./main/RRTitleBar";
+import { PlaythroughSelector } from "./main/PlaythroughSelector";
 
 function createBreadcrumbs(params) {
   return (<Breadcrumbs aria-label="breadcrumb">
@@ -86,22 +77,18 @@ function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, set
   return setupAdditionalTabs(allInformation, tabs);
 }
 
-function PlaythroughSelector( props ) {
-  return (<div style={{ display: 'flex', float: 'right' }}><FormControl style={{ minWidth: 200
-    , marginBottom: 20
-   , float: 'right'}}>
-    <InputLabel id="playthrough-selector-label">Playthrough</InputLabel><Select
-    labelId="playthrough-selector-label"
-    id="playthrough-selector"
-    value={"Initial"}
-    onChange={(v)=> console.log("Value changed:", v)}
-  >
-    <MenuItem value="Initial">Initial </MenuItem>
-    <MenuItem value="Full">Full Playthrough</MenuItem>
-    <MenuItem value="Speedrun">Speed run</MenuItem>
-  </Select></FormControl> <TripeDotDropDownMenu options={["Create New Playthrough", "Import button.log", "Import Bizhawk TAS"]} /></div>);
-}
-
+const initialPlayerState = {
+  paused: true,
+  speed: 100,
+  startAt: -1,
+  endAt: -1,
+  loopFrame: -1,
+  logButtons: false,
+  recordInput: false,
+  playbackLogged: false,
+  fullLogging: false,
+  fullFrames: []
+};
 function App() {
   const classes = useStyles();
   const theme = useRRTheme();
@@ -128,18 +115,7 @@ function App() {
   const [fullState, setFullState] = useState({});
   window.allInformation = allInformation;
 
-  const [playerState, setPlayerState] = useState({ 
-    paused: true, 
-    speed: 100,
-    startAt:-1,
-    endAt:-1,
-    loopFrame: -1,
-    logButtons: false,
-    recordInput: false,
-    playbackLogged: false,
-    fullLogging: false,
-    fullFrames: []
-  });
+  const [playerState, setPlayerState] = useState(initialPlayerState);
 
   const cdData = allInformation?.cd_data?.root_files;
   const tabs = createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation)
@@ -152,91 +128,22 @@ function App() {
     'load_linker_map': <LoadLinkerMapFileDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />
   }
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
-  // useEffect(()=> {
-  //   const newTab = location.pathname.substring(1);
-  //   console.error("Location is:", location.pathname, newTab);
-  //   // if (currentTab !== newTab) {
-  //   //   setCurrentTab(newTab);
-  //   // }
-  // }, [location])
-
-  React.useEffect(()=>{
-    console.error("Requesting Game Information:", gameInformation);
-    const payload = {
-      category: 'game_information',
-      state: gameInformation
-    };
-    sendActionToServer(payload).then((info)=>{
-      if (!info) { return; }
-      console.error("result: gameInformation:", info);
-      setGameInformation(info.current_state);
-      setAllInformation(info);
-      setupAdditionalTabs(info, tabs)
-      setFullState(info);
-      if (info.playerState) {
-        setPlayerState({ ...info.playerState, playerState});
-      }
-      setLoading(false);
-    });
-    // history.push("/"+currentTab);
-  }, [currentDialog, currentTab]);
+  React.useEffect(getGameInformation(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading), [currentDialog, currentTab]);
 
 
   return (
     <div className={classes.root}>
-      {/* <CssBaseline /> */}
-      <AppBar position="fixed"
-          className={clsx(classes.appBar, {
-            [classes.appBarShift]: open,
-          })}>
-        <Toolbar>
-          <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              edge="start"
-              className={clsx(classes.menuButton, open && classes.hide)}
-            >
-              <MenuIcon />
-          </IconButton>
-          <Typography variant="h6">
-            {gameInformation?.library_name}RE
-          </Typography>
-
-          <PlaySettings setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />
-
-        </Toolbar>
-      </AppBar>
-      <RRDrawer setCurrentTab={setCurrentTab} setCurrentDialog={setCurrentDialog} handleDrawerClose={handleDrawerClose} open={open} theme={theme} allInfo={allInformation} memory_descriptors={gameInformation.memory_descriptors} />
-      
-      
-
+      {RRTitleBar(classes, open, gameInformation, setCurrentDialog, playerState, setPlayerState, setCurrentTab, theme, setOpen)}      
       <main
         className={clsx(classes.content, {
           [classes.contentShift]: open,
         })}
       >
-      
         <div className={classes.drawerHeader} />
         {dialogs[currentDialog]}
         <PlaythroughSelector />
         {createBreadcrumbs(params)}
-          <Switch>
-              {tabs[currentTab]}
-            {/* <Route path="/:currentTab/:currentSubTab">
-            </Route>
-            <Route path="/:currentTab">
-              {tabs[currentTab]}
-            </Route> */}
-          </Switch>
+        {tabs[currentTab]}
       </main>
       </div>
   );
@@ -254,3 +161,27 @@ ReactDOM.render(<Router>
     <App />
   </Route>
 </Switch></Router>, document.querySelector("#app"));
+
+
+function getGameInformation(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading) {
+  return function requestGameInformation() {
+    console.error("Requesting Game Information:", gameInformation);
+    const payload = {
+      category: 'game_information',
+      state: gameInformation
+    };
+    sendActionToServer(payload).then((info) => {
+      if (!info) { return; }
+      console.error("result: gameInformation:", info);
+      setGameInformation(info.current_state);
+      setAllInformation(info);
+      setupAdditionalTabs(info, tabs);
+      setFullState(info);
+      if (info.playerState) {
+        setPlayerState({ ...info.playerState, playerState });
+      }
+      setLoading(false);
+    });
+  };
+}
+
