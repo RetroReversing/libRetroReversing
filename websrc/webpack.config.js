@@ -7,11 +7,11 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 module.exports = {
   mode: 'development',
   entry: {
-    app: './main.js',
+    app: './main',
   },
   devtool: 'inline-source-map',
   devServer: {
-    // contentBase: path.join(__dirname, './'), // where dev server will look for static files, not compiled
+    static: path.join(__dirname, './dist/'), // where dev server will look for static files, not compiled
     proxy: {
       '/postresponse': {
         target: 'http://127.0.0.1:1234/',
