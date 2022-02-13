@@ -47,6 +47,19 @@ export function GameDropZone() {
     accept: '.sms,.gg',
   });
 
+  useEffect(()=> {
+    console.info("Accepted files are now:", acceptedFiles);
+    acceptedFiles.map((file) => {
+      console.info("accepted ROM:", file);
+      const game      = file.name;
+      const extension = game.substring(game.lastIndexOf('.') + 1);
+      const system    = extensions[extension];
+      const core      = systems[system];
+      
+      JUN_WriteFileFromJS(file, system);
+    } )
+  }, [acceptedFiles])
+
   useEffectOnce(loadLocalGames(setLocalGames))
 
   const style:any = useMemo(
@@ -154,42 +167,6 @@ function startEmulator(game_name) {
 
 function stopEmulator() {
   console.error("How do we stop the emulator from running the wasm?");
-}
-
-function mapAcceptedFiles(): (value: any, index: number, array: File[]) => JSX.Element {
-  
-  
-  
-  return file => { 
-    console.info("accepted ROM:", file);
-    const game      = file.name;
-    const extension = game.substring(game.lastIndexOf('.') + 1);
-    const system    = extensions[extension];
-    const core      = systems[system];
-    
-    JUN_WriteFileFromJS(file, system);
-    // startEmulator(file.name);
-    
-    return (
-    <ListItem key={file.path}>
-     {game} {extension} {system} {file.path} - {file.size} bytes
-    </ListItem>
-  );}
-}
-
-function mapFileRejection() {
-    return ({ file, errors }) => { 
-        console.error(file, errors);
-        return (
-        <ListItem key={file.path}>
-            {file.path} - {file.size} bytes
-            <List>
-                {errors.map(e => (
-                    <ListItem key={e.code}>{e.message}</ListItem>
-                ))}
-            </List>
-        </ListItem>
-    );}
 }
 
 let frontend_status = { paused: false, startAt: 0 };
