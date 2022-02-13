@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import clsx from 'clsx';
+import {
+  HashRouter as Router,
+  Route,
+  Switch,
+  useHistory,
+  useParams
+} from "react-router-dom";
 
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
@@ -21,13 +28,6 @@ import { MemoryViewer } from './pages/MemoryViewer';
 import PauseSaveDialog from './dialogs/PauseSaveDialog';
 import ResumeDialog from './dialogs/ResumeDialog';
 
-import {
-  HashRouter as Router,
-  Route,
-  Switch,
-  useHistory,
-  useParams
-} from "react-router-dom";
 import { Breadcrumbs } from '@material-ui/core';
 import Link from '@material-ui/core/Link';
 import EditFunctionDialog from './dialogs/EditFunctionDialog';

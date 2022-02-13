@@ -6,6 +6,9 @@ import { extensions, systems } from "./emulators";
 import { MTY, MTY_StrToC, MTY_Alloc, MTY_Start, MTY_Stop } from "./matoya";
 import { JUN_ReadFile, RE_ReadFileFromJS, JUN_WriteFile, JUN_WriteFileFromJS, RE_getAllLocalGames } from "./database";
 import { useEffectOnce } from "react-use";
+import {
+  useHistory
+} from "react-router-dom";
 
 const baseStyle = {
     flex: 1,
@@ -35,7 +38,10 @@ const baseStyle = {
     borderColor: '#ff1744',
   };
 
+  // GameDropZone Component
 export function GameDropZone() {
+  let history = useHistory();
+  const [currentConsole, setCurentConsole] = useState("gg");
   const [localGames, setLocalGames] = useState([]);
   const { acceptedFiles, fileRejections, getRootProps, getInputProps, isDragActive, isDragReject, isDragAccept } = useDropzone({
     accept: '.sms,.gg',
@@ -53,6 +59,10 @@ export function GameDropZone() {
     [isDragActive, isDragReject, isDragAccept],
   );
 
+  function setPath(gameName) {
+    history.push("/"+currentConsole+"/"+gameName);
+  }
+
   return (
     <Box style={{ marginTop: 20 }}>
       <Box {...getRootProps({ style })}>
@@ -67,7 +77,12 @@ export function GameDropZone() {
         <em>These games are stored in your Browsers local storage</em>
         <ul>
           {acceptedFiles.map(file => <li key={file.name} ><a href="#" onClick={()=>startEmulator(file.name)}>{file.name}</a></li>)}
-          {localGames.map(gameName => <li key={gameName} ><a href="#" onClick={()=>startEmulator(gameName.split("/")[1])}>{gameName}</a></li>)}
+          {localGames.map(gamePath => <li key={gamePath} ><a href="#" onClick={()=>{
+            const gameName = gamePath.split("/")[1];
+            setCurentConsole("gg");
+            setPath(gameName); 
+            startEmulator(gameName)
+          }}>{gamePath}</a></li>)}
         </ul>
       </aside>}
     </Box>
