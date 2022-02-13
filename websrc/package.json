@@ -44,7 +44,7 @@
     "file-loader": "^5.0.2",
     "html-webpack-plugin": "^5.5.0",
     "monaco-editor-webpack-plugin": "^1.9.0",
-    "postcss": "^8.3.11",
+    "postcss": "^8.2.13",
     "source-map-loader": "^3.0.0",
     "style-loader": "^1.2.1",
     "tailwindcss": "^2.2.19",
