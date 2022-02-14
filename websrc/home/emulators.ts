@@ -2,7 +2,7 @@
 export const cores = {
     "quicknes": { name: "QuickNES",        library: "quicknes" },
     "snes9x":   { name: "Snes9x",          library: "snes9x"   },
-    "genesis":  { name: "Genesis Plus GX", library: "genesisRR"  },
+    "genesis":  { name: "Genesis Plus GX", library: "genesisrr"  },
     "mgba":     { name: "mGBA",            library: "mgba"     },
     "melonds":  { name: "melonDS",         library: "melonds"  },
 };
