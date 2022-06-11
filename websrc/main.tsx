@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import clsx from 'clsx';
 import {
@@ -98,11 +98,10 @@ function App() {
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   let params = useParams();
-  console.error("React router params:", params);
 
   const [currentTab, _setCurrentTab] = React.useState(params.currentTab || 'home');
   function setCurrentTab(newTab) {
-    history.push("/"+newTab);
+    history.push(newTab);
     _setCurrentTab(newTab);
   }
   const [currentDialog, setCurrentDialog] = React.useState('');
@@ -129,6 +128,16 @@ function App() {
     'export_function': <ExportFunctionDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />,
     'load_linker_map': <LoadLinkerMapFileDialog currentDialogParameters={currentDialogParameters} setCurrentDialog={setCurrentDialog} playerState={playerState} setPlayerState={setPlayerState} />
   }
+
+  useEffect(()=>{
+    if (params?.gameHash && !window["loadedGames"][params?.gameHash]) {
+      console.info("About to Load the Game into the web based emulator");
+      const callback = () => {
+        console.info("Game now running:", params?.gameHash);
+      };
+      window["startEmulator"](params?.gameHash, callback)
+    }
+  }, [params.gameHash])
 
   React.useEffect(getGameInformation(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading), [currentDialog, currentTab]);
 
@@ -201,7 +210,6 @@ ReactDOM.render(<Router>
   </Route>
   <Route path="/">
     <HomePage />
-    HomeSlash
   </Route>
 </Switch></Router>, document.querySelector("#app"));
 

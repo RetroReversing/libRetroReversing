@@ -33,3 +33,9 @@
 .DS_Store
 
 websrc/node_modules
+websrc/dist/genesis.wasm
+websrc/dist/melonds.wasm
+websrc/dist/mgba.wasm
+websrc/dist/quicknes.wasm
+websrc/dist/libRRUI.bundle.js.LICENSE.txt
+websrc/dist/snes9x.wasm

@@ -4,6 +4,10 @@ export let emulatorType = "desktop"; // either "desktop" or "browser" depending 
 export let gameLoaded = false;
 
 export function sendActionToServer(payload) {
+  if (window.sendMessageToCoreFromFrontend) {
+    const result = sendMessageToCoreFromFrontend(payload);
+    return Promise.resolve(result);
+  }
   return axios.post('/postresponse', payload)
   .then(function (response) {
     console.info("Response from emulator:",response);

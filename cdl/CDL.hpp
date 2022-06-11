@@ -73,7 +73,7 @@ struct libRR_paths {
     // string retro_cd_base_name;
 };
 
-// Current state send back to web
+// Current state send back to web (this should only be modified by backend)
 struct libRR_emulator_state {
     string game_name;
     retro_system_av_info libretro_video_info;

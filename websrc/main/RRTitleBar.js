@@ -40,6 +40,6 @@ export function RRTitleBar(classes, open, gameInformation, setCurrentDialog, pla
 
     </Toolbar>
   </AppBar>
-    <RRDrawer setCurrentTab={setCurrentTab} setCurrentDialog={setCurrentDialog} handleDrawerClose={handleDrawerClose} open={open} theme={theme} allInfo={allInformation} memory_descriptors={gameInformation.memory_descriptors} />
+    <RRDrawer setCurrentTab={setCurrentTab} setCurrentDialog={setCurrentDialog} handleDrawerClose={handleDrawerClose} open={open} theme={theme} allInfo={allInformation} memory_descriptors={gameInformation?.memory_descriptors} />
   </>;
 }

@@ -44,10 +44,10 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
   const [openedFunction, setOpenedFunction] = useState(params.currentSubTab || '');
   const [orderBy, setOrderBy] = React.useState('Location');
   const [order, setOrder] = React.useState('asc');
-  const [rows, setRows] = React.useState(window.allInformation?.functions || []);
+  const [rows, setRows] = React.useState(window["allInformation"]?.functions || []);
 
   const getItemSize = (openedFunction, index) => {
-    const rows =  window.allInformation?.functions;
+    const rows =  window["allInformation"]?.functions;
     const row = rows[index][1];
     if (openedFunction === row.func_name) {
       return 600;
@@ -59,16 +59,16 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
     const func_name = row[1].func_offset;
     // window.allInformation?.function_usage[row.func_name]
     if (orderBy === "First Access") {
-      return window.allInformation?.function_usage[func_name]?.first_frame_access;
+      return window["allInformation"]?.function_usage[func_name]?.first_frame_access;
     }
     if (orderBy === "Latest Access") {
-      return window.allInformation?.function_usage[func_name]?.last_frame_access;
+      return window["allInformation"]?.function_usage[func_name]?.last_frame_access;
     }
     if (orderBy === "Frame Count") {
-      return window.allInformation?.function_usage[func_name]?.number_of_frames;
+      return window["allInformation"]?.function_usage[func_name]?.number_of_frames;
     }
     if (orderBy === "Calls Per Frame") {
-      return window.allInformation?.function_usage[func_name]?.number_of_calls_per_frame;
+      return window["allInformation"]?.function_usage[func_name]?.number_of_calls_per_frame;
     }
     if (orderBy === "Name") {
       return row[1].func_name;
@@ -78,8 +78,8 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
   }
 
   useEffect(()=>{
-    if (!window.allInformation || window.allInformation?.functions?.length === 0) { return; }
-    const mapped = map(window.allInformation?.functions, (row)=>row/*[1]*/);
+    if (!window["allInformation"] || window["allInformation"]?.functions?.length === 0) { return; }
+    const mapped = map(window["allInformation"]?.functions, (row)=>row/*[1]*/);
     const sorted = _orderBy(mapped, getSortField, order);
     console.error("Changed order:", order, orderBy, mapped, sorted);
     setRows(sorted);
@@ -97,7 +97,7 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
   // }
 
   if (openedFunction) {
-    const row = filter(window.allInformation?.functions, (func)=>func[1].func_name === openedFunction)[0];
+    const row = filter(window["allInformation"]?.functions, (func)=>func[1].func_name === openedFunction)[0];
     if (row) {
       console.error("openedFunction:", openedFunction, row);
       return <FunctionViewer func={row[1]} setCurrentDialog={setCurrentDialog} setCurrentDialogParameters={setCurrentDialogParameters} />;
@@ -106,12 +106,13 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
   }
 
   if (rows.length <1) {
-    console.error("Checking for rows", window.allInformation?.functions);
-    if (window.allInformation?.functions?.length > 1) {
-      setRows(window.allInformation?.functions);
-      console.error("Updated rows", window.allInformation?.functions);
+    console.error("Checking for rows", window["allInformation"]?.functions);
+    if (window["allInformation"]?.functions?.length > 1) {
+      setRows(window["allInformation"]?.functions);
+      console.error("Updated rows", window["allInformation"]?.functions);
     }
-    return null;
+    debugger;
+    return <div>No Rows in  window.allInformation?.functions {JSON.stringify(Object.keys(window["allInformation"]))}</div>;
   }
 
   return (
@@ -127,8 +128,8 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
       <VirtualizedTable orderBy={orderBy} setOrderBy={setOrderBy} order={order} setOrder={setOrder} rowCount={rows.length} rowGetter={({index})=> {
         // const rows =  window.allInformation?.functions;
         const row = rows[index][1];
-        const playthrough_info = window.allInformation?.function_usage[row?.func_offset] || {};
-        return { name:<a onClick={()=> {
+        const playthrough_info = window["allInformation"]?.function_usage?.[row?.func_offset] || {};
+        return { name: <a onClick={()=> {
           // setOpenedFunction(row.func_name); 
           history.push("/functions/"+row.func_name);
         }

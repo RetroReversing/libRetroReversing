@@ -12,6 +12,7 @@ import ChipInput from 'material-ui-chip-input'
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import Box from '@material-ui/core/Box';
+import { useParams } from 'react-router-dom';
 
 
 export default function ResumeDialog( { fullState, setCurrentDialog, playerState, setPlayerState, open = true }) {
@@ -20,8 +21,9 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
   // const [startAt, setStartAt] = useState(-1);
   // const [endAt, setEndAt] = useState(-1);
   const [endAction, setEndAction] = useState(-1);
+  let params = useParams();
 
-  console.error("Sorted Save States", available_save_states);
+  console.error("ResumeDialog: Sorted Save States", available_save_states, "params:", params?.gameHash);
 
   const handleClose = () => {
     setCurrentDialog('');
@@ -30,6 +32,18 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
   function run() {
     
     console.error("Going to run with with settings:", playerState);
+
+    if (!window["loadedGames"][params?.gameHash]) {
+      console.error("TODO: Load the Game into the web based emulator");
+      const callback = () => {
+        console.error("SHould npow be running");
+        run(); 
+      };
+      window["startEmulator"](params?.gameHash, callback)
+      handleClose();
+      return;
+    }
+
     let loopFrame = +endAction;
     if (loopFrame === 1) {
       loopFrame = playerState?.startAt;
@@ -59,7 +73,7 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
             This will resume the game at the chosen save state, input will be replayed until the end of the log.
           </DialogContentText>
           <Box>
-            <FormControl mr={20} style={{marginRight: 20}}>
+            <FormControl style={{ marginRight: 20 }}>
               <InputLabel htmlFor="start-from">Start from</InputLabel>
               <Select
                 native
@@ -118,7 +132,6 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
               <InputLabel htmlFor="game-speed">Game Speed</InputLabel>
               <Select
                 native
-                ml={5}
                 value={playerState.speed}
                 onChange={(e)=>setPlayerState({
                   ...playerState, speed:+e.target.value
@@ -166,7 +179,7 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
 
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="error">
+          <Button onClick={handleClose} color="secondary">
             Cancel
           </Button>
           <Button onClick={run} color="primary">

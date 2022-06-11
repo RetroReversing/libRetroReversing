@@ -3,12 +3,16 @@ import Typography from '@material-ui/core/Typography';
 import { useDropzone } from 'react-dropzone';
 import { Box, List, ListItem } from '@material-ui/core';
 import { extensions, systems } from "./emulators";
-import { MTY, MTY_StrToC, MTY_Alloc, MTY_Start, MTY_Stop } from "./matoya";
+import { MTY, MTY_StrToC, MTY_StrToJS, MTY_Alloc, MTY_Start, MTY_Stop } from "./matoya";
 import { JUN_ReadFile, RE_ReadFileFromJS, JUN_WriteFile, JUN_WriteFileFromJS, RE_getAllLocalGames } from "./database";
 import { useEffectOnce } from "react-use";
 import {
   useHistory
 } from "react-router-dom";
+import { blue } from "@material-ui/core/colors";
+import { noop } from "lodash";
+
+window["loadedGames"] = {};
 
 const baseStyle = {
     flex: 1,
@@ -73,7 +77,8 @@ export function GameDropZone() {
   );
 
   function setPath(gameName) {
-    history.push("/"+currentConsole+"/"+gameName);
+    const newPath = "/"+currentConsole+"/"+gameName+"/";
+    history.push(newPath);
   }
 
   return (
@@ -90,18 +95,24 @@ export function GameDropZone() {
         <em>These games are stored in your Browsers local storage</em>
         <ul>
           {acceptedFiles.map(file => <li key={file.name} ><a href="#" onClick={()=>startEmulator(file.name)}>{file.name}</a></li>)}
-          {localGames.map(gamePath => <li key={gamePath} ><a href="#" onClick={()=>{
+          {localGames.map(gamePath => <li key={gamePath} style={{ color: "blue", cursor: "pointer" }} onClick={()=>{
             const gameName = gamePath.split("/")[1];
             setCurentConsole("gg");
             setPath(gameName); 
             startEmulator(gameName)
-          }}>{gamePath}</a></li>)}
+          }}>{gamePath}</li>)}
         </ul>
       </aside>}
+      <button onClick={pauseGame}>Pause</button>
     </Box>
   );
 }
 ;
+
+function pauseGame() {
+  frontend_status.paused = !frontend_status.paused;
+  sendMessageToCoreFromFrontend({ category: "pause", state: { paused: frontend_status.paused, fullLogging: false } })
+}
 
 const _fetch = window.fetch;
 function loadLocalGames(setLocalGames) {
@@ -146,7 +157,7 @@ async function customFetch (input: any, init) {
 }
 
 let startedEmulator = false;
-function startEmulator(game_name) {
+function startEmulator(game_name, callback=noop) {
   if (startedEmulator) { 
     stop();
     // return; 
@@ -157,24 +168,91 @@ function startEmulator(game_name) {
   window['fetch'] = customFetch as any;
     
   try {
-    run(system, core, game_name);
+    window["loadedGames"][game_name] = true;
+    run(system, core, game_name).then(callback);
   } catch(e) {
     console.error("Error running core:", e)
     startedEmulator = false;
   }
   startedEmulator = true;
+  return startedEmulator;
 }
+window["startEmulator"] = startEmulator;
 
 function stopEmulator() {
   console.error("How do we stop the emulator from running the wasm?");
 }
 
+// TODO: need to hook this up to be changed instead of postResponse
 let frontend_status = { paused: false, startAt: 0 };
-        
+let game_json = { current_state: { memory_descriptors: []}, playthrough: {}, cd_tracks: [], functions: {}, function_usage: {} };
+
+function getFrontendStatus() {
+  return frontend_status;
+}
+window["getFrontendStatus"] = getFrontendStatus;
+
+
+function updateFrontendStatus(newFrontendStatus) {
+  frontend_status = newFrontendStatus;
+}
+
+function sendMessageToCoreFromFrontend(json) {
+  const resultString = libRR_parse_message_from_emscripten(JSON.stringify(json)+"\0");
+  try {
+  return JSON.parse(resultString);
+  } catch (e) {
+    return {};
+  }
+}
+window["sendMessageToCoreFromFrontend"] = sendMessageToCoreFromFrontend;
+
+function libRR_parse_message_from_emscripten(json_string = '{ "category": "play", "state": { "startAt": 0, "paused": false } }\0') {
+  if (!MTY.module) {
+    console.info("MTY might not be initiated yet", json_string);
+    return ""; //game_json;
+  }
+  MTY.libRRcommand = MTY_Alloc(json_string.length);
+  const c_str = MTY_StrToC(json_string, MTY.libRRcommand, json_string.length);
+  const result = MTY.module.instance.exports.libRR_parse_message_from_emscripten(c_str);
+  console.log("Result:", result, MTY_StrToJS(result));
+  return MTY_StrToJS(result);
+}
+
+function handleServerAction(payload) {
+  console.error("handleServerAction in the frontend", payload);
+  // if (payload.category === "game_information") {
+  //   console.error("Get game information", payload);
+  //   const result = libRR_parse_message_from_emscripten(payload);
+  //   console.error("Get game information", result);
+  //   debugger;
+  //   return Promise.resolve(result);
+  // }
+
+  // if (payload.category === "play") {
+  //   console.error("Game UnPaused", payload);
+  // }
+  // if (payload.category === "pause") {
+  //   console.error("Game Paused", payload);
+  // }
+  // if (payload.category === "restart") {
+  //   console.error("Game Restarted", payload);
+  // }
+  // if (payload.category === "save_state") {
+  //   console.error("Game State Saved", payload);
+  // }
+  // if (payload.category === "delete_state") {
+  //   console.error("Game State Saved Deleted", payload);
+  // }
+  return Promise.resolve(libRR_parse_message_from_emscripten(payload));
+
+}
+window["handleServerAction"] = handleServerAction;
+window["hasInit"] = false;
 
 function run(system, core, game) {
     //Start core execution
-    MTY_Start(`/${core.library}.wasm`, {
+    const promise = MTY_Start(`/${core.library}.wasm`, {
         js_get_host:  (value, length) => MTY_StrToC(window.location.hostname, value, length),
         js_get_port:  ()              => window.location.port ?? 0,
         js_is_secure: ()              => location.protocol.indexOf('https') != -1,
@@ -186,7 +264,17 @@ function run(system, core, game) {
         js_read_file:  JUN_ReadFile,
         js_write_file: JUN_WriteFile,
         retro_deinit: ()=> console.log("retro_deinit"),
-        get_frontend_status: ()=> {
+        set_frontend_status: (status) => {
+          // if (!window["hasInit"]) {
+          //   // backend_emulator_state;
+          //   console.error("Initialising");
+          //   const message = sendMessageToCoreFromFrontend({ category: "backend_emulator_state" })
+          //   console.error("Message Back:", message);
+
+          //   window["hasInit"] = true; 
+          // }
+        },
+        get_frontend_status: () => {
             const json_string = JSON.stringify(frontend_status)+"\0";
             const MAX_COMMAND_LENGTH = 1024;
             MTY.libRRcommand = MTY_Alloc(MAX_COMMAND_LENGTH);
@@ -194,14 +282,14 @@ function run(system, core, game) {
                 console.error("Warning: please increase MAX_COMMAND_LENGTH to at least:", json_string.length);
             }
             const c_str = MTY_StrToC(json_string,MTY.libRRcommand, json_string.length);
-            console.log("get_frontend_status", json_string, c_str);
+            // console.log("get_frontend_status", json_string, c_str);
             return c_str;
         }
     });
     
-
+    return promise;
     //Prevent mobile keyboard
-    MTY.clip.readOnly = true;
+    // MTY.clip.readOnly = true;
 }
 
 function stop() {

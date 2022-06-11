@@ -1125,7 +1125,9 @@ const MTY_WEB_API = {
 				const text = ev.key.length == 1 ? MTY_StrToC(ev.key, MTY.cbuf, 1024) : 0;
 
 				if (MTY_CFunc(keyboard)(MTY.app, true, key, text, mty_get_mods(ev)))
-					ev.preventDefault();
+					{
+						// ev.preventDefault(); libRR change as we want keyboard input to work in the libRR UI
+					}
 			}
 		});
 
@@ -1134,7 +1136,9 @@ const MTY_WEB_API = {
 
 			if (key != undefined)
 				if (MTY_CFunc(keyboard)(MTY.app, false, key, 0, mty_get_mods(ev)))
-					ev.preventDefault();
+					{
+						// ev.preventDefault(); // libRR change as we want keyboard input to work in the libRR UI
+					}
 		});
 
 		MTY.gl.canvas.addEventListener('dragover', (ev) => {
