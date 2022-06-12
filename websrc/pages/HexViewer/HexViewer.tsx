@@ -8,23 +8,13 @@ var PixelSet = require('./PixelTable').PixelSet;
 var PixelSet2 = require('./PixelTable').PixelSet2;
 var createReactClass = require('create-react-class');
 
+// Style file is very important to fisplay the hex correctly
+import "./style.css"
+
 function Item(props) {
 	var classes = (props.active ? 'active' : '') + (props.value == -1 ? ' none' : '');
 	return (<li title={(props.row_start_address+props.index).toString(16)} className={classes} onMouseOver={()=>props.activate(props.index)} onMouseLeave={()=>props.clear()}>{props.byteString}</li>);
 }
-
-// var Item2 = createReactClass({
-// 	activate: function () {
-// 		this.props.activate(this.props.index);
-// 	},
-// 	clear: function() {
-// 		this.props.clear();
-// 	},
-// 	render: function() {
-// 		var classes = (this.props.active ? 'active' : '') + (this.props.value == -1 ? ' none' : '');
-// 		return (<li title={this.props.row_start_address+this.props.index} className={classes} onMouseOver={this.activate} onMouseLeave={this.clear}>{this.props.byteString}</li>);
-// 	}
-// });
 
 var Set = createReactClass({
 	activate: function () {
@@ -85,7 +75,6 @@ var Row = createReactClass({
 		this.setActiveSet(this.props.index);
 	},
 	render: function() {
-		return <>HexVuiew</>
 		var sets = this.props.sets.map(function(set, i) {
 			var active = this.state.activeSet == i ? true : false;
 
