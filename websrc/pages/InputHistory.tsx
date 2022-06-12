@@ -89,7 +89,7 @@ export function InputHistory( {mainState, fullState}) {
   const listRef = React.createRef();
   // We use the last frame of the playthrough instead of button log length as button log can vary in size
   // TODO: need to find last_frame
-  const number_of_rows = fullState?.playthrough?.last_frame || 100;
+  const number_of_rows = fullState?.playthrough?.last_frame || 0;
   const [loading, setLoading] = useState(true);
   const [buttonLog, setButtonLog] = useState(null);
   const [startFrame, setStartFrame] = useState(0);
@@ -151,24 +151,21 @@ export function InputHistory( {mainState, fullState}) {
   const [rows, setRows] = React.useState(window["allInformation"]?.functions || []);
 
   function rowGetter({index}) {  
-    console.error("rowGetter", index)  
     const frame_index = startFrame + index;
     const breakpoint =  (<Checkbox
+      checked={false}
+      onChange={()=>null}
+      inputProps={{ 'aria-label': 'primary checkbox' }}
+      style={{ marginBottom: 20}}
+      />);
+      const save =  (<Checkbox
         checked={false}
         onChange={()=>null}
         inputProps={{ 'aria-label': 'primary checkbox' }}
         style={{ marginBottom: 20}}
-      />);
-    const save =  (<Checkbox
-        checked={false}
-        onChange={()=>null}
-        inputProps={{ 'aria-label': 'primary checkbox' }}
-        style={{ marginBottom: 20}}
-      />);
-    const frame = (<FrameHintPopOver frame={frame_index} />);
-    // Technically our button log supports 64bit (8 byte values)
-    const left = buttonLog?.getUint32(frame_index*8, true);
-    // const right = buttonLog?.getUint32(index*8+ 4, true);
+        />);
+        const frame = (<FrameHintPopOver frame={frame_index} />);
+        // Technically our button log supports 64bit (8 byte values)
     let input = buttonLog?.getUint32(frame_index*8, true);
 
     if (frame_index in buttonChanges) {

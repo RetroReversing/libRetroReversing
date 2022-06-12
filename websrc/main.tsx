@@ -46,7 +46,6 @@ function createBreadcrumbs(params) {
 }
 
 function setupAdditionalGameSpecificTabs(emuMetaData: EmulatorMetaData, tabs) {
-  console.error("setupAdditionalGameSpecificTabs", emuMetaData);
   if (!emuMetaData) return tabs;
   emuMetaData?.memory_descriptors?.forEach((mem)=> {
     const tab_name = "memory_"+mem.name;
