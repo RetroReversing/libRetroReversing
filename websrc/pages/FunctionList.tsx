@@ -111,7 +111,6 @@ export function FunctionList( { loading, setCurrentDialog, setCurrentDialogParam
       setRows(window["allInformation"]?.functions);
       console.error("Updated rows", window["allInformation"]?.functions);
     }
-    debugger;
     return <div>No Rows in  window.allInformation?.functions {JSON.stringify(Object.keys(window["allInformation"]))}</div>;
   }
 

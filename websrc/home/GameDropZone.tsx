@@ -221,29 +221,6 @@ function libRR_parse_message_from_emscripten(json_string = '{ "category": "play"
 
 function handleServerAction(payload) {
   console.error("handleServerAction in the frontend", payload);
-  // if (payload.category === "game_information") {
-  //   console.error("Get game information", payload);
-  //   const result = libRR_parse_message_from_emscripten(payload);
-  //   console.error("Get game information", result);
-  //   debugger;
-  //   return Promise.resolve(result);
-  // }
-
-  // if (payload.category === "play") {
-  //   console.error("Game UnPaused", payload);
-  // }
-  // if (payload.category === "pause") {
-  //   console.error("Game Paused", payload);
-  // }
-  // if (payload.category === "restart") {
-  //   console.error("Game Restarted", payload);
-  // }
-  // if (payload.category === "save_state") {
-  //   console.error("Game State Saved", payload);
-  // }
-  // if (payload.category === "delete_state") {
-  //   console.error("Game State Saved Deleted", payload);
-  // }
   return Promise.resolve(libRR_parse_message_from_emscripten(payload));
 
 }

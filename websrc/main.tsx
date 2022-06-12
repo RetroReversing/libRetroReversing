@@ -11,14 +11,9 @@ import {
 
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import Container from '@material-ui/core/Container';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import { ThemeProvider } from '@material-ui/core/styles';
 
-import { useStyles, useRRTheme, theme } from './styles';
+import { useStyles, useRRTheme } from './styles';
 import { MainPage } from './pages/MainPage';
-import { sendActionToServer } from './server';
 import { InputHistory } from './pages/InputHistory';
 import { GameInformation } from './pages/GameInformation';
 import { FunctionList } from './pages/FunctionList';
@@ -35,7 +30,8 @@ import ExportFunctionDialog from './dialogs/ExportFunctionDialog';
 import LoadLinkerMapFileDialog from './dialogs/LoadLinkerMapFileDialog';
 import { RRTitleBar } from "./main/RRTitleBar";
 import { PlaythroughSelector } from "./main/PlaythroughSelector";
-import { GameDropZone } from "./home/GameDropZone";
+import { HomePage } from "./HomePage";
+import { getEmulatorMetadata } from "./api/getEmulatorMetadata";
 
 function createBreadcrumbs(params) {
   return (<Breadcrumbs aria-label="breadcrumb">
@@ -49,23 +45,23 @@ function createBreadcrumbs(params) {
 </Breadcrumbs>);
 }
 
-function setupAdditionalGameSpecificTabs(allInfo, tabs) {
-  const gameInfo = allInfo.current_state;
-  if (!gameInfo) return tabs;
-  gameInfo.memory_descriptors.forEach((mem)=> {
+function setupAdditionalGameSpecificTabs(emuMetaData: EmulatorMetaData, tabs) {
+  console.error("setupAdditionalGameSpecificTabs", emuMetaData);
+  if (!emuMetaData) return tabs;
+  emuMetaData?.memory_descriptors?.forEach((mem)=> {
     const tab_name = "memory_"+mem.name;
     // TODO find display name
     tabs[tab_name] = <MemoryViewer memory={mem} />;
   });
 
-  allInfo.cd_tracks.forEach((mem)=> {
+  emuMetaData?.cd_tracks?.forEach((mem)=> {
     const tab_name = "memory_"+mem.name;
     tabs[tab_name] = <MemoryViewer memory={{...mem, start: 0} } />;
   });
   return tabs;
 }
 
-function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation) {
+export function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation) {
   const tabs =  {
     input: <InputHistory mainState={gameInformation} fullState={fullState} />,
     functions: <FunctionList loading={loading} setCurrentDialog={setCurrentDialog} setCurrentDialogParameters={setCurrentDialogParameters} />,
@@ -75,7 +71,7 @@ function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, set
     main: <MainPage fullState={fullState} setFullState={setFullState} />,
     resources: <ResourceList cdData={cdData} />,
   };
-  return setupAdditionalGameSpecificTabs(allInformation, tabs);
+  return setupAdditionalGameSpecificTabs(gameInformation, tabs);
 }
 
 const initialPlayerState = {
@@ -139,7 +135,7 @@ function App() {
     }
   }, [params.gameHash])
 
-  React.useEffect(getGameInformation(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading), [currentDialog, currentTab]);
+  React.useEffect(getEmulatorMetadata(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading), [currentDialog, currentTab]);
 
 
   return (
@@ -158,27 +154,6 @@ function App() {
       </main>
       </div>
   );
-}
-
-//  The HomePage will become a game selection interface
-function HomePage() {
-  return <div>
-    <ThemeProvider theme={theme}>
-      <AppBar position="relative">
-          <Toolbar>
-            {/* <CameraIcon sx={{ mr: 2 }} /> */}
-            <Typography variant="h6" color="inherit" noWrap>
-              Reversing Emulator
-            </Typography>
-          </Toolbar>
-        </AppBar>
-      <Container>
-      <Typography variant="h6" color="inherit" noWrap>Add Games</Typography>
-        <Typography align="center">Welcome to the Online version of the Reversing Emulator, simply drop a ROM into the box below to start Reversing!</Typography>
-        <GameDropZone />
-      </Container>
-    </ThemeProvider>
-  </div>;
 }
 
 // ReactDOM.render(<Router><App /></Router>, document.querySelector("#app"));
@@ -213,27 +188,9 @@ ReactDOM.render(<Router>
   </Route>
 </Switch></Router>, document.querySelector("#app"));
 
-
-function getGameInformation(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading) {
-  return function requestGameInformation() {
-    console.error("Requesting Game Information:", gameInformation);
-    const payload = {
-      category: 'game_information',
-      state: gameInformation
-    };
-    sendActionToServer(payload).then((info) => {
-      if (!info) { return; }
-      console.error("result: gameInformation:", info);
-      setGameInformation(info.current_state);
-      setAllInformation(info);
-      setupAdditionalGameSpecificTabs(info, tabs);
-      setFullState(info);
-      if (info.playerState) {
-        setPlayerState({ ...info.playerState, playerState });
-      }
-      setLoading(false);
-    });
-  };
+export interface EmulatorMetaData {
+  memory_descriptors: any;
+  cd_tracks: any;
 }
 
 
