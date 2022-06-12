@@ -29,7 +29,7 @@ extern bool libRR_full_trace_log;
 std::map<string, libRR_emulator_state> playthroughs = {};
 // current_emulator_state holds all the game core information such as Game Name, CD Tracks, Memory regions etc
 // This is never changed from Web requests, and is not often changed at all
-/*libRR_emulator_state*/ json current_emulator_state = {};
+// /*libRR_emulator_state*/ json current_emulator_state = {};
 
 retro_environment_t environ_cb = {};
 
@@ -95,7 +95,7 @@ void libRR_define_console_memory_region(string name, unsigned long long start, u
   cout << name << "\n";
 }
 
-void libRR_get_list_of_memory_regions()
+json libRR_get_list_of_memory_regions()
 {
   // can we save the memory map to json and send to client?
   // printf("libRR_get_list_of_memory_regions number:%d \n", libRR_retromap.num_descriptors);
@@ -110,11 +110,7 @@ void libRR_get_list_of_memory_regions()
       printf("Memory for %s is NULL \n", libRR_retromap.descriptors[i].addrspace);
     }
   }
-
-  printf("Saving current_emulator_state.memory_descriptors\n");
-  current_emulator_state["memory_descriptors"] = memory_descriptors;
-  printf("Saving current_emulator_state\n");
-  game_json["current_emulator_state"] = current_emulator_state;
+  return memory_descriptors;
 }
 
 void libRR_setup_retro_base_directory() {
@@ -192,32 +188,25 @@ string extract_basename(const char *path)
 }
 
 extern string libRR_game_name;
+extern string libRR_rom_name;
 void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t _environ_cb)
 {
   environ_cb = _environ_cb;
   printf("Loading a new ROM \n");
   libRR_setup_console_details(environ_cb);
 
-  string game_name = extract_basename(info->path);
+  libRR_rom_name = extract_basename(info->path);
 
-  current_emulator_state["game_name"] = game_name;
-  printf("Game path: %s name: %s\n", info->path, game_name.c_str());
+  printf("Game path: %s name: %s\n", info->path, libRR_rom_name.c_str());
 
-  libRR_game_name = alphabetic_only_name((char*)game_name.c_str(), game_name.length());
-  current_emulator_state["libRR_save_states"] = libRR_save_states;
-  libRR_get_list_of_memory_regions();
+  libRR_game_name = alphabetic_only_name((char*)libRR_rom_name.c_str(), libRR_rom_name.length());
 
-  current_emulator_state["paths"]["retro_save_directory"] = libRR_save_directory;
-  current_emulator_state["paths"]["retro_base_directory"] = retro_base_directory;
-  current_emulator_state["paths"]["retro_cd_base_directory"] = retro_cd_base_directory;
-  current_emulator_state["paths"]["retro_cd_path"] = retro_cd_path;
   // 
   // Setup reversing files
   // 
   read_json_config();
   libRR_setup_directories();
   init_playthrough(libRR_current_playthrough_name); // todo get name from front end
-  game_json["current_emulator_state"] = current_emulator_state;
   setup_web_server();
 }
 
@@ -441,7 +430,8 @@ uint8_t* get_memory_pointer(string memory_name, int offset, int length) {
     return NULL;
     // return libRR_get_data_for_file(offset, length);
   }
-  for (auto &i : current_emulator_state["memory_descriptors"])
+  json memory_descriptors = libRR_get_list_of_memory_regions();
+  for (auto &i : memory_descriptors)
   {
     string address_space_name = i["addrspace"];
     if (address_space_name == memory_name)
@@ -492,7 +482,8 @@ string get_strings_for_web(string memory_name, int offset, int length) {
 
 string libRR_get_data_for_function(int offset, int length, bool swapEndian, bool asHexString = false) {
   // printf("libRR_get_data_for_function offset: %d length: %d \n", offset, length);
-  for (auto &i : current_emulator_state["memory_descriptors"])
+  json memory_descriptors = libRR_get_list_of_memory_regions();
+  for (auto &i : memory_descriptors)
   {
     int start_offset = i["start"];
     int length_of_memory = i["len"];
@@ -525,7 +516,8 @@ string get_memory_for_web(string memory_name, int offset, int length, bool swapE
     printf("Memory name function \n");
     return libRR_get_data_for_function(offset, length, swapEndian);
   }
-  for (auto &i : current_emulator_state["memory_descriptors"])
+  json memory_descriptors = libRR_get_list_of_memory_regions();
+  for (auto &i : memory_descriptors)
   {
     if (i["addrspace"] == memory_name)
     {
@@ -654,14 +646,13 @@ string libRR_parse_message_from_web(json message_json) //string message)
   // auto message_json = json::parse(message);
   string category = message_json["category"].get<std::string>();
   
-  libRR_get_list_of_memory_regions();
-
-  if (category == "player_settings")
-  {
-    printf("OLD Player settings!\n");
-    return game_json.dump(4);
-  }
-  else if (category == "request_memory")
+  // if (category == "player_settings")
+  // {
+  //   printf("OLD Player settings!\n");
+  //   return game_json.dump(4);
+  // }
+  // else 
+  if (category == "request_memory")
   {
     printf("Request for memory %s\n", message_json["state"]["memory"]["name"].dump(4).c_str());
     return get_memory_for_web(message_json["state"]["memory"]["name"], message_json["state"]["offset"], message_json["state"]["length"], message_json["state"]["swapEndian"]);
@@ -779,7 +770,21 @@ string libRR_parse_message_from_web(json message_json) //string message)
   }
   else if (category == "emulator_metadata") {
     printf("Get Emulator Meta Data (info only ever changed on backend) \n");
+    json current_emulator_state = {};
+    current_emulator_state["game_name"] = libRR_game_name;
+    current_emulator_state["rom_name"] = libRR_rom_name;
+    current_emulator_state["memory_descriptors"] = libRR_get_list_of_memory_regions();
     current_emulator_state["cd_tracks"] = libRR_cd_tracks;
+    current_emulator_state["libRR_save_states"] = libRR_save_states;
+
+    json paths = json::parse("{}");
+    paths["libRR_project_directory"] = libRR_project_directory;
+    paths["retro_save_directory"] = libRR_save_directory;
+    paths["retro_base_directory"] = retro_base_directory;
+    paths["retro_cd_base_directory"] = retro_cd_base_directory;
+    paths["retro_cd_path"] = retro_cd_path;
+    current_emulator_state["paths"] = paths;
+
     return return_json_to_web(current_emulator_state);
   }
   else

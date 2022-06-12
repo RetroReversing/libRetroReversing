@@ -69,6 +69,7 @@ bool libRR_finished_boot_rom = false;
 int frame_last_reversed = 0;
 int time_last_reversed = 0;
 string libRR_game_name = "";
+string libRR_rom_name = "";
 
 // string next_dma_type = "";
 // uint32_t previous_function = 0;
