@@ -11,6 +11,7 @@ import {
 } from "react-router-dom";
 import { blue } from "@material-ui/core/colors";
 import { noop } from "lodash";
+import settings from "../settings.json";
 
 window["loadedGames"] = {};
 
@@ -127,8 +128,13 @@ function loadLocalGames(setLocalGames) {
   };
 }
 
+// customFetch overrides the default browser fetch, to make sure maytoya loads the game from the browser rather than a URL request
 async function customFetch (input: any, init) {
-  //Returning the local game file if the request matches
+  if (input.includes("settings.json")) {
+    console.error("Maytoya wants settings.json");
+    return Promise.resolve(new Response(JSON.stringify(settings), { status: 200 }));
+  }
+  // Returning the local game file if the request matches
   if (input.includes(`/games/`)) {
     
     // return response;
@@ -144,9 +150,6 @@ async function customFetch (input: any, init) {
       }
       console.error("game_binary:", game_binary);
       let game_file_name = game_path.split("/")[1];
-      // game_file_name = "Columns (USA, Europe).gg";
-      // console.error("GAME APTH:", game_file_name, "Columns (USA, Europe).gg");
-      // debugger;
       const file2: any = new File([game_binary.data], ""+game_file_name);
       const response = new Response(file2, { status: 200 });
       resolve(response);})();
@@ -178,10 +181,6 @@ function startEmulator(game_name, callback=noop) {
   return startedEmulator;
 }
 window["startEmulator"] = startEmulator;
-
-function stopEmulator() {
-  console.error("How do we stop the emulator from running the wasm?");
-}
 
 // TODO: need to hook this up to be changed instead of postResponse
 let frontend_status = { paused: false, startAt: 0 };
@@ -241,16 +240,6 @@ function run(system, core, game) {
         js_read_file:  JUN_ReadFile,
         js_write_file: JUN_WriteFile,
         retro_deinit: ()=> console.log("retro_deinit"),
-        set_frontend_status: (status) => {
-          // if (!window["hasInit"]) {
-          //   // backend_emulator_state;
-          //   console.error("Initialising");
-          //   const message = sendMessageToCoreFromFrontend({ category: "backend_emulator_state" })
-          //   console.error("Message Back:", message);
-
-          //   window["hasInit"] = true; 
-          // }
-        },
         get_frontend_status: () => {
             const json_string = JSON.stringify(frontend_status)+"\0";
             const MAX_COMMAND_LENGTH = 1024;
