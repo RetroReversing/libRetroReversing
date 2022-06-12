@@ -519,10 +519,11 @@ string get_memory_for_web(string memory_name, int offset, int length, bool swapE
   json memory_descriptors = libRR_get_list_of_memory_regions();
   for (auto &i : memory_descriptors)
   {
-    if (i["addrspace"] == memory_name)
+    string memory_descriptor_name = i["name"];
+    if (memory_descriptor_name == memory_name)
     {
       int start_offset = i["start"];
-      int length_of_memory = i["len"];
+      int length_of_memory = i["length"];
       int end = start_offset + length_of_memory;
       if (start_offset + offset >= end)
       {
@@ -533,7 +534,7 @@ string get_memory_for_web(string memory_name, int offset, int length, bool swapE
       {
         length = end - (start_offset + offset);
       }
-      int pointer_address = i["ptr"];
+      int pointer_address = i["pointer"];
       return printBytesToDecimalJSArray((uint8_t *)(pointer_address) + offset, length, swapEndian);
     }
   }
