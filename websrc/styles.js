@@ -1,8 +1,20 @@
 import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { createMuiTheme } from '@material-ui/core/styles';
 
 const drawerWidth = 240;
 
 export const useRRTheme = useTheme;
+
+export const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: '#333333',
+    },
+    secondary: {
+      main: '#0079ca',
+    },
+  },
+});
 
 export const useStyles = makeStyles((theme) => ({
   root: {

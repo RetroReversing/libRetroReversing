@@ -51,7 +51,7 @@ export function ParserViewer() {
 
   const [code, setCode] = useState(default_code);
 
-  return "Enable this in webpack";
+  return <>"Enable this in webpack"</>;
 
   console.error("Parser is:", Parser)
 
