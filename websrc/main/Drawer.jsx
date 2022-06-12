@@ -68,7 +68,7 @@ export function RRDrawer( props ) {
       </ListItem>
     ))}
   </List>
-  <Divider />
+  {cd_tracks.length>0 && <Divider />}
   <List>
     {cd_tracks.map((cd_track, index) => (
       <ListItem button key={cd_track.name} onClick={()=>props.setCurrentTab("memory_"+cd_track.name)}>

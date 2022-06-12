@@ -236,6 +236,11 @@ export function visualiseData(data, visualType, is2D=true, showAs="tiles", pixel
   blocks = [];
   mode = is2D?"2d":"1d";
 
+  if (!data) {
+    console.error("visualiseData data is null");
+    return [];
+  }
+
   if (visualType === "highlight_printable") {
     show_printable(data, pixelsPerLine);
   } 
