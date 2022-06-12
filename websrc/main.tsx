@@ -61,9 +61,9 @@ function setupAdditionalGameSpecificTabs(emuMetaData: EmulatorMetaData, tabs) {
   return tabs;
 }
 
-export function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation) {
+export function createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, emulatorMetaData, fullState, cdData, allInformation) {
   const tabs =  {
-    input: <InputHistory mainState={gameInformation} fullState={fullState} />,
+    input: <InputHistory mainState={emulatorMetaData} fullState={fullState} />,
     functions: <FunctionList loading={loading} setCurrentDialog={setCurrentDialog} setCurrentDialogParameters={setCurrentDialogParameters} />,
     data_structures: <DataStructures />,
     home: <GameInformation />,
@@ -71,7 +71,7 @@ export function createTabs(loading, { setCurrentDialog, setCurrentDialogParamete
     main: <MainPage fullState={fullState} setFullState={setFullState} />,
     resources: <ResourceList cdData={cdData} />,
   };
-  return setupAdditionalGameSpecificTabs(gameInformation, tabs);
+  return setupAdditionalGameSpecificTabs(emulatorMetaData, tabs);
 }
 
 const initialPlayerState = {
@@ -91,7 +91,7 @@ function App() {
   const theme = useRRTheme();
   let history = useHistory();
 
-  const [open, setOpen] = React.useState(false);
+  const [leftDrawerOpen, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   let params = useParams();
 
@@ -102,11 +102,9 @@ function App() {
   }
   const [currentDialog, setCurrentDialog] = React.useState('');
   const [currentDialogParameters, setCurrentDialogParameters] = React.useState('');
-  const [gameInformation, setGameInformation] = useState({ 
-    gameName: "",
-  });
+  const [emulatorMetaData, setEmulatorMetadata] = useState({});
   const [allInformation, setAllInformation] = useState({ 
-    gameName: "",
+    gameName: "AllInfo",
     cd_data: { root_files: [] }
   });
   const [fullState, setFullState] = useState({});
@@ -115,7 +113,7 @@ function App() {
   const [playerState, setPlayerState] = useState(initialPlayerState);
 
   const cdData = allInformation?.cd_data?.root_files;
-  const tabs = createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, gameInformation, fullState, cdData, allInformation)
+  const tabs = createTabs(loading, { setCurrentDialog, setCurrentDialogParameters, setFullState }, emulatorMetaData, fullState, cdData, allInformation)
   
   const dialogs = {
     'pause_save': <PauseSaveDialog setCurrentDialog={setCurrentDialog} fullState={fullState} />,
@@ -131,19 +129,18 @@ function App() {
       const callback = () => {
         console.info("Game now running:", params?.gameHash);
       };
-      window["startEmulator"](params?.gameHash, callback)
+      window["startEmulator"](params?.gameHash, callback);
     }
   }, [params.gameHash])
 
-  React.useEffect(getEmulatorMetadata(gameInformation, setGameInformation, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading), [currentDialog, currentTab]);
-
+  React.useEffect(getEmulatorMetadata.bind(null, setEmulatorMetadata, setLoading), [currentDialog, currentTab, leftDrawerOpen]);
 
   return (
     <div className={classes.root}>
-      {RRTitleBar(classes, open, gameInformation, setCurrentDialog, playerState, setPlayerState, setCurrentTab, theme, setOpen)}      
+      {RRTitleBar(classes, leftDrawerOpen, emulatorMetaData, setCurrentDialog, playerState, setPlayerState, setCurrentTab, theme, setOpen)}      
       <main
         className={clsx(classes.content, {
-          [classes.contentShift]: open,
+          [classes.contentShift]: leftDrawerOpen,
         })}
       >
         <div className={classes.drawerHeader} />

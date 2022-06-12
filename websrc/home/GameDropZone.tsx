@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { Box, List, ListItem } from '@material-ui/core';
 import { extensions, systems } from "./emulators";
 import { MTY, MTY_StrToC, MTY_StrToJS, MTY_Alloc, MTY_Start, MTY_Stop } from "./matoya";
-import { JUN_ReadFile, RE_ReadFileFromJS, JUN_WriteFile, JUN_WriteFileFromJS, RE_getAllLocalGames } from "./database";
+import { JUN_ReadFile, RE_ReadFileFromJS, JUN_WriteFile, JUN_WriteFileFromJS, RE_getAllLocalGames, RE_ReadRomFromJS } from "./database";
 import { useEffectOnce } from "react-use";
 import {
   useHistory
@@ -128,10 +128,19 @@ function loadLocalGames(setLocalGames) {
   };
 }
 
+export async function loadFileFromLocalStorage(path, file_name) {
+  const binary_file = await RE_ReadFileFromJS(path);
+  if (!binary_file) {
+    console.error("Binary file was null for ", file_name, "path:", path);
+    return;
+  }
+
+  return Buffer.from(binary_file.data, "base64").buffer;
+}
+
 // customFetch overrides the default browser fetch, to make sure maytoya loads the game from the browser rather than a URL request
 async function customFetch (input: any, init) {
   if (input.includes("settings.json")) {
-    console.error("Maytoya wants settings.json");
     return Promise.resolve(new Response(JSON.stringify(settings), { status: 200 }));
   }
   // Returning the local game file if the request matches
@@ -141,8 +150,9 @@ async function customFetch (input: any, init) {
     // return new Promise(resolve => resolve(response));
     return new Promise(resolve => {
       
-      (async () => {const game_path = input.split("/games/")[1];
-      const game_binary = await RE_ReadFileFromJS(game_path);
+      (async () => {
+        const game_path = input.split("/games/")[1];
+        const game_binary = await RE_ReadRomFromJS(game_path);
 
       if (!game_binary) {
         console.error("Game binary was null");
@@ -152,7 +162,8 @@ async function customFetch (input: any, init) {
       let game_file_name = game_path.split("/")[1];
       const file2: any = new File([game_binary.data], ""+game_file_name);
       const response = new Response(file2, { status: 200 });
-      resolve(response);})();
+      resolve(response);
+    })();
     });
   }
 
@@ -189,14 +200,8 @@ let game_json = { current_state: { memory_descriptors: []}, playthrough: {}, cd_
 function getFrontendStatus() {
   return frontend_status;
 }
-window["getFrontendStatus"] = getFrontendStatus;
 
-
-function updateFrontendStatus(newFrontendStatus) {
-  frontend_status = newFrontendStatus;
-}
-
-function sendMessageToCoreFromFrontend(json) {
+export function sendMessageToCoreFromFrontend(json) {
   const resultString = libRR_parse_message_from_emscripten(JSON.stringify(json)+"\0");
   try {
   return JSON.parse(resultString);
@@ -204,7 +209,11 @@ function sendMessageToCoreFromFrontend(json) {
     return {};
   }
 }
+
+// TODO: only set these when we are sure we are only using WASM cores
+window["isWASM"] = true;
 window["sendMessageToCoreFromFrontend"] = sendMessageToCoreFromFrontend;
+window["getFrontendStatus"] = getFrontendStatus;
 
 function libRR_parse_message_from_emscripten(json_string = '{ "category": "play", "state": { "startAt": 0, "paused": false } }\0') {
   if (!MTY.module) {

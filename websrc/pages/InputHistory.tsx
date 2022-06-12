@@ -80,14 +80,16 @@ export function ShowButtonsForInput({ input, frame, buttonChanges, setButtonChan
       const element = getButtonElement(frame, i, input, isButtonPressed===0); //<span onClick={changeButtonState} disabled={isButtonPressed===0}>{name}</span>
       resultingElements.push(element);
   }
-  return resultingElements;
+  return <>{resultingElements}</>;
 }
 
 
 
 export function InputHistory( {mainState, fullState}) {
   const listRef = React.createRef();
-  const number_of_rows = fullState?.playthrough?.last_frame || 0;
+  // We use the last frame of the playthrough instead of button log length as button log can vary in size
+  // TODO: need to find last_frame
+  const number_of_rows = fullState?.playthrough?.last_frame || 100;
   const [loading, setLoading] = useState(true);
   const [buttonLog, setButtonLog] = useState(null);
   const [startFrame, setStartFrame] = useState(0);
@@ -146,9 +148,10 @@ export function InputHistory( {mainState, fullState}) {
 
   const [order, setOrder] = React.useState('Location');
   const [orderDirection, setOrderDirection] = React.useState('asc');
-  const [rows, setRows] = React.useState(window.allInformation?.functions || []);
+  const [rows, setRows] = React.useState(window["allInformation"]?.functions || []);
 
-  function rowGetter({index}) {    
+  function rowGetter({index}) {  
+    console.error("rowGetter", index)  
     const frame_index = startFrame + index;
     const breakpoint =  (<Checkbox
         checked={false}
@@ -177,8 +180,9 @@ export function InputHistory( {mainState, fullState}) {
   }
 
 return (<Box>
+  number_of_rows: {number_of_rows}
   <Box p={2}>
-    <TextField ml={2} id="start-frame" label="Start Frame" value={startFrame} onChange={(e)=>setStartFrame(+e.target.value || 0)} />
+    <TextField id="start-frame" label="Start Frame" value={startFrame} onChange={(e)=>setStartFrame(+e.target.value || 0)} />
   </Box>
   <TableContainer component={Paper}>
   <Paper style={{ height: 600, width: "100%" }}>
