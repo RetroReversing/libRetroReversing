@@ -190,7 +190,9 @@ void cdl_log_jump_cached(int take_jump, uint32_t jump_target, uint8_t* jump_targ
 
 int number_of_functions = 0;
 bool libRR_full_function_log = false;
-bool libRR_full_trace_log = true;
+
+bool libRR_full_trace_log = false; // used in Genesis core in functions such as libRR_log_trace_str
+
 int last_return_address = 0;
 uint32_t libRR_call_depth = 0; // Tracks how big our stack trace is in terms of number of function calls
 
@@ -372,9 +374,9 @@ void libRR_log_rst(uint32_t current_pc, uint32_t jump_target) {
 string function_name = ""; // last function name called
 const char* libRR_log_function_call(uint32_t current_pc, uint32_t jump_target, uint32_t stack_pointer) {
     // TODO: find out why uncommeting the following causes a segfault
-    // if (!libRR_full_function_log || !libRR_finished_boot_rom) {
-    //     return;
-    // }
+    if (!libRR_full_function_log || !libRR_finished_boot_rom) {
+        return "nolog";
+    }
     string bank_number = "0000";
     uint32_t calculated_jump_target = jump_target;
     if (libRR_bank_switching_available) {

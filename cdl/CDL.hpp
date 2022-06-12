@@ -63,7 +63,8 @@ struct player_settings {
 };
 void to_json(json& j, const player_settings& p);
 void from_json(const json& j, player_settings& p);
-extern player_settings libRR_settings;
+// extern player_settings libRR_settings;
+extern json libRR_settings;
 
 struct libRR_paths {
     string retro_save_directory;
@@ -73,7 +74,7 @@ struct libRR_paths {
     // string retro_cd_base_name;
 };
 
-// Current state send back to web
+// Current state send back to web (Deprecated in favour of just using JSON)
 struct libRR_emulator_state {
     string game_name;
     retro_system_av_info libretro_video_info;

@@ -23,10 +23,14 @@ string libRR_export_directory = "";
 string libRR_current_playthrough_name = "Initial";
 int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
-player_settings libRR_settings = {.paused = true, .playbackLogged = false, .recordInput = false, .fullLogging = false, .endAt = -1, .loopFrame = -1};
+json libRR_settings = json::parse("{ \"paused\": true, \"fullLogging\": false }");
+extern bool libRR_full_trace_log;
 
 std::map<string, libRR_emulator_state> playthroughs = {};
-libRR_emulator_state current_state = {};
+// current_emulator_state holds all the game core information such as Game Name, CD Tracks, Memory regions etc
+// This is never changed from Web requests, and is not often changed at all
+/*libRR_emulator_state*/ json current_emulator_state = {};
+
 retro_environment_t environ_cb = {};
 
 std::vector<libRR_save_state> libRR_save_states = {};
@@ -107,10 +111,10 @@ void libRR_get_list_of_memory_regions()
     }
   }
 
-  printf("Saving current_state.memory_descriptors\n");
-  current_state.memory_descriptors = memory_descriptors;
-  printf("Saving current_state\n");
-  game_json["current_state"] = current_state;
+  printf("Saving current_emulator_state.memory_descriptors\n");
+  current_emulator_state["memory_descriptors"] = memory_descriptors;
+  printf("Saving current_emulator_state\n");
+  game_json["current_emulator_state"] = current_emulator_state;
 }
 
 void libRR_setup_retro_base_directory() {
@@ -154,7 +158,6 @@ void libRR_setup_directories() {
 
 // 
 // # Read all JSON config
-// This isn't used yet
 // 
 void read_json_config() {
   cout << "Project directory:" << libRR_project_directory << std::endl;
@@ -195,29 +198,26 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   printf("Loading a new ROM \n");
   libRR_setup_console_details(environ_cb);
 
-  current_state.game_name = extract_basename(info->path);
-  printf("Game path: %s name: %s\n", info->path, current_state.game_name.c_str());
+  string game_name = extract_basename(info->path);
 
-  libRR_game_name = alphabetic_only_name((char*)current_state.game_name.c_str(), current_state.game_name.length());
-  current_state.libretro_game_info = *info;
-  current_state.libRR_save_states = libRR_save_states;
+  current_emulator_state["game_name"] = game_name;
+  printf("Game path: %s name: %s\n", info->path, game_name.c_str());
 
-  retro_get_system_av_info(&current_state.libretro_video_info);
-  retro_get_system_info(&current_state.libretro_system_info);
-  printf("\n\nFPS: %f \n", current_state.libretro_video_info.timing.fps);
+  libRR_game_name = alphabetic_only_name((char*)game_name.c_str(), game_name.length());
+  current_emulator_state["libRR_save_states"] = libRR_save_states;
   libRR_get_list_of_memory_regions();
 
-  current_state.paths.retro_save_directory = libRR_save_directory;
-  current_state.paths.retro_base_directory = retro_base_directory;
-  current_state.paths.retro_cd_base_directory = retro_cd_base_directory;
-  current_state.paths.retro_cd_path = retro_cd_path;
+  current_emulator_state["paths"]["retro_save_directory"] = libRR_save_directory;
+  current_emulator_state["paths"]["retro_base_directory"] = retro_base_directory;
+  current_emulator_state["paths"]["retro_cd_base_directory"] = retro_cd_base_directory;
+  current_emulator_state["paths"]["retro_cd_path"] = retro_cd_path;
   // 
   // Setup reversing files
   // 
   read_json_config();
   libRR_setup_directories();
   init_playthrough(libRR_current_playthrough_name); // todo get name from front end
-  game_json["current_state"] = current_state;
+  game_json["current_emulator_state"] = current_emulator_state;
   setup_web_server();
 }
 
@@ -302,7 +302,7 @@ void save_playthough_metadata() {
   if (libRR_current_playthrough.count("name") < 1) {
     libRR_current_playthrough["name"] = libRR_current_playthrough_name;
     libRR_current_playthrough["states"] =  json::parse("[]");
-    libRR_current_playthrough["current_state"] =  json::parse("{}");
+    // libRR_current_playthrough["current_save_state"] =  json::parse("{}");
     libRR_current_playthrough["last_frame"] =  0;
   }
   saveJsonToFile(current_playthrough_directory+"/playthrough.json", libRR_current_playthrough);
@@ -412,7 +412,7 @@ string libRR_create_save_state(string name, int frame, bool fast_save = false) {
   state.name = name;
   state.frame = RRCurrentFrame;
   libRR_current_playthrough["states"].push_back(state);
-  libRR_current_playthrough["current_state"] = state;
+  libRR_current_playthrough["current_save_state"] = state;
 
   if (RRCurrentFrame > libRR_current_playthrough["last_frame"]) {
       libRR_current_playthrough["last_frame"] = RRCurrentFrame;
@@ -441,21 +441,25 @@ uint8_t* get_memory_pointer(string memory_name, int offset, int length) {
     return NULL;
     // return libRR_get_data_for_file(offset, length);
   }
-  for (auto &i : current_state.memory_descriptors)
+  for (auto &i : current_emulator_state["memory_descriptors"])
   {
-    if (i.addrspace == memory_name)
+    string address_space_name = i["addrspace"];
+    if (address_space_name == memory_name)
     {
-      int end = i.start + i.len;
-      if (i.start + offset >= end)
+      int start_offset = i["start"];
+      int length_of_memory = i["len"];
+      int pointer_address = i["ptr"];
+      int end = start_offset + length_of_memory;
+      if (start_offset + offset >= end)
       {
         // Starting at the end is no good
         return NULL;
       }
-      if ((i.start + offset + length) >= end)
+      if ((start_offset + offset + length) >= end)
       {
-        length = end - (i.start + offset);
+        length = end - (start_offset + offset);
       }
-      return (uint8_t *)(i.ptr) + offset;
+      return (uint8_t *)(pointer_address) + offset;
     }
   }
 
@@ -488,21 +492,24 @@ string get_strings_for_web(string memory_name, int offset, int length) {
 
 string libRR_get_data_for_function(int offset, int length, bool swapEndian, bool asHexString = false) {
   // printf("libRR_get_data_for_function offset: %d length: %d \n", offset, length);
-  for (auto &i : current_state.memory_descriptors)
+  for (auto &i : current_emulator_state["memory_descriptors"])
   {
-    int end = i.start + i.len;
-    if (offset >= i.start && offset < end) {
-      int relative_offset = offset - i.start;
+    int start_offset = i["start"];
+    int length_of_memory = i["len"];
+    int pointer_address = i["ptr"];
+    int end = start_offset + length_of_memory;
+    if (offset >= start_offset && offset < end) {
+      int relative_offset = offset - start_offset;
       if ((offset + length) >= end)
       {
         length = end - (offset);
       }
       
       if (asHexString) {
-        return printBytesToStr((uint8_t *)(i.ptr) + relative_offset, length, swapEndian);
+        return printBytesToStr((uint8_t *)(pointer_address) + relative_offset, length, swapEndian);
       }
       // printf("Found Name: %s start: %d end: %d \n", i.addrspace, i.start, end);
-      return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + relative_offset, length, swapEndian);
+      return printBytesToDecimalJSArray((uint8_t *)(pointer_address) + relative_offset, length, swapEndian);
     }
   }
   printf("libRR_get_data_for_function Failed to find: %d \n", offset);
@@ -518,21 +525,24 @@ string get_memory_for_web(string memory_name, int offset, int length, bool swapE
     printf("Memory name function \n");
     return libRR_get_data_for_function(offset, length, swapEndian);
   }
-  for (auto &i : current_state.memory_descriptors)
+  for (auto &i : current_emulator_state["memory_descriptors"])
   {
-    if (i.addrspace == memory_name)
+    if (i["addrspace"] == memory_name)
     {
-      int end = i.start + i.len;
-      if (i.start + offset >= end)
+      int start_offset = i["start"];
+      int length_of_memory = i["len"];
+      int end = start_offset + length_of_memory;
+      if (start_offset + offset >= end)
       {
         // Starting at the end is no good
         return "[]";
       }
-      if ((i.start + offset + length) >= end)
+      if ((start_offset + offset + length) >= end)
       {
-        length = end - (i.start + offset);
+        length = end - (start_offset + offset);
       }
-      return printBytesToDecimalJSArray((uint8_t *)(i.ptr) + offset, length, swapEndian);
+      int pointer_address = i["ptr"];
+      return printBytesToDecimalJSArray((uint8_t *)(pointer_address) + offset, length, swapEndian);
     }
   }
 
@@ -613,11 +623,33 @@ void upload_linker_map(json linker_map) {
 
 }
 
+__attribute__((export_name("libRR_parse_message_from_emscripten"))) const char* libRR_parse_message_from_emscripten(const char* json_message) {
+  printf("libRR_parse_message_from_emscripten %s \n", json_message);
+  libRR_full_trace_log = false;
+  if (json::accept(json_message)) {
+      return libRR_parse_message_from_web(json::parse(json_message)).c_str();
+  }
+  printf("ERROR in libRR_parse_message_from_emscripten, this is not valid JSON: %s \n", json_message);
+  return "Error invalid JSON provided to libRR_parse_message_from_emscripten";
+}
+
+string return_json_to_web(json result) {
+  json result_json;
+  result_json["result"] = result;
+  string dump = result_json.dump(1, ' ', true, nlohmann::detail::error_handler_t::replace);
+  printf("About to return dump to web client\n");
+  return dump;
+}
+
 // Settings
 double libRR_playback_speed = 100;
 string libRR_parse_message_from_web(json message_json) //string message)
 {
-  // printf("New Web Message %s \n", message.c_str());
+  printf("New Web Message %s \n", message_json.dump().c_str());
+
+   if (!message_json.contains("category")) {
+     return "No category defined";
+   }
 
   // auto message_json = json::parse(message);
   string category = message_json["category"].get<std::string>();
@@ -660,9 +692,9 @@ string libRR_parse_message_from_web(json message_json) //string message)
       libRR_load_save_state(startAt);
     }
 
-    player_settings p2 = message_json["state"].get<player_settings>();
-    libRR_settings = p2;
-    libRR_full_function_log = p2.fullLogging;
+    libRR_settings = message_json["state"];
+    libRR_full_function_log = libRR_settings["fullLogging"];
+    libRR_full_trace_log = libRR_full_function_log;
 
     // Set the speed here
     libRR_playback_speed = message_json["state"]["speed"];
@@ -670,7 +702,7 @@ string libRR_parse_message_from_web(json message_json) //string message)
     
     if (libRR_current_playthrough["last_frame"] != 0) {
       // std::cout << p2.dump(4) << std::endl;
-      std::cout << "Would load:" << libRR_current_playthrough["current_state"]["frame"].dump(4) << std::endl;
+      std::cout << "Would load:" << libRR_current_playthrough["current_save_state"]["frame"].dump(4) << std::endl;
       // libRR_load_save_state(libRR_current_playthrough["current_state"]["frame"]);
     }
     return "Running";
@@ -678,14 +710,11 @@ string libRR_parse_message_from_web(json message_json) //string message)
   }
   else if (category == "pause") {
     printf("Pause request from UI %s\n", message_json["state"].dump().c_str());
-    player_settings p2 = message_json["state"].get<player_settings>();
-    libRR_settings = p2;
-    libRR_full_function_log = p2.fullLogging;
+    libRR_settings = message_json["state"];
+    libRR_full_function_log = libRR_settings["fullLogging"];
     save_constant_metadata();
     libRR_export_all_files();
     return "Paused";
-    // printf("Returning game_json dump (sometimes segfaults?) \n");
-    // return game_json.dump(4);
   }
   else if (category == "restart") {
     libRR_reset(0);
@@ -748,8 +777,10 @@ string libRR_parse_message_from_web(json message_json) //string message)
     saveJsonToFile(libRR_project_directory+"/linker_map.json", message_json["state"]);
     return "Uploaded linker map";
   }
-  else if (category == "game_information") {
-    printf("get game information \n");
+  else if (category == "emulator_metadata") {
+    printf("Get Emulator Meta Data (info only ever changed on backend) \n");
+    current_emulator_state["cd_tracks"] = libRR_cd_tracks;
+    return return_json_to_web(current_emulator_state);
   }
   else
   {
@@ -759,10 +790,9 @@ string libRR_parse_message_from_web(json message_json) //string message)
   libRR_display_message("Category: %s", category.c_str());
 
   // Update game_json based on emulator settings
-  game_json["current_state"] = current_state;
+  // game_json["current_state"] = current_state;
   printf("About to set playthrough\n");
   game_json["playthrough"] = libRR_current_playthrough;
-  game_json["cd_tracks"] = libRR_cd_tracks;
   printf("About to set functions\n");
   std::cout << "function map size is " << functions.size() << '\n';
   game_json["functions"] = functions;

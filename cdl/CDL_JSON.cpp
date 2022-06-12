@@ -34,8 +34,27 @@ std::map<string, string> function_signatures;
 std::map<uint32_t,uint8_t> cached_jumps;
 std::map<uint32_t,string> memory_to_log;
 
+std::streampos fileSize( const char* filePath ){
+
+    std::streampos fsize = 0;
+    std::ifstream file( filePath, std::ios::binary );
+
+    fsize = file.tellg();
+    file.seekg( 0, std::ios::end );
+    fsize = file.tellg() - fsize;
+    file.close();
+
+    return fsize;
+}
+
 void readJsonToObject(string filename, json& json_object, string default_json) {
     printf("readJsonToObject %s \n", filename.c_str());
+    long sizeOfFile = fileSize(filename.c_str());
+    if (sizeOfFile < 0) {
+        printf("Size of file was Negative: %d \n", sizeOfFile);
+        json_object = json::parse(default_json);
+        return;
+    }
     std::ifstream i(filename);
     if (!i.good()) {
         printf("WARNING: readJsonToObject Failed to load file: %s \n", filename.c_str());
@@ -74,6 +93,7 @@ void saveJsonToFile(string filename, json& json_object) {
         cout << "ERROR: Failed to write file: " << filename << std::endl;
     }
     cout << "Save Successful" << std::endl; 
+    // cout << "Saved this:" << dump << std::endl;  //Used for debugging only
 }
 
 void save_dram_rw_to_json() {
