@@ -93,11 +93,19 @@ export async function JUN_WriteFileFromJS(file, system) {
     // files[file.path] = fileContent;
 }
 
-export async function RE_ReadFileFromJS(file_path) {
+export async function RE_ReadRomFromJS(file_path) {
     let db = await openDB('Junie', 1);
 
     let tx = db.transaction('games', 'readonly')
     let store = tx.objectStore('games')
+    return await store.get(file_path);
+}
+
+export async function RE_ReadFileFromJS(file_path) {
+    let db = await openDB('Junie', 1);
+
+    let tx = db.transaction('files', 'readonly')
+    let store = tx.objectStore('files')
     return await store.get(file_path);
 }
 

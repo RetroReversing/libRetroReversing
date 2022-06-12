@@ -1529,8 +1529,9 @@ export async function MTY_Start(bin, userEnv, endFunc, glver) {
 	if (!canvas) {
 		canvas = document.createElement('canvas');
 	}
-	canvas.style.width = '100%';
-	canvas.style.height = '100%';
+	// TODO: check if in portrait mode and if so use different values
+	canvas.style.width = '100vw';
+	canvas.style.height = '90vh';
 	document.body.appendChild(canvas);
 
 	if (glver)

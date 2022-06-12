@@ -2,8 +2,7 @@ import { sendActionToServer } from '../server';
 import { EmulatorMetaData } from "../main";
 
 
-export function getEmulatorMetadata(_, setEmulatorMetadata, setAllInformation, tabs, setFullState, setPlayerState, playerState, setLoading) {
-  return function () {
+export function getEmulatorMetadata(setEmulatorMetadata, setLoading) {
     const payload = {
       category: 'emulator_metadata'
     };
@@ -19,5 +18,4 @@ export function getEmulatorMetadata(_, setEmulatorMetadata, setAllInformation, t
       // }
       setLoading(false);
     });
-  };
 }
