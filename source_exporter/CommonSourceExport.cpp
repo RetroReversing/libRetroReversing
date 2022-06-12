@@ -63,6 +63,11 @@ void libRR_export_template_files(string template_directory_name) {
     }
   #endif
 
+   #ifdef EMSCRIPTEN
+    printf("Skipping libRR_export_template_files in Emscripten Mode");
+    return; // TODO: add this back in
+    #endif
+
     // Copy required files
     json j = files_json["files"];
     for (json::iterator it = j.begin(); it != j.end(); ++it) {
