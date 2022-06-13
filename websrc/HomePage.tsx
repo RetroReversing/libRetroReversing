@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
 import AppBar from '@material-ui/core/AppBar';
@@ -6,9 +6,24 @@ import Toolbar from '@material-ui/core/Toolbar';
 import { ThemeProvider } from '@material-ui/core/styles';
 import { theme } from './styles';
 import { GameDropZone } from "./home/GameDropZone";
+import { db } from "./firebase-config";
+import { collection, getDocs } from "@firebase/firestore";
 
-//  The HomePage will become a game selection interface
 export function HomePage() {
+  const [recentGames, setRecentGames] = useState([]);
+
+  const gamesCollectionRef = collection(db, "recentGames");
+
+  useEffect(()=> {
+    const getRecentGames = async () => {
+      const data = await getDocs(gamesCollectionRef);
+      const mapped = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+      setRecentGames(mapped);
+      console.error("Recent Games:", mapped);
+    }
+    getRecentGames();
+  }, []);
+
   return <div>
     <ThemeProvider theme={theme}>
       <AppBar position="relative">

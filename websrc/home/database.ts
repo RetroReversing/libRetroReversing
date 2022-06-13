@@ -50,7 +50,7 @@ request.onsuccess = event =>
 //Read a file from memory storage
 let fileBuffer = null;
 export function JUN_ReadFile(path, length) {    
-    console.error("JUN_ReadFile path name:", MTY_StrToJS(path), length, files);
+    // console.error("JUN_ReadFile path name:", MTY_StrToJS(path), length, files);
     const file = files[MTY_StrToJS(path)];
     if (!file)
         return null;
