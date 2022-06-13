@@ -14,6 +14,8 @@ import { noop } from "lodash";
 import settings from "../settings.json";
 
 window["loadedGames"] = {};
+window["Buffer"] = Buffer;
+
 
 const baseStyle = {
     flex: 1,
@@ -223,7 +225,7 @@ function libRR_parse_message_from_emscripten(json_string = '{ "category": "play"
   MTY.libRRcommand = MTY_Alloc(json_string.length);
   const c_str = MTY_StrToC(json_string, MTY.libRRcommand, json_string.length);
   const result = MTY.module.instance.exports.libRR_parse_message_from_emscripten(c_str);
-  console.log("Result:", result, MTY_StrToJS(result));
+  console.log("Result back from core, pointer:", result, "String:", MTY_StrToJS(result), "Payload: ",json_string);
   return MTY_StrToJS(result);
 }
 

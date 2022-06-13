@@ -23,7 +23,7 @@ export default function ResumeDialog( { fullState, setCurrentDialog, playerState
   const [endAction, setEndAction] = useState(-1);
   let params = useParams();
 
-  console.error("ResumeDialog: Sorted Save States", available_save_states, "params:", params?.gameHash);
+  // console.error("ResumeDialog: Sorted Save States", available_save_states, "params:", params?.gameHash);
 
   const handleClose = () => {
     setCurrentDialog('');
