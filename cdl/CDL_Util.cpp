@@ -78,7 +78,7 @@ void to_json(json& j, const retro_memory_descriptor& p) {
         {"disconnect", p.disconnect},
         {"length", p.len},
         {"name", p.addrspace},
-        // {"pointer", p.ptr},
+        {"pointer", (int)p.ptr}
     };
 }
 
