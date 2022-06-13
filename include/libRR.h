@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 // Common Variables
-extern int RRCurrentFrame;
+extern unsigned int RRCurrentFrame;
 extern bool libRR_should_playback_input;
 extern bool libRR_should_append_history;
 extern int libRR_should_Load_EPROM;

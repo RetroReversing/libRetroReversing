@@ -83,8 +83,11 @@ void init_playthrough(string name) {
   save_constant_metadata();
   cout << "About to read button state to memory" << std::endl;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", 0);
+
   if (!libRR_current_playthrough["last_frame"].is_null()) {
     libRR_last_logged_frame = libRR_current_playthrough["last_frame"];
+  } else {
+    printf("Current Playthrough's last frame is null /n");
   }
   libRR_should_playback_input = true;
   printf("Loaded last logged frame: %d\n",libRR_last_logged_frame);
@@ -139,7 +142,11 @@ void libRR_setup_directories() {
   printf("libRR_setup_directories");
   libRR_setup_retro_base_directory();
 
+#ifdef EMSCRIPTEN
+  libRR_project_directory = "";
+#else
   libRR_project_directory = retro_base_directory;
+#endif
   libRR_project_directory += "/RE_projects/";
   libRR_project_directory += libRR_console; //current_state.libretro_system_info.library_name;
   libRR_project_directory += "/" + libRR_game_name + "/";
@@ -157,8 +164,8 @@ void libRR_setup_directories() {
 // 
 void read_json_config() {
   cout << "Project directory:" << libRR_project_directory << std::endl;
-  readJsonToObject(libRR_project_directory+"/game.json", game_json);
-  cout << game_json.dump(4) << std::endl;
+  // readJsonToObject(libRR_project_directory+"/game.json", game_json);
+  // cout << game_json.dump(4) << std::endl;
   readJsonToObject(libRR_project_directory+"/playthroughs.json", playthroughs_json);
   cout << playthroughs_json.dump(4) << std::endl;
 }
@@ -201,11 +208,13 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
 
   libRR_game_name = alphabetic_only_name((char*)libRR_rom_name.c_str(), libRR_rom_name.length());
 
+  RRCurrentFrame = 0;
+
   // 
   // Setup reversing files
   // 
-  read_json_config();
   libRR_setup_directories();
+  read_json_config();
   init_playthrough(libRR_current_playthrough_name); // todo get name from front end
   setup_web_server();
 }
@@ -280,7 +289,7 @@ void save_constant_metadata() {
   saveJsonToFile(libRR_project_directory+"/called_functions.json", libRR_called_functions);
   saveJsonToFile(libRR_project_directory+"/long_jumps.json", libRR_long_jumps);
 
-  cout << "About to save trace log" << std::endl;
+  cout << "About to save trace log (flush)";
   libRR_log_trace_flush();
   game_json["functions"] = functions;
   saveJsonToFile(libRR_project_directory+"/functions.json", game_json["functions"]);
@@ -289,6 +298,7 @@ void save_constant_metadata() {
 void save_playthough_metadata() {
   printf("Save Playthough Meta Data");
   if (libRR_current_playthrough.count("name") < 1) {
+    printf("libRR_current_playthrough does not have a name so lets create a new one");
     libRR_current_playthrough["name"] = libRR_current_playthrough_name;
     libRR_current_playthrough["states"] =  json::parse("[]");
     // libRR_current_playthrough["current_save_state"] =  json::parse("{}");
@@ -301,13 +311,14 @@ void save_playthough_metadata() {
 }
 
 void libRR_reset(unsigned int reset_frame) {
-  printf("libRR_reset\n");
+  printf("libRR_reset to frame: %d\n", reset_frame);
   RRCurrentFrame = reset_frame;
   libRR_should_playback_input = true;
   libRR_read_button_state_from_file(current_playthrough_directory+"button_log.bin", reset_frame);
 }
 
 string libRR_load_save_state(int frame) {
+  printf("libRR_load_save_state frame: %d \n", frame);
   size_t length_of_save_buffer = retro_serialize_size();
   uint8_t *data = (uint8_t *)malloc(length_of_save_buffer);
   string filename = "save_"+to_string(frame)+".sav";
@@ -380,7 +391,7 @@ string libRR_delete_save_state(int frame) {
   return libRR_current_playthrough.dump(4);
 }
 
-string libRR_create_save_state(string name, int frame, bool fast_save = false) {
+string libRR_create_save_state(string name, unsigned int frame, bool fast_save = false) {
 
   string filename = "save_"+to_string(frame)+".sav";
 
@@ -388,7 +399,7 @@ string libRR_create_save_state(string name, int frame, bool fast_save = false) {
   size_t length_of_save_buffer = retro_serialize_size();
   uint8_t *data = (uint8_t *)malloc(length_of_save_buffer);
   libRR_direct_serialize(data, length_of_save_buffer);
-  cout << "Length of save buffer: " << length_of_save_buffer << " Name:" << name << std::endl;
+  cout << "libRR_create_save_state Length of save buffer: " << length_of_save_buffer << " Name from client:" << name << " At Frame:" << frame << std::endl;
   libRR_write_binary_data_to_file(data, length_of_save_buffer, current_playthrough_directory+filename);
   free(data);
 
@@ -404,6 +415,7 @@ string libRR_create_save_state(string name, int frame, bool fast_save = false) {
   libRR_current_playthrough["current_save_state"] = state;
 
   if (RRCurrentFrame > libRR_current_playthrough["last_frame"]) {
+    printf("RRCurrentFrame is greater than last_frame of Playthrough so setting Last frame to: %d", RRCurrentFrame);
       libRR_current_playthrough["last_frame"] = RRCurrentFrame;
   }
   save_playthough_metadata();
@@ -616,22 +628,26 @@ void upload_linker_map(json linker_map) {
 
 }
 
+
+string message_result = ""; // Store message_result on heap
 __attribute__((export_name("libRR_parse_message_from_emscripten"))) const char* libRR_parse_message_from_emscripten(const char* json_message) {
   printf("libRR_parse_message_from_emscripten %s \n", json_message);
   libRR_full_trace_log = false;
   if (json::accept(json_message)) {
-      return libRR_parse_message_from_web(json::parse(json_message)).c_str();
+    message_result =  libRR_parse_message_from_web(json::parse(json_message));
+    return message_result.c_str();
   }
   printf("ERROR in libRR_parse_message_from_emscripten, this is not valid JSON: %s \n", json_message);
   return "Error invalid JSON provided to libRR_parse_message_from_emscripten";
 }
 
+string dump_to_return = "";
+json result_json = {};
 string return_json_to_web(json result) {
-  json result_json;
   result_json["result"] = result;
-  string dump = result_json.dump(1, ' ', true, nlohmann::detail::error_handler_t::replace);
+  dump_to_return = result_json.dump(1, ' ', true, nlohmann::detail::error_handler_t::replace);
   printf("About to return dump to web client\n");
-  return dump;
+  return dump_to_return;
 }
 
 // Settings
@@ -770,13 +786,15 @@ string libRR_parse_message_from_web(json message_json) //string message)
     return "Uploaded linker map";
   }
   else if (category == "emulator_metadata") {
-    printf("Get Emulator Meta Data (info only ever changed on backend) \n");
+    // printf("Get Emulator Meta Data (info only ever changed on backend) \n");
     json current_emulator_state = {};
     current_emulator_state["game_name"] = libRR_game_name;
     current_emulator_state["rom_name"] = libRR_rom_name;
     current_emulator_state["memory_descriptors"] = libRR_get_list_of_memory_regions();
     current_emulator_state["cd_tracks"] = libRR_cd_tracks;
     current_emulator_state["libRR_save_states"] = libRR_save_states;
+    current_emulator_state["libRR_current_playthrough"] = libRR_current_playthrough;
+    current_emulator_state["RRCurrentFrame"] = RRCurrentFrame;
 
     json paths = json::parse("{}");
     paths["libRR_project_directory"] = libRR_project_directory;
@@ -797,8 +815,8 @@ string libRR_parse_message_from_web(json message_json) //string message)
 
   // Update game_json based on emulator settings
   // game_json["current_state"] = current_state;
-  printf("About to set playthrough\n");
-  game_json["playthrough"] = libRR_current_playthrough;
+  // printf("About to set playthrough\n");
+  // game_json["playthrough"] = libRR_current_playthrough;
   printf("About to set functions\n");
   std::cout << "function map size is " << functions.size() << '\n';
   game_json["functions"] = functions;

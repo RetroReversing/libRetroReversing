@@ -49,6 +49,13 @@ void libRR_export_template_files(string template_directory_name) {
       printf("WARNING: NOT Found libRetroReversing export templates folder - will not try to export\n");
       return;
     }
+
+     #ifdef EMSCRIPTEN
+    printf("Skipping libRR_export_template_files in Emscripten Mode");
+    return; // TODO: add this back in when we figure out how to load files.json from wasm
+    #endif
+
+    // TODO: how do we read the static files.json from WASM?
     readJsonToObject(export_template_directory+"files.json", files_json);
     cout << "Exporter Name is: " << files_json["name"] << "\n";
     libRR_export_assembly_extention = (string)files_json["asm_extenstion"];
@@ -63,10 +70,7 @@ void libRR_export_template_files(string template_directory_name) {
     }
   #endif
 
-   #ifdef EMSCRIPTEN
-    printf("Skipping libRR_export_template_files in Emscripten Mode");
-    return; // TODO: add this back in
-    #endif
+  
 
     // Copy required files
     json j = files_json["files"];

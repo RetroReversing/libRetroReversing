@@ -11,12 +11,12 @@
 
 // Common Variables
 int l_CurrentFrame;
-int RRCurrentFrame = 0;
 bool isPaused = false;
 extern retro_environment_t environ_cb;
 extern double libRR_playback_speed;
 
 extern "C" {
+  unsigned int RRCurrentFrame = 0;
   long long total_time_elapsed = 0;
   
   void frame_time_callback(retro_usec_t usec) {
@@ -54,7 +54,6 @@ bool libRR_run_frame() {
       total_time_elapsed = 0;
     }
 
-    // printf("libRR_run_frame %s \n", libRR_settings.dump().c_str()); // useful for debugging
 
     // Check if reached end of what player wants to run
     if (libRR_settings["endAt"] == RRCurrentFrame) {
@@ -76,6 +75,7 @@ bool libRR_run_frame() {
 
     // Check if paused from the UI
     if (!libRR_settings["paused"]) {
+      // printf("libRR_run_frame number:%u Settings: %s \n", RRCurrentFrame, libRR_settings.dump().c_str()); // useful for debugging
       RRCurrentFrame++;
     } else {
       #ifdef _WIN32
