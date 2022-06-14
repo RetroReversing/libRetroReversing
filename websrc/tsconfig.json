@@ -8,7 +8,8 @@
       "moduleResolution": "node",
       "allowSyntheticDefaultImports": true,
       "strict": false,
-      "resolveJsonModule": true
+      "resolveJsonModule": true,
+      "skipLibCheck": true
     },
     "include": ["./main/**/*", "./pages/**/*"]
   }
