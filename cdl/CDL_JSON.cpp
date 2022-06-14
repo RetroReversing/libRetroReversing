@@ -48,10 +48,10 @@ std::streampos fileSize( const char* filePath ){
 }
 
 void readJsonToObject(string filename, json& json_object, string default_json) {
-    printf("readJsonToObject %s \n", filename.c_str());
+    // printf("readJsonToObject %s", filename.c_str());
     long sizeOfFile = fileSize(filename.c_str());
     if (sizeOfFile < 0) {
-        printf("Size of file was Negative: %d \n", sizeOfFile);
+        printf("WARN: Size of file was Negative: %d \n", sizeOfFile);
         json_object = json::parse(default_json);
         return;
     }
@@ -80,19 +80,19 @@ void readJsonToObject(string filename, json& json_object, string default_json) {
 }
 
 void saveJsonToFile(string filename, json& json_object) {
-    cout << "Saving: " << filename << std::endl;
+    // cout << "Saving: " << filename << std::endl;
     string dump = json_object.dump(2);
     if (dump == "null" || dump == "{}") {
-        cout << "WARN: Nothing to write for file\n";
+        cout << "WARN: Nothing to write for file" + filename;
         return;
     }
     std::ofstream o(filename);
     if (o.good()) {
         o << dump;
     } else {
-        cout << "ERROR: Failed to write file: " << filename << std::endl;
+        cout << "ERROR: Failed to write file: " + filename << std::endl;
     }
-    cout << "Save Successful" << std::endl; 
+    cout << "INFO: Save Successful: " + filename;
     // cout << "Saved this:" << dump << std::endl;  //Used for debugging only
 }
 
