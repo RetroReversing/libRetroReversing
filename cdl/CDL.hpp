@@ -10,6 +10,7 @@
 
 #include "../include/libRR.h"
 
+#ifndef EMSCRIPTEN
 #ifndef __has_include
   static_assert(false, "__has_include not supported");
 #else
@@ -23,6 +24,7 @@
 #    include <boost/filesystem.hpp>
      namespace fs = boost::filesystem;
 #  endif
+#endif
 #endif
 
 using namespace std;

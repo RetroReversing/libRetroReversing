@@ -1,8 +1,12 @@
 #include "../include/libRR.h"
 #include <queue>
 #include "CDL.hpp"
-#include <experimental/filesystem>
 #include <cstdarg>
+
+#ifndef EMSCRIPTEN
+// TODO: check if this include can be removed since we are already including it in CDL.hpp
+#include <experimental/filesystem>
+#endif
 
 // Variables
 char libRR_save_directory[4096];
