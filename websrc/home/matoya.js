@@ -1580,7 +1580,15 @@ export async function MTY_Start(bin, userEnv, endFunc, glver) {
 
 	// Execute the '_start' entry point, this will fetch args and execute the 'main' function
 	try {
-		MTY.module.instance.exports._start();
+		// Start libRR change
+		if (MTY.module.instance.exports._start) {
+			MTY.module.instance.exports._start();
+		} else {
+			console.info("Matoya running as a Reactor");
+			MTY.module.instance.exports._initialize();
+			MTY.module.instance.exports._main();
+		}
+		// End libRR change
 
 	// We expect to catch the 'MTY_AppRun halted execution' exception
 	// Otherwise look for an indication of unsupported WASM features
