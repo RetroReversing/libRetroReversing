@@ -11,5 +11,6 @@
       "resolveJsonModule": true,
       "skipLibCheck": true
     },
-    "include": ["./main/**/*", "./pages/**/*"]
+    "include": ["./main/**/*", "./pages/**/*"],
+    "exclude": ["./node_modules/**/*"]
   }
