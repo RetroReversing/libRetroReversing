@@ -74,7 +74,7 @@ export function Row({row}) {
         <TableCell component="th" scope="row" onClick={() => setOpen(!open)}>
           {row.name.replace(';1','')}
         </TableCell>
-        <TableCell align="right">{row.lba} -> {row.extent_location_end_lba} ({1 + row.extent_location_end_lba-row.lba})</TableCell>
+        <TableCell align="right">{row.lba} -&gt; {row.extent_location_end_lba} ({1 + row.extent_location_end_lba-row.lba})</TableCell>
         <TableCell align="right"><FrameHintPopOver frame={row.first_access} /></TableCell>
         <TableCell align="right"><FrameHintPopOver frame={row.last_access} /></TableCell>
         <TableCell align="right">{row.access_count}</TableCell>
