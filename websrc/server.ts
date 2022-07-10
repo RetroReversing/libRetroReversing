@@ -1,7 +1,6 @@
 import axios from "axios";
 import { loadFileFromLocalStorage, sendMessageToCoreFromFrontend } from "./home/GameDropZone";
 
-export let emulatorType = "desktop"; // either "desktop" or "browser" depending on where the user is emulating from
 export let gameLoaded = false;
 
 export function sendActionToServer(payload) {
@@ -18,7 +17,7 @@ export function sendActionToServer(payload) {
   .catch(function errorCallingEmulator(error) {
     console.error("Error calling emulator:",error);
     console.info("External emulator not found, using internal wasm emulator instead");
-    emulatorType = "browser";
+    window["isWASM"] = true; 
     gameLoaded = false;
   });
 }

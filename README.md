@@ -180,6 +180,12 @@ for (auto& el : o.items()) {
 * `to_string()` (integer to string)
 * `libRR_replace_string(thestring, toreplace, replacement)` (replace substring in thestring)
 
+---
+## Useful Variables
+* libRR_console - Name of the current console core, e.g PS1/NES
+* libRR_rom_name - Name of the current ROM
+* libRR_game_name - name of the Current Game
+
 
 # Creating a libRR enabled core
 

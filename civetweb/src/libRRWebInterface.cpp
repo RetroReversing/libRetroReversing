@@ -172,12 +172,16 @@ printf("server options: %s\n\n", options[17]);
 
     mg_set_request_handler(ctx, "/postresponse", PostResponser, 0);
 
+	// TODO: get both console name and game name here
+	string url_to_open = "http://localhost:1234/#/" + string(libRR_console)+"/"+ string(libRR_game_name);
+
     /* Add some handler */
     // mg_set_request_handler(ctx, "/test", FileHandler, 0);
 		#ifdef _WIN32
-		ShellExecute(0, 0, "http://www.localhost:1234", 0, 0 , SW_SHOW );
+		ShellExecute(0, 0, url_to_open.c_str(), 0, 0 , SW_SHOW );
 		#else
-		system("open http://localhost:1234");
+		string command = "open " + url_to_open;
+		system(command.c_str());
 		#endif
 }
 

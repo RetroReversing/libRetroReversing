@@ -213,7 +213,7 @@ export function sendMessageToCoreFromFrontend(json) {
 }
 
 // TODO: only set these when we are sure we are only using WASM cores
-window["isWASM"] = true;
+window["isWASM"] = false; // Initially always false, until the first call fails
 window["sendMessageToCoreFromFrontend"] = sendMessageToCoreFromFrontend;
 window["getFrontendStatus"] = getFrontendStatus;
 

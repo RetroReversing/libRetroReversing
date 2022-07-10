@@ -38,6 +38,7 @@ export function HomePage() {
         <Typography variant="h6" color="inherit" noWrap>Add Games</Typography>
         <Typography align="center">Welcome to the Online version of the Reversing Emulator, simply drop a ROM into the box below to start Reversing!</Typography>
         <GameDropZone />
+        {window["isWASM"]? "WASM Mode": "RetroArch Mode"}
       </Container>
     </ThemeProvider>
   </div>;

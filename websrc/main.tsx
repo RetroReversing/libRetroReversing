@@ -123,7 +123,7 @@ function App() {
   }
 
   useEffect(()=>{
-    if (params?.gameHash && !window["loadedGames"][params?.gameHash]) {
+    if (window["isWASM"] && params?.gameHash && !window["loadedGames"][params?.gameHash]) {
       console.info("About to Load the Game into the web based emulator");
       const callback = () => {
         console.info("Game now running:", params?.gameHash);
