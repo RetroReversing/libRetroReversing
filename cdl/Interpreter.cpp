@@ -5,7 +5,6 @@
 #ifdef EMSCRIPTEN
 // Emscripten doesn't need a javascript parser
 #else
-#include <experimental/filesystem>
 #include "../interpreter/duktape/duktape.h"
 #include "../interpreter/mjs/mjs.h"
 #endif

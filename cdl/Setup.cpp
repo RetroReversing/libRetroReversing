@@ -5,7 +5,6 @@
 
 #ifndef EMSCRIPTEN
 // TODO: check if this include can be removed since we are already including it in CDL.hpp
-#include <experimental/filesystem>
 #endif
 
 // Variables

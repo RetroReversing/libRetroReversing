@@ -19,7 +19,7 @@
      namespace fs = std::experimental::filesystem;
 #  elif __has_include(<filesystem>)
 #    include <filesystem>
-     namespace fs = std::fs::filesystem;
+     namespace fs = std::__fs::filesystem;
 #  elif __has_include(<boost/filesystem.hpp>)
 #    include <boost/filesystem.hpp>
      namespace fs = boost::filesystem;

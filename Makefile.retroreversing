@@ -27,8 +27,8 @@ else
     ifeq ($(UNAME_S),Darwin)
         CCFLAGS += -D OSX -w  -MMD
         CFLAGS += -D OSX -w  -MMD
-        CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=12.0 -w  -MMD
-        LDFLAGS += -lc++ -mmacosx-version-min=12.0
+        CXXFLAGS += -std=c++11 -stdlib=libc++ -mmacosx-version-min=13.0 -w  -MMD
+        LDFLAGS += -lc++ -mmacosx-version-min=13.0
         # LDFLAGS += -lbfd -L/usr/local/opt/binutils/lib -liberty -lintl -liconv -mmacosx-version-min=10.9 -lc++
     endif
     UNAME_P := $(shell uname -p)
