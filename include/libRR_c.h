@@ -43,6 +43,12 @@ const char* libRR_log_function_call(uint32_t current_pc, uint32_t target_pc, uin
 void libRR_log_interrupt_call(uint32_t current_pc, uint32_t target_pc);
 void libRR_log_return_statement(uint32_t current_pc, uint32_t return_target, uint32_t stack_pointer);
 
+
+// Standard
+void libRR_video_cb(const void *fb, unsigned int width, unsigned int height, unsigned int pitch);
+extern void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t environ_cb);
+
+
 // N64 Memory logging
 void cdl_log_mem_write(const uint32_t lsaddr, uint32_t pc);
 void cdl_log_opcode_error();
