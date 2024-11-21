@@ -85,18 +85,20 @@ unsigned long long libRR_playback_next_input_state() {
 // 
 // # libRR_log_input_state_bitmask - this is the prefered solution to use in a core if possible
 // 
-void libRR_log_input_state_bitmask(retro_input_state_t input_cb) {
-  int16_t ret = input_cb( 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK );
-  button_history.push(ret);
-  // printf("Logging input state frame:%d result:%d \n", RRCurrentFrame, ret);
+retro_input_state_t base_input_cb;
+int16_t libRR_log_input_state_bitmask(unsigned int port, unsigned int device, unsigned int index, unsigned int id) {
+  int16_t baseResult = base_input_cb(port, device, index, id);
+  button_history.push(baseResult);
+  return baseResult;
 }
 
 retro_input_state_t libRR_handle_input(retro_input_state_t input_cb) {
-  if (libRR_should_playback_input) {
-		return libRR_playback();
-	}  
-  libRR_log_input_state_bitmask(input_cb);
-  return input_cb;
+  // if (libRR_should_playback_input) {
+	// 	return libRR_playback();
+	// }
+
+  base_input_cb = input_cb;
+  return libRR_log_input_state_bitmask;
 }
 
 

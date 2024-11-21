@@ -40,7 +40,47 @@ void console_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, u
 
 extern "C" {
 
- // 
+string get_slot_for_address(int32_t offset) {
+    return "0";
+}
+
+string write_console_asm_header() {
+    string contents = "";
+    return contents;
+}
+
+// The following are only needed for consoles with CDs
+string retro_cd_base_directory = "libRR_RememberToSetCDBase";
+string retro_cd_path = "libRR_RememberToSetCDPATH";
+string retro_cd_base_name = "libRR_RememberToBaseName";
+
+const char* libRR_console = "N64";
+
+struct retro_memory_map libRR_retromap = { 0 };
+
+// Delay slot variables
+uint32_t libRR_delay_slot_pc = 0;
+bool libRR_isDelaySlot = false;
+
+// Bank switching
+uint32_t libRR_bank_size = 0;
+uint16_t libRR_current_bank_slot_0 = 1;
+uint16_t libRR_current_bank_slot_1 = 2;
+uint16_t libRR_current_bank_slot_2 = 3;
+uint32_t libRR_slot_0_max_addr = 0x4000;
+uint32_t libRR_slot_1_max_addr = 0x7fff;
+uint32_t libRR_slot_2_max_addr = 0x7fff;
+bool libRR_bank_switching_available = false;
+
+void libRR_setup_console_details(retro_environment_t environ_cb) {
+    printf("TODO: Setup setting such as libRR_define_console_memory_region for this console\n");
+    // libRR_set_retro_memmap(environ_cb);
+}
+
+// Mupen doesn't have this defined so:
+char retro_base_directory[4096];
+
+// 
 // # Toggles
 // 
 bool support_n64_prints = false;
@@ -234,6 +274,7 @@ void readJsonFromFile() {
 
 void cdl_log_pif_ram(uint32_t address, uint32_t* value) {
     #ifndef USE_CDL
+        function_stack.push_back(0);
         return;
     #endif
     printf("Game was reset? \n");
@@ -474,7 +515,7 @@ void cdl_log_rsp(uint32_t log_type, uint32_t address, const char * extra_data) {
         if (audio_address.find(address) != audio_address.end() ) 
             return;
         audio_address[address] = n2hexstr(address)+extra_data;
-        // cout << "Alist address:" << std::hex << address << " " << extra_data << "\n";
+        cout << "Alist address:" << std::hex << address << " " << extra_data << "\n";
         return;
     }
     if (log_type == CDL_UCODE_CRC) {
@@ -602,11 +643,13 @@ bool isAddressCartROM(uint32_t address) {
 void cdl_log_audio_sample(uint32_t saved_ai_dram, uint32_t saved_ai_length) {
     if (audio_samples.find(saved_ai_dram) != audio_samples.end() ) 
         return;
+    
+    printf("audio_plugin_push_samples AI_DRAM_ADDR_REG:%#08x length:%#08x\n", saved_ai_dram, saved_ai_length);
+
     auto t = cdl_dram_cart_map();
     t.dram_offset = n2hexstr(saved_ai_dram);
     t.rom_offset = n2hexstr(saved_ai_length);
     audio_samples[saved_ai_dram] = t;
-    // printf("audio_plugin_push_samples AI_DRAM_ADDR_REG:%#08x length:%#08x\n", saved_ai_dram, saved_ai_length);
 }
 
 void cdl_log_cart_rom_dma_write(uint32_t dram_addr, uint32_t cart_addr, uint32_t length) {
@@ -907,7 +950,7 @@ void log_dma_write(uint8_t* mem, uint32_t proper_cart_address, uint32_t cart_add
         return;
 
     auto t = cdl_dma();
-    t.dram_start=dram_addr;
+    t.dram_start = dram_addr;
     t.dram_end = dram_addr+length;
     t.rom_start = proper_cart_address;
     t.rom_end = proper_cart_address+length;
@@ -916,13 +959,19 @@ void log_dma_write(uint8_t* mem, uint32_t proper_cart_address, uint32_t cart_add
     t.header = mem[proper_cart_address+3];
     t.frame = l_CurrentFrame;
 
-    // if (function_stack.size() > 0 && labels.find(current_function) != labels.end()) {
-    t.func_addr = print_function_stack_trace(); // labels[current_function].func_name;
-    // }
+    if (function_stack.size() > 0 && labels.find(current_function) != labels.end()) {
+        t.func_addr = print_function_stack_trace(); // labels[current_function].func_name;
+    }
 
     dmas[proper_cart_address] = t;
 
-    // std::cout << "DMA: Dram:0x" << std::hex << t.dram_start << "->0x" << t.dram_end << " Length:0x" << t.length << " " << t.ascii_header << " Stack:" << function_stack.size() << " " << t.func_addr << " last:"<< function_stack.back() << "\n";
+    uint32_t last = 0;
+    if (function_stack.size() > 0) {
+        last = function_stack.back();
+    } else {
+        std::cout << "Warning: function stack empty" << std::endl;
+    }
+    std::cout << "DMA: Dram:0x" << std::hex << t.dram_start << "->0x" << t.dram_end << " Length:0x" << t.length << " " << t.ascii_header << " Stack:" << function_stack.size() << " " << t.func_addr << " last:" << last << "\n";
     
 }
 
@@ -1203,5 +1252,16 @@ uint32_t cdl_get_alternative_jump(uint32_t current_jump) {
 
   void libRR_export_all_files() {
     printf("N64: Export All files to Reversing Project, depends on which core we are using");
+  }
+
+  uint32_t libRR_pc_lookahead = 0;
+
+  int get_current_bank_number_for_address(uint32_t addr) {
+    return 0;
+  }
+
+  void add_console_specific_game_json() {
+    // TODO: Add special value to game_json e.g:
+    // game_json["VDP2"]["TVMD"]["DisplayOn"] = VDP2::DisplayOn;
   }
 }

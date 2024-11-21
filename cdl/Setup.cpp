@@ -28,13 +28,12 @@ int libRR_should_Load_EPROM = 0;
 int libRR_message_duration_in_frames = 180;
 json libRR_settings = json::parse("{ \"paused\": true, \"fullLogging\": false }");
 extern bool libRR_full_trace_log;
+extern retro_environment_t environ_cb;
 
 std::map<string, libRR_emulator_state> playthroughs = {};
 // current_emulator_state holds all the game core information such as Game Name, CD Tracks, Memory regions etc
 // This is never changed from Web requests, and is not often changed at all
 // /*libRR_emulator_state*/ json current_emulator_state = {};
-
-retro_environment_t environ_cb = {};
 
 std::vector<libRR_save_state> libRR_save_states = {};
 
@@ -119,11 +118,11 @@ json libRR_get_list_of_memory_regions()
   return memory_descriptors;
 }
 
-void libRR_setup_retro_base_directory() {
+void libRR_setup_retro_base_directory(retro_environment_t _environ_cb) {
   // Setup path
   const char *dir = NULL;
 
-  if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
+  if (_environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
         snprintf(libRR_save_directory, sizeof(libRR_save_directory), "%s", dir);
     }
   else {
@@ -131,7 +130,7 @@ void libRR_setup_retro_base_directory() {
   }
   dir = NULL; 
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+   if (_environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
       snprintf(retro_base_directory, sizeof(retro_base_directory), "%s", dir);
    }
@@ -141,9 +140,9 @@ void libRR_setup_retro_base_directory() {
   // end setup path
 }
 
-void libRR_setup_directories() {
+void libRR_setup_directories(retro_environment_t _environ_cb) {
   printf("libRR_setup_directories");
-  libRR_setup_retro_base_directory();
+  libRR_setup_retro_base_directory(_environ_cb);
 
 #ifdef EMSCRIPTEN
   libRR_project_directory = "";
@@ -201,9 +200,8 @@ extern string libRR_game_name;
 extern string libRR_rom_name;
 void libRR_handle_load_game(const struct retro_game_info *info, retro_environment_t _environ_cb)
 {
-  environ_cb = _environ_cb;
   printf("Loading a new ROM \n");
-  libRR_setup_console_details(environ_cb);
+  libRR_setup_console_details(_environ_cb);
 
   libRR_rom_name = extract_basename(info->path);
 
@@ -216,7 +214,7 @@ void libRR_handle_load_game(const struct retro_game_info *info, retro_environmen
   // 
   // Setup reversing files
   // 
-  libRR_setup_directories();
+  libRR_setup_directories(_environ_cb);
   read_json_config();
   init_playthrough(libRR_current_playthrough_name); // todo get name from front end
   setup_web_server();
@@ -589,7 +587,9 @@ void libRR_display_message(const char *format, ...)
   msg.frames = libRR_message_duration_in_frames;
   msg.msg = strc;
 
-  environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+  if (environ_cb != NULL)
+    environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+  
   free(str);
 }
 
