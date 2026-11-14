@@ -73,8 +73,10 @@ string libRR_rom_name = "";
 
 // string next_dma_type = "";
 // uint32_t previous_function = 0;
- std::vector<uint32_t> function_stack = std::vector<uint32_t>();
-std::vector<uint32_t> previous_ra; // previous return address
+// Each starts with a sentinel (0: "no function", "no return address") that is never popped, so the hooks can read
+// back() before the first call is logged and after an unbalanced return, as a headless frontend leaves them.
+std::vector<uint32_t> function_stack = std::vector<uint32_t>(1, 0);
+std::vector<uint32_t> previous_ra = std::vector<uint32_t>(1, 0); // previous return address
 
 std::map<uint32_t, std::map<string, string> > addresses;
 
