@@ -711,9 +711,9 @@ void cdl_log_jump_return(int take_jump, uint32_t jump_target, uint32_t pc, uint3
         add_note(pc, jump_target, problem);
         // return;
     }
-    function_stack.pop_back();
+    if (function_stack.size() > 1) function_stack.pop_back(); /* keep the sentinel */
     current_function = function_stack.back();
-    previous_ra.pop_back();
+    if (previous_ra.size() > 1) previous_ra.pop_back();
 
     console_log_jump_return(take_jump, jump_target, pc, ra, registers, r4300);
 
